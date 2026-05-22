@@ -1,0 +1,69 @@
+router.get('/all-products', async (req, res) => {
+    try {
+        const products = await sql`
+            SELECT p.*,
+            COALESCE(
+                json_agg(
+                    json_build_object(
+                        'variant_id', v.variant_id,
+                        'color_name', v.color_name,
+                        'color_code', v.color_code,
+                        'price', v.price,
+                        'price_str', v.price_str,
+                        'local_gallery', v.local_gallery,
+                        'quantity', i.quantity
+                    )
+                ) FILTER (WHERE v.variant_id IS NOT NULL),
+                '[]'
+            ) as variants
+            FROM product p
+            LEFT JOIN productvariant v ON p.product_id = v.product_id
+            LEFT JOIN productinventory i ON v.variant_id = i.variant_id
+            GROUP BY p.product_id
+        `;
+
+        const formattedProducts = products.map(formatProductPaths);
+        res.status(200).json({ success: true, total: formattedProducts.length, data: formattedProducts });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/products/:category', async (req, res) => {
+    try {
+        const type = req.params.category;
+        const products = await sql`
+            WITH RECURSIVE cat_tree AS (
+                SELECT category_id FROM category WHERE category_id = ${type}
+                UNION ALL
+                SELECT c.category_id FROM category c
+                INNER JOIN cat_tree ct ON c.parent_id = ct.category_id
+            )
+            SELECT p.*,
+            COALESCE(
+                json_agg(
+                    json_build_object(
+                        'variant_id', v.variant_id,
+                        'color_name', v.color_name,
+                        'color_code', v.color_code,
+                        'price', v.price,
+                        'price_str', v.price_str,
+                        'local_gallery', v.local_gallery,
+                        'quantity', i.quantity
+                    )
+                ) FILTER (WHERE v.variant_id IS NOT NULL),
+                '[]'
+            ) as variants
+            FROM product p
+            LEFT JOIN productvariant v ON p.product_id = v.product_id
+            LEFT JOIN productinventory i ON v.variant_id = i.variant_id
+            WHERE p.category_id IN (SELECT category_id FROM cat_tree)
+            GROUP BY p.product_id
+        `;
+
+        const formattedProducts = products.map(formatProductPaths);
+        res.status(200).json({ success: true, data: formattedProducts });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});

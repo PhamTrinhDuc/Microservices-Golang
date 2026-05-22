@@ -1,0 +1,99 @@
+[
+    {
+        "id": "203759",
+        "name": "Cáp chuyển đổi Type C - 3.5mm Apple MU7E2",
+        "base_id": "203759",
+        "category": "hub",
+        "description": "Cáp chuyển đổi Type-C sang 3.5mm Apple MU7E2 Trắng. có thiết kế nhỏ gọn, dễ dàng sử dụng và mang theo. Dây cáp. giúp chuyển đổi từ cổng sạc USB Type-C sang jack 3.5mm để kết nối. tai nghe. ,. loa. ,. gậy chụp ảnh. ,.. Cáp chuyển đổi tương thích với các thiết bị sử dụng chân sạc USB Type-C. Cáp chuyển đổi dùng với các thiết bị có chân sạc Type-C như điện thoại, tablet, bao gồm cả các dòng iPhone mới nhất như. iPhone 17. ,. iPhone 17 Pro. và. iPhone 17 Pro Max. Cáp chuyển đổi Apple được bọc lớp nhựa trắng rất bền bỉ và chắc chắn. Xem thêm",
+        "price": 290000,
+        "price_str": "290.000₫",
+        "img_thumb": "cap-chuyen-oi-type-c-35mm-apple-mu7e2_thumb.jpg",
+        "local_desc_images": [
+            "cap-chuyen-oi-type-c-35mm-apple-mu7e2_desc_0.jpg",
+            "cap-chuyen-oi-type-c-35mm-apple-mu7e2_desc_1.jpg",
+            "cap-chuyen-oi-type-c-35mm-apple-mu7e2_desc_2.jpg",
+            "cap-chuyen-oi-type-c-35mm-apple-mu7e2_desc_3.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 290000,
+                "price_str": "290.000₫",
+                "specs": {
+                    "Chức năng": "Chuyển đổi cổng kết nối",
+                    "Đầu ra": "1 Cổng 3.5 mm",
+                    "Jack kết nối": "Type-C",
+                    "Độ dài dây": "0.07 m",
+                    "Kích thước": "Hãng không công bố",
+                    "Sản xuất tại": "Trung Quốc",
+                    "Thương hiệu của": "Mỹ",
+                    "Hãng": [
+                        "Apple.",
+                        "Xem thông tin hãng"
+                    ]
+                },
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "215983",
+        "name": "Adapter chuyển đổi Type C 3 in 1 Apple MUF82",
+        "base_id": "215983",
+        "category": "hub",
+        "description": "Adapter chuyển đổi Type C sang HDMI/Type C/USB Apple MUF82 Trắng. có. thiết kế nhỏ gọn, sang trọng. giúp người dùng dễ dàng mang theo bên mình sử dụng. Adapter là. sản phẩm chính hãng của Apple. được thiết kế cho. Macbook. và iPad Pro. Sử dụng cổng USB 3.0 để kết nối các thiết bị như. USB. ,. ổ cứng di động. ,. bàn phím. ,. chuột. ,..để đồng bộ hóa và sạc các thiết bị iOS của bạn. Bạn cũng có thể kết nối. cáp sạc. với cổng USB để sạc Macbook hoặc iPad Pro. Adapter có tích hợp thêm 1 đầu ra cổng Type-C để hỗ trợ sạc pin, truyền dữ liệu,.. Có. đầu ra cổng HDMI với chuẩn 1080p ở 60Hz hay UHD (4K) ở 30Hz cho độ phân giải cao. đảm bảo chất lượng hình ảnh tốt nhất. Có thể thấy, Adapter chuyển đổi Type-C sang HDMI/Type-C/USB Apple MUF82 Trắng với thiết kế sang trọng được tích hợp các cổng kết nối là HDMI, USB 3.0, Type-C. Sản phẩm sẽ là sự lựa chọn tốt cho những khách hàng sử dụng Macbook và iPad Pro. Với thiết bị này, bạn hoàn toàn có thể sử dụng sản phẩm với dòng. iPhone 17. ,. iPhone 17 Pro. hay. iPhone 17 Pro Max. để mở rộng kết nối và tiện ích. Xem thêm",
+        "price": 2090000,
+        "price_str": "2.090.000₫",
+        "img_thumb": "adapter-chuyen-oi-type-c-3-in-1-apple-muf82_thumb.jpg",
+        "local_desc_images": [
+            "adapter-chuyen-oi-type-c-3-in-1-apple-muf82_desc_0.jpg",
+            "adapter-chuyen-oi-type-c-3-in-1-apple-muf82_desc_1.jpg",
+            "adapter-chuyen-oi-type-c-3-in-1-apple-muf82_desc_2.jpg",
+            "adapter-chuyen-oi-type-c-3-in-1-apple-muf82_desc_3.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 2090000,
+                "price_str": "2.090.000₫",
+                "specs": {
+                    "Chức năng": [
+                        "Xuất hình ảnh",
+                        "Chuyển đổi cổng kết nối",
+                        "Truyền dữ liệu",
+                        "Chuyển đổi chân sạc"
+                    ],
+                    "Đầu ra": [
+                        "1 Type C",
+                        "1 USB 3.0",
+                        "1 HDMI (4K)"
+                    ],
+                    "Jack kết nối": "Type-C",
+                    "Công suất tối đa": "Hãng không công bố",
+                    "Độ dài dây": "Hãng không công bố",
+                    "Kích thước": "Hãng không công bố",
+                    "Sản xuất tại": "Việt Nam/Trung Quốc (tùy lô hàng)",
+                    "Thương hiệu của": "Mỹ",
+                    "Hãng": [
+                        "Apple.",
+                        "Xem thông tin hãng"
+                    ]
+                },
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg"
+                ]
+            }
+        ]
+    }
+]

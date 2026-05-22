@@ -1,0 +1,2466 @@
+{
+"1": {
+  "SENDER_ADDRESS": {
+    "PROVINCE_ID": 1,
+    "DISTRICT_ID": 25,
+    "WARD_ID": 498,
+    "ADDRESS": "Đại Mỗ, Nam Từ liêm, Hà Nội"
+  },
+  "RECEIVER_ADDRESS": {
+    "PROVINCE_ID": 1,
+    "DISTRICT_ID": 4,
+    "WARD_ID": 74,
+    "ADDRESS": "Định Công, Hoàng Mai, Hà Nội"
+  },
+  "RESULT": [
+    {
+      "MA_DV_CHINH": "PHS",
+      "TEN_DICHVU": "Nội tỉnh tiết kiệm thỏa thuận",
+      "GIA_CUOC": 18150,
+      "THOI_GIAN": "36 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "PTN",
+      "TEN_DICHVU": "Nội tỉnh nhanh thỏa thuận",
+      "GIA_CUOC": 24200,
+      "THOI_GIAN": "12 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "SCN",
+      "TEN_DICHVU": "Chuyển phát nhanh",
+      "GIA_CUOC": 23099,
+      "THOI_GIAN": "24 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "PTTX",
+          "SERVICE_NAME": "Phát tận tay xác thực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "SHT",
+      "TEN_DICHVU": "Chuyển phát hỏa tốc",
+      "GIA_CUOC": 41800,
+      "THOI_GIAN": "12 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "STK",
+      "TEN_DICHVU": "Chuyển phát tiêu chuẩn",
+      "GIA_CUOC": 18150,
+      "THOI_GIAN": "36 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "VHT",
+      "TEN_DICHVU": "Hỏa tốc thỏa thuận",
+      "GIA_CUOC": 41800,
+      "THOI_GIAN": "12 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    }
+  ]
+},
+"2":{
+  "SENDER_ADDRESS": {
+    "PROVINCE_ID": 1,
+    "DISTRICT_ID": 25,
+    "WARD_ID": 498,
+    "ADDRESS": "Đại Mỗ, Nam Từ liêm, Hà Nội"
+  },
+  "RECEIVER_ADDRESS": {
+    "PROVINCE_ID": 1,
+    "DISTRICT_ID": 4,
+    "WARD_ID": 74,
+    "ADDRESS": "Định Công, Hoàng Mai, Hà Nội"
+  },
+  "RESULT": [
+    {
+      "MA_DV_CHINH": "BTK",
+      "TEN_DICHVU": "Hàng nặng tiết kiệm",
+      "GIA_CUOC": 551137,
+      "THOI_GIAN": "48 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "PHS",
+      "TEN_DICHVU": "Nội tỉnh tiết kiệm thỏa thuận",
+      "GIA_CUOC": 436089,
+      "THOI_GIAN": "36 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "PTN",
+      "TEN_DICHVU": "Nội tỉnh nhanh thỏa thuận",
+      "GIA_CUOC": 442138,
+      "THOI_GIAN": "12 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "VHT",
+      "TEN_DICHVU": "Hỏa tốc thỏa thuận",
+      "GIA_CUOC": 904036,
+      "THOI_GIAN": "12 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    }
+  ]
+},
+"3": {
+  "SENDER_ADDRESS": {
+    "PROVINCE_ID": 1,
+    "DISTRICT_ID": 25,
+    "WARD_ID": 498,
+    "ADDRESS": "Đại Mỗ, Nam Từ liêm, Hà Nội"
+  },
+  "RECEIVER_ADDRESS": {
+    "PROVINCE_ID": 2,
+    "DISTRICT_ID": 33,
+    "WARD_ID": 644,
+    "ADDRESS": "Khu phố 14, Hẻm 129/47 Đường Nguyễn Trãi, Phường Chợ Quán, Thành phố Hồ Chí Minh"
+  },
+  "RESULT": [
+    {
+      "MA_DV_CHINH": "BCN",
+      "TEN_DICHVU": "Hàng nặng nhanh",
+      "GIA_CUOC": 2790684,
+      "THOI_GIAN": "60 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "BTK",
+      "TEN_DICHVU": "Hàng nặng tiết kiệm",
+      "GIA_CUOC": 1036166,
+      "THOI_GIAN": "96 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "LCOD",
+      "TEN_DICHVU": "TMĐT Tiết Kiệm thỏa thuận",
+      "GIA_CUOC": 1052756,
+      "THOI_GIAN": "72 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "NCOD",
+      "TEN_DICHVU": "TMĐT Nhanh thỏa thuận",
+      "GIA_CUOC": 2790132,
+      "THOI_GIAN": "36 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GST",
+          "SERVICE_NAME": "Giao hàng đặc thù",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HST",
+          "SERVICE_NAME": "Hồ sơ thầu",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    },
+    {
+      "MA_DV_CHINH": "VHT",
+      "TEN_DICHVU": "Hỏa tốc thỏa thuận",
+      "GIA_CUOC": 3658410,
+      "THOI_GIAN": "24 giờ",
+      "EXCHANGE_WEIGHT": 0,
+      "EXTRA_SERVICE": [
+        {
+          "SERVICE_CODE": "GGD",
+          "SERVICE_NAME": "Giao Bưu phẩm tại điểm giao dịch",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCTP",
+          "SERVICE_NAME": "Chuyển tiếp",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBP",
+          "SERVICE_NAME": "Báo phát",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GTT",
+          "SERVICE_NAME": "Phát tận tay",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDK",
+          "SERVICE_NAME": "Đồng kiểm",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GNG",
+          "SERVICE_NAME": "Gửi hàng tại bưu cục",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBH",
+          "SERVICE_NAME": "Khai giá",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "XMG",
+          "SERVICE_NAME": "Thu tiền xem hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "TRS",
+          "SERVICE_NAME": "Hoàn cước hai chiều",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "RRS",
+          "SERVICE_NAME": "Hoàn cước chiều về",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGDH",
+          "SERVICE_NAME": "Đổi hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GGC",
+          "SERVICE_NAME": "Gia cố hàng hóa",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "SMS",
+          "SERVICE_NAME": "SMS thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GDH",
+          "SERVICE_NAME": "Đổi Trả Hàng Nội Bộ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "NBOX",
+          "SERVICE_NAME": "Nhận hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GBOX",
+          "SERVICE_NAME": "Gửi hàng tại Box",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "FRS",
+          "SERVICE_NAME": "Hoàn cước chiều đi",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "ZNS",
+          "SERVICE_NAME": "Zalo thông báo đơn hàng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GG1P",
+          "SERVICE_NAME": "Giao Một Phần",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GCD",
+          "SERVICE_NAME": "Phụ phí cấm đường",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKK",
+          "SERVICE_NAME": "PP vùng xã khó khăn",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "GKV",
+          "SERVICE_NAME": "PP cao điểm khu vực",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HGC",
+          "SERVICE_NAME": "Hàng giá trị cao",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDV",
+          "SERVICE_NAME": "Hàng dễ vỡ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HLH",
+          "SERVICE_NAME": "Hàng lạnh",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HDN",
+          "SERVICE_NAME": "Hóa đơn, giấy chứng nhận",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HQK",
+          "SERVICE_NAME": "Hàng quá khổ",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HNK",
+          "SERVICE_NAME": "Hàng nguyên khối",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HCL",
+          "SERVICE_NAME": "Chất lỏng",
+          "DESCRIPTION": null
+        },
+        {
+          "SERVICE_CODE": "HPN",
+          "SERVICE_NAME": "Hàng từ tính, pin",
+          "DESCRIPTION": null
+        }
+      ]
+    }
+  ]
+}
+
+}

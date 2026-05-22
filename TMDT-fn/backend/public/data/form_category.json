@@ -1,0 +1,168 @@
+{
+  "dtdd": {
+    "label": "Điện thoại di động",
+    "fields": [
+      { "key": "screen", "label": "Màn hình", "type": "text" },
+      { "key": "os", "label": "Hệ điều hành", "type": "text" },
+      { "key": "camera_after", "label": "Camera sau", "type": "multi" },
+      { "key": "camera_front", "label": "Camera trước", "type": "text" },
+      { "key": "chip", "label": "Chip xử lý (CPU)", "type": "text" },
+      { "key": "ram", "label": "RAM", "type": "text" },
+      { "key": "storage", "label": "Bộ nhớ trong", "type": "text" },
+      { "key": "battery_charging", "label": "Pin & Sạc", "type": "text" }
+    ]
+  },
+  "laptop": {
+    "label": "Laptop",
+    "fields": [
+      { "key": "cpu", "label": "Công nghệ CPU", "type": "text" },
+      { "key": "ram", "label": "RAM", "type": "text" },
+      { "key": "hard_drive", "label": "Ổ cứng", "type": "text" },
+      { "key": "screen", "label": "Màn hình", "type": "text" },
+      { "key": "gpu", "label": "Card màn hình", "type": "text" },
+      { "key": "weight", "label": "Trọng lượng", "type": "text" }
+    ]
+  },
+  "micro": {
+    "label": "Micro / Thiết bị thu âm",
+    "fields": [
+      { "key": "micro_type", "label": "Loại micro", "type": "text" },
+      { "key": "connection_dist", "label": "Khoảng cách truyền", "type": "text" },
+      { "key": "battery_life", "label": "Thời gian hoạt động", "type": "text" },
+      { "key": "polar_pattern", "label": "Hướng thu âm", "type": "text" },
+      { "key": "charging_port", "label": "Cổng sạc", "type": "text" },
+      { "key": "frequency", "label": "Tần số hoạt động", "type": "text" }
+    ]
+  },
+  "hub": {
+    "label": "Hub / Cổng chuyển đổi",
+    "fields": [
+      { "key": "input", "label": "Đầu vào", "type": "text" },
+      { "key": "output", "label": "Đầu ra", "type": "multi" },
+      { "key": "data_speed", "label": "Tốc độ truyền dữ liệu", "type": "text" },
+      { "key": "max_power", "label": "Công suất tối đa", "type": "text" },
+      { "key": "resolution", "label": "Độ phân giải tối đa", "type": "text" }
+    ]
+  },
+  "game": {
+    "label": "Thiết bị chơi game / Console",
+    "fields": [
+      { "key": "cpu_gpu", "label": "Bộ xử lý & Đồ họa", "type": "text" },
+      { "key": "ram_storage", "label": "RAM & Bộ nhớ", "type": "text" },
+      { "key": "screen", "label": "Màn hình", "type": "text" },
+      { "key": "connection", "label": "Cổng kết nối", "type": "multi" },
+      { "key": "utilities", "label": "Tiện ích đặc biệt", "type": "multi" }
+    ]
+  },
+  "ban-phim": {
+    "label": "Bàn phím",
+    "fields": [
+      { "key": "connection", "label": "Cách kết nối", "type": "multi" },
+      { "key": "switch", "label": "Loại Switch", "type": "text" },
+      { "key": "keycap", "label": "Chất liệu keycaps", "type": "text" },
+      { "key": "led", "label": "Đèn LED", "type": "text" },
+      { "key": "compatibility", "label": "Tương thích", "type": "multi" }
+    ]
+  },
+  "chuot": {
+    "label": "Chuột máy tính",
+    "fields": [
+      { "key": "dpi", "label": "Độ phân giải (DPI)", "type": "text" },
+      { "key": "connection", "label": "Cách kết nối", "type": "text" },
+      { "key": "sensor", "label": "Cảm biến", "type": "text" },
+      { "key": "switch", "label": "Loại Switch", "type": "text" },
+      { "key": "led", "label": "Đèn LED", "type": "text" }
+    ]
+  },
+  "tai-nghe": {
+    "label": "Tai nghe",
+    "fields": [
+      { "key": "battery_earbuds", "label": "Pin tai nghe", "type": "text" },
+      { "key": "battery_case", "label": "Pin hộp sạc", "type": "text" },
+      { "key": "charging_port", "label": "Cổng sạc", "type": "text" },
+      { "key": "compatibility", "label": "Tương thích", "type": "multi" },
+      { "key": "utilities", "label": "Tiện ích", "type": "multi" }
+    ]
+  },
+  "lot-chuot": {
+    "label": "Lót chuột",
+    "fields": [
+      { "key": "size", "label": "Kích thước", "type": "text" },
+      { "key": "surface", "label": "Bề mặt", "type": "text" },
+      { "key": "base_material", "label": "Chất liệu đế", "type": "text" }
+    ]
+  },
+  "loa": {
+    "label": "Loa",
+    "fields": [
+      { "key": "total_power", "label": "Tổng công suất", "type": "text" },
+      { "key": "connection", "label": "Kết nối", "type": "multi" },
+      { "key": "battery", "label": "Thời gian pin", "type": "text" },
+      { "key": "utilities", "label": "Tiện ích", "type": "multi" }
+    ]
+  },
+  "o-cung": {
+    "label": "Ổ cứng di động / SSD",
+    "fields": [
+      { "key": "capacity", "label": "Dung lượng", "type": "text" },
+      { "key": "read_speed", "label": "Tốc độ đọc", "type": "text" },
+      { "key": "write_speed", "label": "Tốc độ ghi", "type": "text" },
+      { "key": "interface", "label": "Chuẩn kết nối", "type": "text" }
+    ]
+  },
+  "sac-cap": {
+    "label": "Sạc, cáp",
+    "fields": [
+      { "key": "interface", "label": "Cổng kết nối", "type": "text" },
+      { "key": "max_power", "label": "Công suất tối đa", "type": "text" },
+      { "key": "length", "label": "Độ dài dây", "type": "text" },
+      { "key": "utilities", "label": "Công nghệ/Tiện ích", "type": "multi" }
+    ]
+  },
+  "sac-dtdd": {
+    "label": "Sạc dự phòng",
+    "fields": [
+      { "key": "capacity", "label": "Dung lượng pin", "type": "text" },
+      { "key": "efficiency", "label": "Hiệu suất sạc", "type": "text" },
+      { "key": "output", "label": "Nguồn ra", "type": "multi" },
+      { "key": "core", "label": "Lõi pin", "type": "text" }
+    ]
+  },
+  "usb_the_nho": {
+    "label": "USB / Thẻ nhớ",
+    "fields": [
+      { "key": "capacity", "label": "Dung lượng", "type": "text" },
+      { "key": "read_speed", "label": "Tốc độ đọc", "type": "text" },
+      { "key": "write_speed", "label": "Tốc độ ghi", "type": "text" }
+    ]
+  },
+  "op-dien-thoai": {
+    "label": "Ốp lưng điện thoại",
+    "fields": [
+      { "key": "material", "label": "Chất liệu", "type": "text" },
+      { "key": "compatibility", "label": "Dòng máy tương thích", "type": "text" },
+      { "key": "feature", "label": "Tính năng (Magsafe, Chống sốc...)", "type": "multi" },
+      { "key": "brand", "label": "Thương hiệu", "type": "text" }
+    ]
+  },
+  "mieng-dan": {
+    "label": "Miếng dán / Kính cường lực",
+    "fields": [
+      { "key": "material", "label": "Chất liệu", "type": "text" },
+      { "key": "compatibility", "label": "Dòng máy tương thích", "type": "text" },
+      { "key": "hardness", "label": "Độ cứng (9H...)", "type": "text" },
+      { "key": "thinness", "label": "Độ mỏng", "type": "text" },
+      { "key": "feature", "label": "Tính năng (Chống vân tay, Chống nhìn trộm...)", "type": "multi" }
+    ]
+  },
+  "tui-soc": {
+    "label": "Túi chống sốc / Balo",
+    "fields": [
+      { "key": "size_compatible", "label": "Kích thước Laptop tương thích", "type": "text" },
+      { "key": "material", "label": "Chất liệu vải", "type": "text" },
+      { "key": "compartments", "label": "Số ngăn", "type": "text" },
+      { "key": "waterproof", "label": "Chống nước", "type": "text" },
+      { "key": "weight", "label": "Trọng lượng", "type": "text" }
+    ]
+  }
+}

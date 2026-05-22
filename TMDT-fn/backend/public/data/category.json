@@ -1,0 +1,50 @@
+[
+    { "id": 1, "label": "Điện thoại", "icon": "Smartphone", "slug": "dtdd" },
+    { "id": 2, "label": "Laptop", "icon": "Laptop", "slug": "laptop" },
+    {
+        "id": 3,
+        "label": "Phụ kiện",
+        "icon": "Headphones",
+        "slug": "phu-kien",
+        "hasSubmenu": true,
+        "submenu": [
+            {
+                "title": "Phụ kiện di động",
+                "items": [
+                    { "label": "Sạc dự phòng", "slug": "sac-dtdd" },
+                    { "label": "Sạc, cáp", "slug": "sac-cap" },
+                    { "label": "Ốp lưng điện thoại", "slug": "op-dien-thoai" },
+                    { "label": "Miếng dán màn hình", "slug": "mieng-dan" }
+                ]
+            },
+            {
+                "title": "Phụ kiện Laptop, PC",
+                "items": [
+                    { "label": "Chuột máy tính", "slug": "chuot" },
+                    { "label": "Bàn phím", "slug": "ban-phim" },
+                    { "label": "Balo, Túi chống sốc", "slug": "tui-soc" },
+                    { "label": "Lót chuột", "slug": "lot-chuot" },
+                    { "label": "Hub chuyển đổi", "slug": "hub" },
+                    { "label": "Thiết bị chơi game", "slug": "game" }
+                ]
+            },
+            {
+                "title": "Thiết bị âm thanh",
+                "items": [
+                    { "label": "Tai nghe", "slug": "tai-nghe" },
+                    { "label": "Loa", "slug": "loa" },
+                    { "label": "Micro", "slug": "micro" }
+                ]
+            },
+            {
+                "title": "Thiết bị lưu trữ",
+                "items": [
+                    { "label": "Thẻ nhớ", "slug": "the-nho" },
+                    { "label": "USB", "slug": "usb" },
+                    { "label": "Ổ cứng di động", "slug": "o-cung" }
+                ]
+            }
+        ]
+    },
+    { "id": 4, "label": "Tablet", "icon": "Tablet", "slug": "tablet" }
+]

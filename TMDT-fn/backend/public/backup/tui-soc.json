@@ -1,0 +1,875 @@
+[
+    {
+        "id": "338732",
+        "name": "Balo Laptop 15.6 inch Targus TBB653GL",
+        "base_id": "338732",
+        "category": "tui-soc",
+        "description": "Trong nhịp sống hiện đại, một chiếc balo laptop vừa gọn gàng, bền bỉ vừa có tính thẩm mỹ cao là phụ kiện không thể thiếu cho dân văn phòng và sinh viên. Balo Laptop 15.6 inch Targus TBB653GL. ra đời nhằm đáp ứng những tiêu chí đó – mang đến sự tiện lợi trong từng hành trình. Thiết kế hiện đại, tinh tế trong từng chi tiết. Balo Targus. sở hữu kiểu dáng tối giản nhưng không kém phần sang trọng. Các đường nét thiết kế mềm mại, màu sắc trung tính như đen, tím, be và xanh dương dễ phối hợp với nhiều phong cách. Phần quai đeo và lưng được thiết kế ôm sát, có lớp đệm êm tạo cảm giác thoải mái khi mang. Logo Targus nhỏ gọn phía trước giúp tổng thể thêm tinh tế mà vẫn nổi bật phong cách thương hiệu. Tối ưu không gian chứa đồ. Balo. được thiết kế với nhiều ngăn tiện ích, phù hợp cho nhu cầu học tập và làm việc hằng ngày. Ngăn chính có lớp đệm chống sốc bảo vệ laptop kích thước đến 15.6 inch khỏi va đập. Phía trước là hai ngăn phụ giúp sắp xếp phụ kiện nhỏ như sạc, chuột, điện thoại hoặc sổ tay, trong khi hai ngăn hông co giãn linh hoạt để đựng bình nước hoặc ô gấp. Bên trong balo còn có ngăn riêng cho tài liệu, giữ mọi thứ gọn gàng và dễ tìm kiếm. Chất liệu bền chắc, sử dụng lâu dài. Điểm nổi bật của. balo 15.6 inch. này chính là được chế tạo từ chai nhựa tái chế (Recycled Plastic Bottles), giúp giảm thiểu rác thải nhựa và hướng đến lối sống xanh bền vững. Dù làm từ vật liệu tái chế, bề mặt vải vẫn giữ được độ bền chắc hạn chế bám bụi và dễ vệ sinh. Dây kéo kim loại chắc chắn, trượt êm và khó gãy. Phần quai đeo cùng lưng balo được lót đệm dày, thoáng khí, tạo cảm giác thoải mái khi mang lâu. Đây là lựa chọn lý tưởng cho người dùng muốn đồng hành cùng sản phẩm bền vững nhưng vẫn đảm bảo chất lượng sử dụng cao. Với thiết kế thanh lịch, không gian lưu trữ hợp lý và chất liệu thân thiện môi trường, Balo Laptop 15.6 inch Targus TBB653GL là người bạn đồng hành hoàn hảo trong học tập, công việc và di chuyển hằng ngày. Xem thêm",
+        "price": 237000,
+        "price_str": "237.000₫",
+        "img_thumb": "balo-laptop-156-inch-targus-tbb653gl_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-156-inch-targus-tbb653gl_desc_0.jpg",
+            "balo-laptop-156-inch-targus-tbb653gl_desc_1.jpg",
+            "balo-laptop-156-inch-targus-tbb653gl_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Tím",
+                "price": 237000,
+                "price_str": "237.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_tim_gal_0.jpg",
+                    "ban-tieu-chuan_tim_gal_1.jpg",
+                    "ban-tieu-chuan_tim_gal_2.jpg",
+                    "ban-tieu-chuan_tim_gal_3.jpg",
+                    "ban-tieu-chuan_tim_gal_4.jpg",
+                    "ban-tieu-chuan_tim_gal_5.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xanh Dương",
+                "price": 237000,
+                "price_str": "237.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xanh-duong_gal_0.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_1.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_2.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_3.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_4.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_5.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Màu be",
+                "price": 237000,
+                "price_str": "237.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-be_gal_0.jpg",
+                    "ban-tieu-chuan_mau-be_gal_1.jpg",
+                    "ban-tieu-chuan_mau-be_gal_2.jpg",
+                    "ban-tieu-chuan_mau-be_gal_3.jpg",
+                    "ban-tieu-chuan_mau-be_gal_4.jpg",
+                    "ban-tieu-chuan_mau-be_gal_5.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 237000,
+                "price_str": "237.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 237000,
+                "price_str": "237.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "327936",
+        "name": "Túi xách chống sốc Laptop 14 inch Tomtoc Briefcase Premium A11D3P1",
+        "base_id": "327936",
+        "category": "tui-soc",
+        "description": "Túi xách chống sốc Laptop 14 inch Tomtoc Briefcase Premium A11D3P1. chính là lựa chọn hoàn hảo vừa đảm bảo phong cách thời trang, vừa cung cấp khả năng bảo vệ tối ưu cho máy tính của bạn. Túi chống sốc Tomtoc. không chỉ là một chiếc túi đựng laptop thông thường mà còn là một món phụ kiện thời trang giúp bạn nổi bật trong đám đông. Với vẻ ngoài sang trọng và phong cách, chiếc túi này không chỉ đơn thuần là một sản phẩm bảo vệ máy tính, mà còn là tuyên ngôn về gu thẩm mỹ của bạn. Túi chống sốc 14 inch này được thiết kế với bố cục thông minh và hệ thống tổ chức siêu chức năng, cho phép bạn dễ dàng sắp xếp và mang theo mọi vật dụng cần thiết. Túi chính có khả năng chứa laptop lên đến 14 inch, được trang bị lớp đệm dày và lớp lót lông mềm mại, bảo vệ máy tính của bạn khỏi trầy xước và va đập hàng ngày. Bảo vệ tối ưu với công nghệ CornerArmor độc quyền. Tomtoc Briefcase Premium A11D3P1 nổi bật với công nghệ CornerArmor, một sáng chế của Hoa Kỳ được tích hợp tại các góc dưới của túi. Đây là công nghệ tương tự như túi khí ô tô, giúp bảo vệ máy tính của bạn khỏi các tai nạn như rơi hay va đập. Túi chống sốc này sẽ đảm bảo laptop của bạn luôn được bảo vệ ở mức cao nhất, ngay cả khi bạn di chuyển trong môi trường khắc nghiệt. Lớp lót bên trong mềm mại, kết hợp với đệm dày ở ngăn chính, không chỉ giúp bảo vệ máy tính khỏi những tác động vật lý mà còn ngăn chặn các vết trầy xước không mong muốn. Túi chống sốc Tomtoc Briefcase thực sự mang đến sự an tâm cho người dùng, đặc biệt là những ai thường xuyên di chuyển. Tay cầm bằng da PU mềm mại, thoải mái khi mang. Một điểm cộng khác của Tomtoc Briefcase Premium A11D3P1 là tay cầm bằng da PU mềm mại, mang đến cảm giác cầm nắm dễ chịu và chắc chắn. Chất liệu da PU bền bỉ và dẻo dai không chỉ tạo cảm giác thoải mái khi cầm mà còn tăng thêm phần sang trọng cho chiếc túi. Ngoài ra, túi còn được trang bị khóa kéo YKK chất lượng cao từ Nhật Bản. Khóa kéo YKK nổi tiếng với độ bền vượt trội và hoạt động mượt mà, giúp bạn dễ dàng sử dụng và mang lại cảm giác chắc chắn, bền bỉ theo thời gian. Lựa chọn hoàn hảo cho công việc và du lịch. Không chỉ là một chiếc túi laptop, Tomtoc Briefcase Premium A11D3P1 còn là người bạn đồng hành lý tưởng cho các chuyến đi. Với thiết kế nhỏ gọn nhưng lại chứa đựng đầy đủ các ngăn tiện lợi, túi giúp bạn sắp xếp ngăn nắp từ laptop, tài liệu đến các phụ kiện nhỏ như sạc, bút viết, tai nghe,.. Sự đa năng và tiện lợi của chiếc. túi chống sốc. này không chỉ giúp bạn quản lý tốt hơn các vật dụng cá nhân mà còn tăng tính linh hoạt khi di chuyển. Dù bạn đi làm, gặp gỡ đối tác hay du lịch ngắn ngày, Tomtoc Briefcase Premium A11D3P1 luôn là lựa chọn đáng tin cậy. Tóm lại, túi chống sốc Laptop 14 inch Tomtoc Briefcase Premium A11D3P1 không chỉ là một chiếc túi bảo vệ laptop mà còn là phụ kiện thời trang giúp bạn tự tin trong mọi hoàn cảnh. Từ thiết kế thời trang, khả năng bảo vệ tối ưu, cho đến sự tiện dụng trong việc sắp xếp đồ đạc, Tomtoc đã tạo ra một sản phẩm tuyệt vời dành cho những người yêu thích ",
+        "price": 1241000,
+        "price_str": "1.241.000₫",
+        "img_thumb": "tui-xach-chong-soc-laptop-14-inch-tomtoc-briefcase-premium-a11d3p1_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-briefcase-premium-a11d3p1_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-briefcase-premium-a11d3p1_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-briefcase-premium-a11d3p1_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 1241000,
+                "price_str": "1.241.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "336523",
+        "name": "Balo Laptop 16 inch Tomtoc Flap TA1",
+        "base_id": "336523",
+        "category": "tui-soc",
+        "description": "Balo Laptop 16 inch Tomtoc Flap. là sự kết hợp tinh tế giữa thiết kế hiện đại và tính năng bảo vệ vượt trội, mang đến giải pháp lý tưởng cho những ai thường xuyên di chuyển cùng laptop. Với kiểu dáng tối giản nhưng không kém phần thời trang, chiếc balo này dễ dàng phù hợp với nhiều phong cách khác nhau. Dung tích rộng rãi – Thiết kế tối ưu cho sự ngăn nắp. Balo Laptop 16 inch. này là sự lựa chọn tuyệt vời dành cho những ai cần không gian lưu trữ linh hoạt mà vẫn muốn giữ cho mọi thứ ngăn nắp, gọn gàng. Với thiết kế dạng flap đặc trưng, chiếc balo này sở hữu nhiều ngăn chứa thông minh, cho phép bạn sắp xếp các vật dụng cá nhân một cách khoa học và dễ tiếp cận. Bên ngoài balo được bố trí nhiều ngăn phụ tiện lợi, cho phép bạn dễ dàng sắp xếp và truy cập các vật dụng cần thiết trong quá trình di chuyển. Các ngăn được thiết kế đa dạng về vị trí và hình thức đóng mở, giúp tối ưu hóa khả năng sử dụng trong nhiều tình huống khác nhau. Bảo vệ thiết bị điện tử tối ưu – Đồng hành an toàn trong mọi hành trình. Một trong những yếu tố làm nên tên tuổi của. balo Tomtoc. chính là khả năng bảo vệ vượt trội dành cho laptop và thiết bị điện tử. Mẫu balo Flap 16 inch được thiết kế với ngăn đựng laptop riêng biệt, có lớp lót mềm mại và đệm chống sốc toàn diện. Ngoài ra, bên trong balo còn có thêm nhiều ngăn phụ để chứa các thiết bị ngoại vi. Mọi thứ được giữ cố định, tránh va chạm và trầy xước nhờ hệ thống phân chia khoa học và lớp đệm bảo vệ toàn diện. Trải nghiệm thoải mái – Linh hoạt cho cả ngày dài. Không chỉ chú trọng đến công năng và khả năng bảo vệ, Tomtoc Flap còn được thiết kế để mang đến sự thoải mái tối đa cho người sử dụng. Phần lưng. balo. được lót đệm dày, thoáng khí, giúp giảm áp lực và hạn chế tình trạng đổ mồ hôi khi phải mang trong thời gian dài. Dây đeo vai được thiết kế bản lớn, tích hợp thêm lớp mút mềm và khóa điều chỉnh đến từ thương hiệu YKK, giúp bạn dễ dàng thay đổi độ dài sao cho phù hợp với thể trạng và tư thế mang. Điểm cộng nữa là phần dây đeo hành lý phía sau, cho phép bạn gắn balo laptop vào tay kéo vali khi đi du lịch – cực kỳ tiện lợi trong những chuyến đi xa. Balo Laptop 16 inch Tomtoc Flap là sự kết hợp hoàn hảo giữa tính năng, độ bền và phong cách. Không chỉ cung cấp không gian lưu trữ rộng rãi và thiết kế thông minh, sản phẩm còn đảm bảo an toàn tuyệt đối cho các thiết bị điện tử – vốn là người bạn đồng hành không thể thiếu của người hiện đại. Xem thêm",
+        "price": 1776000,
+        "price_str": "1.776.000₫",
+        "img_thumb": "balo-laptop-16-inch-tomtoc-flap-ta1_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-16-inch-tomtoc-flap-ta1_desc_0.jpg",
+            "balo-laptop-16-inch-tomtoc-flap-ta1_desc_1.jpg",
+            "balo-laptop-16-inch-tomtoc-flap-ta1_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 1776000,
+                "price_str": "1.776.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen - nâu",
+                "price": 1776000,
+                "price_str": "1.776.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en-nau_gal_0.jpg",
+                    "ban-tieu-chuan_en-nau_gal_1.jpg",
+                    "ban-tieu-chuan_en-nau_gal_2.jpg",
+                    "ban-tieu-chuan_en-nau_gal_3.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1776000,
+                "price_str": "1.776.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1776000,
+                "price_str": "1.776.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "vàng",
+                "price": 1776000,
+                "price_str": "1.776.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_vang_gal_0.jpg",
+                    "ban-tieu-chuan_vang_gal_1.jpg",
+                    "ban-tieu-chuan_vang_gal_2.jpg",
+                    "ban-tieu-chuan_vang_gal_3.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "338733",
+        "name": "Balo Laptop 15.6 inch Targus TBB63602GL",
+        "base_id": "338733",
+        "category": "tui-soc",
+        "description": "Balo Laptop 15.6 inch Targus TBB63602GL. là lựa chọn lý tưởng cho những ai tìm kiếm sự kết hợp giữa thiết kế hiện đại và tinh thần bền vững. Được chế tác từ chai nhựa tái chế, sản phẩm không chỉ mang đến độ bền cao, khả năng bảo vệ laptop vượt trội mà còn thể hiện ý thức bảo vệ môi trường, hướng đến phong cách sống xanh và tinh tế của người dùng hiện đại. Thiết kế tinh giản, ứng dụng linh hoạt trong cuộc sống. Balo Targus. mang phong cách thiết kế tối giản, hiện đại với đường nét mềm mại và phối màu trung tính, phù hợp với mọi hoàn cảnh sử dụng. Balo có kết cấu gọn gàng nhưng vẫn đảm bảo không gian lưu trữ rộng rãi cho laptop, tài liệu và các vật dụng cá nhân. Logo Targus nhỏ gọn được bố trí tinh tế ở mặt trước tạo điểm nhấn sang trọng. Phần ngăn chính mở rộng cùng các ngăn phụ tiện lợi giúp sắp xếp đồ dùng một cách khoa học, dễ dàng lấy ra khi cần. Dáng balo đứng vững, form cứng cáp giúp duy trì hình dạng đẹp dù để nhiều vật dụng bên trong. Chất liệu tái chế thân thiện – Bền đẹp theo thời gian. Một trong những điểm nổi bật nhất của Targus TBB63602GL chính là chất liệu được làm từ chai nhựa tái chế. Thông qua quy trình tái chế hiện đại, các chai nhựa phế thải được xử lý, tạo thành sợi vải bền chắc, nhẹ và chống thấm hiệu quả. Điều này không chỉ giúp giảm thiểu rác thải nhựa mà còn giảm lượng khí thải carbon trong quá trình sản xuất. Dù sử dụng vật liệu tái chế,. balo. vẫn đảm bảo độ bền vượt trội, không phai màu, không dễ bám bẩn, thích hợp cho điều kiện di chuyển hằng ngày. Đây là minh chứng cho sự kết hợp giữa công nghệ sản xuất tiên tiến và cam kết bảo vệ môi trường của Targus. Bảo vệ laptop tối đa, thoải mái khi sử dụng. Balo 15.6 inch. được trang bị ngăn đệm chống sốc riêng biệt, vừa vặn với laptop 15.6 inch, đảm bảo an toàn cho thiết bị trong mọi hành trình. Quai đeo và lưng balo có lớp đệm êm ái, thoáng khí, giảm áp lực khi mang lâu. Hai ngăn lưới bên hông giúp người dùng dễ dàng mang theo bình nước hoặc ô nhỏ, tăng thêm sự tiện lợi. Từng chi tiết của balo đều được hoàn thiện tỉ mỉ, mang lại cảm giác sử dụng nhẹ nhàng, thoải mái mà vẫn đảm bảo tính bền bỉ trong thời gian dài. Balo Laptop 15.6 inch Targus TBB63602GL không chỉ là vật dụng mang tính tiện ích mà còn là biểu tượng cho lối sống xanh và hiện đại. Với thiết kế thanh lịch, chất liệu bền vững và khả năng bảo vệ toàn diện, đây chính là người bạn đồng hành đáng tin cậy cho công việc, học tập và cuộc sống hằng ngày. Xem thêm",
+        "price": 550000,
+        "price_str": "550.000₫",
+        "img_thumb": "balo-laptop-156-inch-targus-tbb63602gl_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-156-inch-targus-tbb63602gl_desc_0.jpg",
+            "balo-laptop-156-inch-targus-tbb63602gl_desc_1.jpg",
+            "balo-laptop-156-inch-targus-tbb63602gl_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 550000,
+                "price_str": "550.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "336524",
+        "name": "Túi xách chống sốc Laptop 17 inch Tomtoc A42G1D1",
+        "base_id": "336524",
+        "category": "tui-soc",
+        "description": "Khi công việc và học tập ngày càng gắn liền với chiếc laptop, việc bảo vệ thiết bị khỏi va đập và trầy xước trở nên quan trọng hơn bao giờ hết. Túi xách chống sốc Laptop 17 inch Tomtoc A42G1D1. chính là người bạn đồng hành lý tưởng cho những ai thường xuyên di chuyển và cần sự an tâm tuyệt đối cho chiếc máy tính của mình. Bảo vệ tối ưu với công nghệ CornerArmor. Túi xách, túi đeo. này là giải pháp lý tưởng để bảo vệ thiết bị điện tử giá trị của bạn khi di chuyển. Điểm nổi bật hàng đầu của sản phẩm chính là công nghệ CornerArmor độc quyền được trang bị ở cả bốn góc túi. Đây là công nghệ đã được kiểm nghiệm theo tiêu chuẩn thử nghiệm rơi của quân đội Mỹ, giúp bảo vệ laptop khỏi những cú va đập mạnh ở các góc. Kết hợp với lớp đệm mật độ cao và các cạnh đàn hồi, chiếc túi mang đến khả năng hấp thụ lực vượt trội, giảm thiểu rủi ro trầy xước hay nứt vỡ máy trong quá trình sử dụng hàng ngày. Thiết kế thông minh, không gian lưu trữ tối ưu. Không chỉ dừng lại ở khả năng bảo vệ, Tomtoc A42G1D1 còn nổi bật với hệ thống lưu trữ được thiết kế thông minh, giúp phân chia ngăn tiện lợi và khoa học. Túi sở hữu ba ngăn chính cùng nhiều ngăn phụ bên trong, hỗ trợ người dùng sắp xếp các phụ kiện một cách gọn gàng và dễ dàng truy cập. Đặc biệt, một ngăn ẩn phía sau được bố trí kín đáo để chứa các vật dụng cá nhân như ví, hộ chiếu hoặc điện thoại – vừa tiện lợi, vừa tăng tính bảo mật khi bạn cần di chuyển nơi đông người. Ngoài ra, túi còn được tích hợp dây đeo tiện lợi dành cho AirTag hoặc móc chìa khóa, hỗ trợ bạn trong việc quản lý đồ dùng cá nhân một cách hiệu quả hơn bao giờ hết. Chất liệu bền bỉ, chống nước và thân thiện môi trường. Túi xách Tomtoc. này sử dụng chất liệu vải cao cấp có khả năng chống thấm nước, giúp bảo vệ thiết bị khỏi những cơn mưa bất chợt hay tai nạn đổ nước. Lớp vỏ ngoài không chỉ bền mà còn dễ lau chùi, giữ được vẻ ngoài sạch sẽ và chuyên nghiệp trong thời gian dài sử dụng. Bên trong, sản phẩm được lót bằng lớp vải nhung mềm mịn, kết hợp cùng lớp đệm bảo vệ giúp hạn chế tối đa trầy xước bề mặt laptop và các thiết bị điện tử khác. Điều đặc biệt hơn, toàn bộ vải được làm từ vật liệu tái chế thân thiện với môi trường, thể hiện cam kết của Tomtoc trong việc hướng đến lối sống xanh và bền vững. Sự thoải mái và linh hoạt trong từng chi tiết. Túi xách chống sốc. này không chỉ đẹp và chắc chắn, mà còn chú trọng đến trải nghiệm sử dụng thực tế. Quai cầm bằng da PU mềm mại, kết hợp với dây đeo vai có thể tháo rời và miếng đệm vai êm ái, giúp bạn linh hoạt thay đổi cách đeo tùy theo tình huống. Từng chi tiết nhỏ như khóa kéo YKK cao cấp, các điểm chịu lực được gia cố chắc chắn, cho đến thiết kế tổng thể gọn gàng và tinh tế đều góp phần tạo nên một sản phẩm chất lượng cao. Sản phẩm thực sự phù hợp với cả môi trường làm việc chuyên nghiệp lẫn phong cách cá nhân năng động. Nếu bạn đang tìm kiếm một chiếc túi xách không chỉ bảo vệ laptop tối ưu mà còn đáp ứng đầy đủ nhu cầu về thời trang, tiện dụng và bền bỉ, thì Tomtoc A42G1D1 chính là lựa chọn đáng cân ",
+        "price": 1181000,
+        "price_str": "1.181.000₫",
+        "img_thumb": "tui-xach-chong-soc-laptop-17-inch-tomtoc-a42g1d1_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-17-inch-tomtoc-a42g1d1_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-17-inch-tomtoc-a42g1d1_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-17-inch-tomtoc-a42g1d1_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 1181000,
+                "price_str": "1.181.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "328316",
+        "name": "Túi xách chống sốc laptop 16 inch UniQ Stockholm Proctective Nylon",
+        "base_id": "328316",
+        "category": "tui-soc",
+        "description": "Túi xách chống sốc Laptop 16 inch UniQ Stockholm Protective Nylon. không chỉ mang lại sự bảo vệ tuyệt đối cho chiếc laptop của bạn mà còn mang đến phong cách thời trang hiện đại, thanh lịch. Chất liệu cao cấp. Túi chống sốc UniQ. được làm từ chất liệu vải nylon chống thấm nước cao cấp, một sự lựa chọn hoàn hảo để bảo vệ laptop của bạn trong mọi điều kiện thời tiết. Vải nylon không chỉ có khả năng chống thấm nước vượt trội mà còn có độ bền cao, giúp túi luôn giữ được vẻ ngoài mới mẻ và sang trọng theo thời gian. Với thiết kế đơn giản nhưng tinh tế, chiếc túi này mang đến cho bạn phong cách lịch lãm, chuyên nghiệp. Bạn có thể tự tin mang theo laptop của mình đến bất cứ đâu, từ các cuộc họp quan trọng đến những buổi cà phê thư giãn, mà không lo lắng về việc laptop của bạn bị ướt hay hư hỏng khi trời mưa. UniQ Stockholm được trang bị lớp lót chống sốc chất lượng cao, đảm bảo rằng laptop của bạn sẽ luôn an toàn trước những tác động từ bên ngoài. Lớp lót bên trong của túi được làm từ chất liệu mềm mịn kết hợp với đệm dày ở ngăn chính, giúp bảo vệ laptop của bạn khỏi những va đập hay trầy xước trong quá trình di chuyển. Khóa kéo hợp kim kẽm bền bỉ. Để đảm bảo sự an toàn và tiện dụng cho người dùng, túi chống sốc UniQ này sử dụng khóa kéo từ hợp kim kẽm cao cấp. Khóa kéo này không chỉ mang lại vẻ ngoài tinh tế mà còn có độ bền vượt trội, đảm bảo tuổi thọ sử dụng lâu dài mà không bị hỏng hóc. Phần đầu trượt của khóa kéo được thiết kế linh hoạt, giúp người dùng dễ dàng mở và đóng túi mà không gặp phải sự cố kẹt hay khó khăn, mang đến trải nghiệm sử dụng tốt hơn, đặc biệt trong những tình huống cần thao tác nhanh chóng. Một ưu điểm nổi bật của túi chống sốc UniQ Stockholm chính là thiết kế dây đeo vai có thể điều chỉnh linh hoạt theo chiều cao và nhu cầu sử dụng của từng người. Bạn có thể dễ dàng điều chỉnh dây đeo để có cảm giác thoải mái nhất khi mang túi. Không chỉ vậy, dây đeo vai còn có thể tháo rời khi bạn không có nhu cầu sử dụng, rất tiện lợi khi bạn muốn biến chiếc túi thành một phụ kiện gọn nhẹ hơn, cầm tay hoặc để trong cốp xe mà không vướng víu. UniQ Stockholm Protective Nylon được thiết kế với phần chuyển hành lý ở phía sau, cho phép bạn dễ dàng gắn túi vào tay cầm của vali khi di chuyển. Tính năng này giúp bạn giảm bớt gánh nặng khi mang nhiều hành lý cùng lúc, đồng thời đảm bảo an toàn cho chiếc laptop của bạn trong suốt chuyến đi. Chỉ cần một vài thao tác đơn giản, túi chống sốc UniQ Stockholm có thể biến thành một phần của vali kéo, giúp việc di chuyển trở nên nhẹ nhàng và thuận tiện hơn bao giờ hết. Đây là lựa chọn hoàn hảo cho những ai thường xuyên phải đi xa, từ những chuyến công tác ngắn hạn đến các kỳ nghỉ dài ngày. Ngăn chứa đồ rộng rãi, thoải mái. Với không gian rộng rãi,. túi xách này. có thể chứa laptop lên đến 16 inch, cùng nhiều ngăn nhỏ khác để bạn dễ dàng sắp xếp các phụ kiện như sạc, điện thoại, tài liệu hay thậm chí là một quyển sách yêu thích. Bố cục bên trong của túi chống sốc laptop 16 inch được sắp xếp hợp lý, giúp bạn ti",
+        "price": 1216000152000020,
+        "price_str": "1.216.000₫1.520.000₫-20%",
+        "img_thumb": "tui-xach-chong-soc-laptop-16-inch-uniq-stockholm-proctective-nylon_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-16-inch-uniq-stockholm-proctective-nylon_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-uniq-stockholm-proctective-nylon_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-uniq-stockholm-proctective-nylon_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xanh Dương",
+                "price": 1216000152000020,
+                "price_str": "1.216.000₫1.520.000₫-20%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xanh-duong_gal_0.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_1.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_2.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_3.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_4.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_5.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_6.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_7.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_8.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_9.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_10.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_11.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_12.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_13.jpg",
+                    "ban-tieu-chuan_xanh-duong_gal_14.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1216000152000020,
+                "price_str": "1.216.000₫1.520.000₫-20%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg",
+                    "ban-tieu-chuan_en_gal_6.jpg",
+                    "ban-tieu-chuan_en_gal_7.jpg",
+                    "ban-tieu-chuan_en_gal_8.jpg",
+                    "ban-tieu-chuan_en_gal_9.jpg",
+                    "ban-tieu-chuan_en_gal_10.jpg",
+                    "ban-tieu-chuan_en_gal_11.jpg",
+                    "ban-tieu-chuan_en_gal_12.jpg",
+                    "ban-tieu-chuan_en_gal_13.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1216000152000020,
+                "price_str": "1.216.000₫1.520.000₫-20%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg",
+                    "ban-tieu-chuan_en_gal_6.jpg",
+                    "ban-tieu-chuan_en_gal_7.jpg",
+                    "ban-tieu-chuan_en_gal_8.jpg",
+                    "ban-tieu-chuan_en_gal_9.jpg",
+                    "ban-tieu-chuan_en_gal_10.jpg",
+                    "ban-tieu-chuan_en_gal_11.jpg",
+                    "ban-tieu-chuan_en_gal_12.jpg",
+                    "ban-tieu-chuan_en_gal_13.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "341734",
+        "name": "Túi xách chống sốc Laptop 16 inch Innostyle Stratus Carrying S610",
+        "base_id": "341734",
+        "category": "tui-soc",
+        "description": "Túi xách chống sốc Laptop 16 inch Innostyle Stratus Carrying S610. là sự kết hợp hoàn hảo giữa phong cách hiện đại và khả năng bảo vệ tối ưu cho thiết bị của bạn. Với thiết kế tinh tế, chất liệu cao cấp cùng đường may tỉ mỉ, sản phẩm không chỉ mang đến vẻ ngoài sang trọng, chuyên nghiệp mà còn đảm bảo an toàn tuyệt đối cho laptop trong mọi hành trình. Thiết kế tinh tế, hiện đại và tiện dụng. Túi xách chống sốc. này sở hữu phong cách thiết kế tối giản nhưng không kém phần tinh tế, phù hợp với nhiều phong cách người dùng hiện đại. Sản phẩm có ba lựa chọn màu sắc mang đến sự linh hoạt cho người dùng trong việc thể hiện cá tính riêng. Đường nét được hoàn thiện tỉ mỉ, form dáng vuông vức, tạo cảm giác chắc chắn và chuyên nghiệp. Tay cầm được bọc êm ái, giúp việc di chuyển trở nên nhẹ nhàng và thoải mái hơn, đồng thời tăng tính tiện lợi khi mang theo trong các chuyến đi học, đi làm hay công tác xa. Chất liệu cao cấp, bảo vệ toàn diện cho thiết bị. Điểm nổi bật của. túi xách chống sốc Innostyle. này chính là khả năng chống sốc vượt trội nhờ cấu trúc nhiều lớp bảo vệ. Lớp ngoài được làm từ chất liệu vải cao cấp, chống bám bụi và hạn chế thấm nước, giúp bảo vệ laptop an toàn trong điều kiện thời tiết thay đổi. Bên trong, túi được trang bị lớp đệm dày và mềm mại, giúp hấp thụ lực va đập hiệu quả, giảm thiểu tối đa nguy cơ trầy xước hay hư hại thiết bị khi di chuyển. Đường may chắc chắn, viền túi được gia cố kỹ lưỡng, tạo nên độ bền bỉ và ổn định trong suốt quá trình sử dụng lâu dài. Tiện ích sử dụng linh hoạt, ngăn chứa hợp lý. Không chỉ chú trọng về khả năng bảo vệ,. túi xách chống sốc 16 inch. này còn được thiết kế khoa học với nhiều ngăn chứa thông minh. Hệ thống khóa kéo mượt mà, chắc chắn giúp việc đóng mở nhanh chóng và an toàn. Với kiểu dáng mỏng nhẹ, bạn có thể cầm tay, đeo kèm balo hoặc bỏ vừa vặn vào vali khi di chuyển xa mà không chiếm quá nhiều diện tích. Túi xách chống sốc Laptop 16 inch Innostyle Stratus Carrying S610 là lựa chọn hoàn hảo cho những ai cần một sản phẩm bền đẹp và bảo vệ tối ưu cho thiết bị. Với thiết kế hiện đại, chất liệu cao cấp cùng tính tiện dụng cao, chiếc túi này sẽ là người bạn đồng hành tin cậy trong mọi việc. Xem thêm",
+        "price": 680000,
+        "price_str": "680.000₫",
+        "img_thumb": "tui-xach-chong-soc-laptop-16-inch-innostyle-stratus-carrying-s610_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-16-inch-innostyle-stratus-carrying-s610_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-innostyle-stratus-carrying-s610_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-innostyle-stratus-carrying-s610_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Vàng nhạt",
+                "price": 680000,
+                "price_str": "680.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_vang-nhat_gal_0.jpg",
+                    "ban-tieu-chuan_vang-nhat_gal_1.jpg",
+                    "ban-tieu-chuan_vang-nhat_gal_2.jpg",
+                    "ban-tieu-chuan_vang-nhat_gal_3.jpg",
+                    "ban-tieu-chuan_vang-nhat_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 34000068000050,
+                "price_str": "340.000₫680.000₫-50%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 34000068000050,
+                "price_str": "340.000₫680.000₫-50%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 680000,
+                "price_str": "680.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "336525",
+        "name": "Túi xách chống sốc Laptop 16 inch Tomtoc A42",
+        "base_id": "336525",
+        "category": "tui-soc",
+        "description": "Túi xách chống sốc Laptop 16 inch Tomtoc. là người bạn đồng hành lý tưởng cho nhân viên văn phòng và những ai sở hữu nhiều thiết bị công nghệ. Với thiết kế tinh tế, sức chứa ấn tượng và khả năng bảo vệ vượt trội, chiếc túi này không chỉ là phụ kiện mà còn là giải pháp tối ưu để bạn an tâm mang theo laptop và các vật dụng cá nhân mỗi ngày. Thiết kế tinh tế, chất liệu bền bỉ - \"chất\" từ cái nhìn đầu tiên. Chiếc. túi chống sốc. này không chỉ là một vật dụng bảo vệ laptop thông thường, mà còn là một phụ kiện thời trang thể hiện phong cách của bạn. Túi có 3 màu sắc đa dạng: xanh, đen và xám, dễ dàng phối hợp với nhiều loại trang phục khác nhau. Quai cầm bằng da PU mềm mại, mang lại cảm giác thoải mái khi cầm nắm. Vải polyester cao cấp không chỉ bền bỉ mà còn có khả năng chống thấm nước, bảo vệ an toàn cho các thiết bị bên trong. Lớp lót bên trong bằng vải nhung mềm mại, êm ái, giúp bảo vệ laptop khỏi trầy xước. Thoải mái đựng \"cả thế giới\" nhờ các ngăn chứa siêu tiện lợi. Điểm cộng lớn nhất của chiếc túi này chính là sức chứa và các ngăn tiện ích. Ngăn chính rộng rãi, vừa vặn cho laptop 16 inch. Bên cạnh đó, túi còn có 2 ngăn phụ kiện riêng biệt để đựng sạc, chuột, điện thoại, tai nghe và các vật dụng cá nhân khác. Đặc biệt, ngăn ẩn phía sau là nơi lý tưởng để cất giữ những vật dụng quan trọng như ví tiền, chìa khóa, thẻ xe, giúp bạn an tâm hơn khi di chuyển. Với chiếc túi này, bạn có thể mang theo mọi thứ cần thiết cho một ngày làm việc hiệu quả. \"An toàn là bạn\", công nghệ bảo vệ laptop hàng đầu. Chiếc. túi chống sốc Tomtoc. được trang bị công nghệ CornerArmor độc quyền, giúp tăng cường khả năng bảo vệ các góc của laptop - những vị trí dễ bị tổn thương nhất khi va đập. Khóa kéo YKK bền bỉ, trơn tru, đảm bảo an toàn cho các vật dụng bên trong. Vải chống thấm nước giúp bảo vệ laptop khỏi những cơn mưa bất chợt hoặc sự cố tràn nước. Với những công nghệ này, bạn có thể hoàn toàn yên tâm về sự an toàn của chiếc laptop yêu quý. Linh hoạt biến hóa, trải nghiệm mang vác thoải mái. Túi chống sốc Laptop 16 inch. Tomtoc không chỉ là một chiếc túi xách thông thường, mà còn là một người bạn đồng hành linh hoạt. Dây đeo vai có thể tháo rời và điều chỉnh độ dài, giúp bạn dễ dàng chuyển đổi giữa phong cách xách tay và đeo vai. Miếng đệm vai êm ái giúp giảm áp lực lên vai, mang lại cảm giác thoải mái khi mang vác trong thời gian dài. Nhờ vậy, chiếc túi này phù hợp với nhiều hoàn cảnh khác nhau, từ môi trường công sở chuyên nghiệp đến những chuyến công tác xa nhà. Với thiết kế đẹp mắt, chất liệu bền bỉ, sức chứa lớn, khả năng bảo vệ vượt trội và sự linh hoạt trong sử dụng, túi xách chống sốc Laptop 16 inch Tomtoc là một khoản đầu tư xứng đáng cho bất kỳ ai đang tìm kiếm một giải pháp bảo vệ laptop toàn diện. Đặc biệt, sản phẩm này rất phù hợp với nhân viên văn phòng, những người thường xuyên phải di chuyển và mang theo laptop bên mình. Nếu bạn là một người yêu thích sự tiện lợi, an toàn và phong cách, thì đừng bỏ qua chiếc túi này nhé!. Xem thêm",
+        "price": 1078000,
+        "price_str": "1.078.000₫",
+        "img_thumb": "tui-xach-chong-soc-laptop-16-inch-tomtoc-a42_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-16-inch-tomtoc-a42_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-tomtoc-a42_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-tomtoc-a42_desc_2.jpg",
+            "tui-xach-chong-soc-laptop-16-inch-tomtoc-a42_desc_3.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1078000,
+                "price_str": "1.078.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xanh",
+                "price": 1078000,
+                "price_str": "1.078.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xanh_gal_0.jpg",
+                    "ban-tieu-chuan_xanh_gal_1.jpg",
+                    "ban-tieu-chuan_xanh_gal_2.jpg",
+                    "ban-tieu-chuan_xanh_gal_3.jpg",
+                    "ban-tieu-chuan_xanh_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 1078000,
+                "price_str": "1.078.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1078000,
+                "price_str": "1.078.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "336538",
+        "name": "Balo Laptop 14 inch Tomtoc Flap TA1S1Y1",
+        "base_id": "336538",
+        "category": "tui-soc",
+        "description": "Trong nhịp sống hiện đại, một chiếc balo không chỉ để đựng đồ mà còn là người bạn đồng hành trong công việc, học tập hay du lịch. Đặc biệt với những ai thường xuyên mang theo laptop, việc lựa chọn một balo vừa tiện dụng, vừa bảo vệ thiết bị là điều không thể bỏ qua. Balo Laptop 14 inch Tomtoc Flap TA1S1Y1. nổi bật với thiết kế thông minh, không gian lưu trữ hợp lý và sự chăm chút tỉ mỉ, là lựa chọn lý tưởng cho nhu cầu sử dụng hàng ngày. Dung tích lớn nhưng vẫn gọn gàng. Một trong những điểm nổi bật đầu tiên của. balo Tomtoc. chính là dung tích chứa đồ lớn nhưng vẫn đảm bảo tổng thể gọn gàng và linh hoạt. Được phát triển từ dòng sản phẩm VintPack, chiếc balo này mang trong mình khả năng lưu trữ cực kỳ hợp lý, sẵn sàng đáp ứng đầy đủ nhu cầu của bạn. Cấu trúc ngăn chứa của. balo. được thiết kế khoa học với nhiều khu vực tiện lợi, giúp bạn dễ dàng sắp xếp và lấy các vật dụng cần thiết trong mọi tình huống. Các ngăn phụ được bố trí hợp lý, hỗ trợ việc phân loại đồ dùng một cách gọn gàng, từ vật dụng cá nhân cho đến những món đồ cần tiếp cận nhanh. Ngoài ra, thiết kế linh hoạt với các túi bên và lối mở phụ giúp tăng tính tiện ích, mang đến sự thuận tiện tối đa trong quá trình sử dụng hàng ngày hoặc khi di chuyển. An tâm trên từng bước di chuyển. Với mục tiêu bảo vệ tối ưu cho thiết bị điện tử, đặc biệt là laptop 14 inch, Tomtoc Flap TA1S1Y1 được thiết kế với phần ngăn đựng laptop có lớp đệm mềm mại, cùng những đường may tinh tế giúp giảm thiểu tối đa tác động từ va đập, rung lắc hoặc sốc khi di chuyển. Điều này giúp bạn hoàn toàn yên tâm khi mang theo laptop, máy tính bảng hay các thiết bị công nghệ khác bên mình. Ngăn chứa thiết bị không chỉ đảm bảo về độ an toàn mà còn được sắp xếp khoa học để người dùng dễ dàng sắp xếp các loại phụ kiện như sạc, cáp, chuột, sổ tay… một cách ngăn nắp và trật tự. Sự gọn gàng trong thiết kế của. balo laptop 14 inch. này không chỉ giúp tối ưu diện tích mà còn tạo cảm giác dễ chịu, không bị lộn xộn khi sử dụng hàng ngày. Thoải mái tối đa – Nhẹ nhàng dù mang nặng. Hiểu rõ nhu cầu di chuyển liên tục của người dùng hiện đại, Tomtoc Flap TA1S1Y1 chú trọng đến yếu tố thoải mái và nhẹ nhàng khi đeo. Mặt lưng balo được trang bị lớp đệm thoáng khí giúp giảm thiểu tình trạng nóng lưng và đổ mồ hôi, đặc biệt hữu ích trong những ngày hè oi bức hoặc khi phải mang balo trong thời gian dài. Dây đeo vai cũng là một điểm nhấn đáng giá với thiết kế đệm êm, kết hợp cùng bộ điều chỉnh dây YKK Strap Adjuster cao cấp giúp điều chỉnh độ dài linh hoạt, đồng thời hỗ trợ lực tốt, giảm áp lực lên vai khi mang đồ nặng. Ngoài ra, mặt sau balo còn được tích hợp dây đai cố định với tay cầm của vali, hỗ trợ tối đa các chuyến đi xa, giúp việc di chuyển trở nên dễ dàng hơn bao giờ hết. Cân bằng giữa tiện ích và phong cách. Không chỉ tập trung vào công năng, Tomtoc Flap TA1S1Y1 còn chinh phục người dùng nhờ sự tinh tế trong từng chi tiết thiết kế. Tay cầm được bố trí cả ở phía trên và bên trong nắp gập, mang lại sự tiện lợi tối đa khi cần di chuyển nha",
+        "price": 1691000,
+        "price_str": "1.691.000₫",
+        "img_thumb": "balo-laptop-14-inch-tomtoc-flap-ta1s1y1_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-14-inch-tomtoc-flap-ta1s1y1_desc_0.jpg",
+            "balo-laptop-14-inch-tomtoc-flap-ta1s1y1_desc_1.jpg",
+            "balo-laptop-14-inch-tomtoc-flap-ta1s1y1_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 1691000,
+                "price_str": "1.691.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "341701",
+        "name": "Túi đeo chéo chống sốc Laptop 16 inch Tomtoc Protection Premium A03",
+        "base_id": "341701",
+        "category": "tui-soc",
+        "description": "Túi đeo chéo chống sốc Laptop 16 inch Tomtoc Protection Premium A03. mang đến phong cách hiện đại cùng khả năng bảo vệ đáng tin cậy. Thiết kế tinh tế kết hợp lớp đệm chống sốc dày giúp laptop luôn an toàn. Chất liệu cao cấp cùng đường may chắc chắn thể hiện sự tỉ mỉ trong từng chi tiết. Thiết kế tinh tế, mang đậm phong cách hiện đại. Túi đeo chéo Tomtoc. gây ấn tượng với thiết kế gọn gàng, hiện đại, phù hợp với người dùng yêu thích phong cách tối giản. Đường nét vuông vức kết hợp tông màu sang trọng giúp sản phẩm dễ dàng hòa hợp trong mọi hoàn cảnh, từ công việc đến cuộc sống thường ngày. Chất liệu vải polyester cao cấp mang đến cảm giác mềm mại khi cầm nắm, đồng thời giữ được hình dáng túi luôn ổn định và đẹp mắt. Mỗi chi tiết như khóa kéo, dây đeo, đường may đều được hoàn thiện tỉ mỉ, thể hiện tinh thần chỉn chu trong thiết kế của Tomtoc. Bảo vệ laptop an toàn với lớp đệm chống sốc dày dặn. Tomtoc trang bị cho túi đeo chéo này hệ thống đệm bảo vệ dày và êm, được bố trí quanh thân túi để giảm thiểu tối đa tác động từ bên ngoài. Khoang chính được thiết kế vừa khít, giúp laptop cố định chắc chắn trong quá trình di chuyển. Nhờ lớp lót mềm mại bên trong, các cạnh và góc máy luôn được bảo vệ cẩn thận, hạn chế trầy xước và va đập. Bên ngoài, lớp vải polyester dày dặn giúp giữ cấu trúc túi ổn định, duy trì vẻ ngoài bền đẹp dù sử dụng trong thời gian dài. Ngăn chứa thông minh, bố trí hợp lý cho nhiều phụ kiện. Không chỉ là nơi cất giữ laptop,. túi đeo chéo 16 inch. còn mang đến trải nghiệm sử dụng tiện lợi nhờ thiết kế nhiều ngăn chứa nhỏ gọn và hợp lý. Phần khoang trước được chia thành các ngăn riêng biệt giúp bạn dễ dàng sắp xếp phụ kiện. Các ngăn lót mềm của. túi đeo chéo. giúp bảo vệ đồ dùng tránh trầy xước, đồng thời giữ cho không gian bên trong luôn gọn gàng. Thiết kế này đặc biệt phù hợp cho những ai yêu thích sự ngăn nắp, khoa học trong sinh hoạt hằng ngày. Túi đeo chéo chống sốc Laptop 16 inch Tomtoc Protection Premium A03 là lựa chọn hoàn hảo cho người dùng hiện đại yêu thích sự tinh tế và tiện dụng. Với thiết kế tỉ mỉ, chất liệu polyester bền bỉ cùng khả năng bảo vệ tối ưu, sản phẩm mang đến trải nghiệm sử dụng thoải mái, an toàn. Xem thêm",
+        "price": 1269000,
+        "price_str": "1.269.000₫",
+        "img_thumb": "tui-eo-cheo-chong-soc-laptop-16-inch-tomtoc-protection-premium-a03_thumb.jpg",
+        "local_desc_images": [
+            "tui-eo-cheo-chong-soc-laptop-16-inch-tomtoc-protection-premium-a03_desc_0.jpg",
+            "tui-eo-cheo-chong-soc-laptop-16-inch-tomtoc-protection-premium-a03_desc_1.jpg",
+            "tui-eo-cheo-chong-soc-laptop-16-inch-tomtoc-protection-premium-a03_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 1269000,
+                "price_str": "1.269.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg",
+                    "ban-tieu-chuan_en_gal_6.jpg",
+                    "ban-tieu-chuan_en_gal_7.jpg",
+                    "ban-tieu-chuan_en_gal_8.jpg",
+                    "ban-tieu-chuan_en_gal_9.jpg",
+                    "ban-tieu-chuan_en_gal_10.jpg",
+                    "ban-tieu-chuan_en_gal_11.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 1269000,
+                "price_str": "1.269.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg",
+                    "ban-tieu-chuan_xam_gal_5.jpg",
+                    "ban-tieu-chuan_xam_gal_6.jpg",
+                    "ban-tieu-chuan_xam_gal_7.jpg",
+                    "ban-tieu-chuan_xam_gal_8.jpg",
+                    "ban-tieu-chuan_xam_gal_9.jpg",
+                    "ban-tieu-chuan_xam_gal_10.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 1269000,
+                "price_str": "1.269.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg",
+                    "ban-tieu-chuan_xam_gal_5.jpg",
+                    "ban-tieu-chuan_xam_gal_6.jpg",
+                    "ban-tieu-chuan_xam_gal_7.jpg",
+                    "ban-tieu-chuan_xam_gal_8.jpg",
+                    "ban-tieu-chuan_xam_gal_9.jpg",
+                    "ban-tieu-chuan_xam_gal_10.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "328397",
+        "name": "Balo Laptop 15.6 inch Targus Urban Essentials TBB594GL",
+        "base_id": "328397",
+        "category": "tui-soc",
+        "description": "Balo Laptop 15.6 inch Targus Urban Essentials TBB594GL. là một sản phẩm hoàn hảo cho những ai đang tìm kiếm một chiếc balo không chỉ bền bỉ, bảo vệ tốt thiết bị mà còn có kiểu dáng hiện đại, phong cách. Với thiết kế mỏng nhẹ, chất liệu cao cấp và hệ thống ngăn chứa thông minh, chiếc balo này đáp ứng đầy đủ các yêu cầu của người dùng hiện đại. Thiết kế mỏng nhẹ, phong cách hiện đại. Balo Laptop Targus. được thiết kế với kiểu dáng mỏng nhẹ, chỉ nặng 0.57 kg, mang lại sự thoải mái và dễ chịu khi mang theo suốt cả ngày. Với kích thước 31 x 15 x 43.5 cm, sản phẩm này vừa đủ để bạn có thể bảo quản laptop, máy tính bảng và các vật dụng cá nhân mà vẫn gọn gàng, không cồng kềnh. Thiết kế tối giản cùng các đường nét gọn gàng, chiếc balo mang đậm hơi thở hiện đại, phù hợp với nhiều phong cách từ công sở đến dạo phố. Điểm nhấn về thiết kế của chiếc balo này nằm ở phần dây đeo vai có đường viền và mặt sau được trang bị đệm êm ái, mang lại cảm giác thoải mái dù phải mang trong thời gian dài. Thiết kế này không chỉ tạo sự êm ái cho vai và lưng mà còn giúp balo giữ được form dáng tốt ngay cả khi đựng nhiều vật dụng. Ngoài ra, sản phẩm còn tích hợp dây đeo xe đẩy, tiện lợi cho những chuyến công tác hoặc du lịch. Chất liệu cao cấp, bền bỉ. Balo Targus Urban Essentials được làm từ chất liệu nylon cao cấp, có khả năng chống thấm nước, chống phai màu và độ bền cao. Balo giúp bạn bảo vệ các đồ vật bên trong, đặc biệt là laptop và các thiết bị điện tử khác, an toàn trước các yếu tố thời tiết như mưa hay bụi bẩn. Chất liệu nylon này không chỉ bền mà còn dễ dàng vệ sinh, giữ cho balo luôn sạch sẽ và mới mẻ sau thời gian dài sử dụng. Bên trong balo được thiết kế mềm mịn, êm ái, giúp chống trầy xước cho laptop cũng như các thiết bị khác. Đây là một điểm cộng lớn, đặc biệt đối với những ai thường xuyên mang theo laptop khi di chuyển. Ngăn chứa thông minh, tiện ích tối đa. Balo. gồm một ngăn chính rộng rãi dành cho laptop và tài liệu, cùng với ngăn phụ có khóa kéo chắc chắn để bạn có thể sắp xếp các phụ kiện như điện thoại, sạc, chuột máy tính, tai nghe,.. một cách gọn gàng. Ngăn đựng laptop của balo có khả năng chứa được các loại máy tính xách tay có kích thước lên đến 15.6 inch. Điểm đặc biệt là ngăn đựng này được trang bị lớp đệm chống sốc mềm mại, bảo vệ laptop khỏi những va đập ngoài ý muốn trong quá trình di chuyển. Ngoài ra, balo còn có các ngăn phụ tiện lợi để đựng các vật dụng cá nhân như chìa khóa, thẻ xe, bút viết,.. Ở hai bên balo, bạn sẽ tìm thấy ngăn đựng chai nước, mang lại sự tiện dụng khi di chuyển. Ngăn túi này đặc biệt hữu ích khi bạn đi làm, đi học hoặc đi du lịch mà không cần lo lắng về việc cất giữ chai nước hay đồ uống của mình. Dù bạn là sinh viên, nhân viên văn phòng hay người thường xuyên di chuyển, Balo Targus Urban Essentials sẽ là người bạn đồng hành lý tưởng, mang đến sự tiện lợi và thoải mái trong suốt hành trình của bạn. Với sự kết hợp giữa tính năng và thời trang, sản phẩm này chắc chắn sẽ làm hài lòng cả những người dùng khó tính nhất. Xem t",
+        "price": 580000,
+        "price_str": "580.000₫",
+        "img_thumb": "balo-laptop-156-inch-targus-urban-essentials-tbb594gl_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-156-inch-targus-urban-essentials-tbb594gl_desc_0.jpg",
+            "balo-laptop-156-inch-targus-urban-essentials-tbb594gl_desc_1.jpg",
+            "balo-laptop-156-inch-targus-urban-essentials-tbb594gl_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 580000,
+                "price_str": "580.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg",
+                    "ban-tieu-chuan_en_gal_6.jpg",
+                    "ban-tieu-chuan_en_gal_7.jpg",
+                    "ban-tieu-chuan_en_gal_8.jpg",
+                    "ban-tieu-chuan_en_gal_9.jpg",
+                    "ban-tieu-chuan_en_gal_10.jpg",
+                    "ban-tieu-chuan_en_gal_11.jpg",
+                    "ban-tieu-chuan_en_gal_12.jpg",
+                    "ban-tieu-chuan_en_gal_13.jpg",
+                    "ban-tieu-chuan_en_gal_14.jpg",
+                    "ban-tieu-chuan_en_gal_15.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Đen",
+                "price": 580000,
+                "price_str": "580.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_en_gal_0.jpg",
+                    "ban-tieu-chuan_en_gal_1.jpg",
+                    "ban-tieu-chuan_en_gal_2.jpg",
+                    "ban-tieu-chuan_en_gal_3.jpg",
+                    "ban-tieu-chuan_en_gal_4.jpg",
+                    "ban-tieu-chuan_en_gal_5.jpg",
+                    "ban-tieu-chuan_en_gal_6.jpg",
+                    "ban-tieu-chuan_en_gal_7.jpg",
+                    "ban-tieu-chuan_en_gal_8.jpg",
+                    "ban-tieu-chuan_en_gal_9.jpg",
+                    "ban-tieu-chuan_en_gal_10.jpg",
+                    "ban-tieu-chuan_en_gal_11.jpg",
+                    "ban-tieu-chuan_en_gal_12.jpg",
+                    "ban-tieu-chuan_en_gal_13.jpg",
+                    "ban-tieu-chuan_en_gal_14.jpg",
+                    "ban-tieu-chuan_en_gal_15.jpg"
+                ]
+            },
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "Xám",
+                "price": 580000,
+                "price_str": "580.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_xam_gal_0.jpg",
+                    "ban-tieu-chuan_xam_gal_1.jpg",
+                    "ban-tieu-chuan_xam_gal_2.jpg",
+                    "ban-tieu-chuan_xam_gal_3.jpg",
+                    "ban-tieu-chuan_xam_gal_4.jpg",
+                    "ban-tieu-chuan_xam_gal_5.jpg",
+                    "ban-tieu-chuan_xam_gal_6.jpg",
+                    "ban-tieu-chuan_xam_gal_7.jpg",
+                    "ban-tieu-chuan_xam_gal_8.jpg",
+                    "ban-tieu-chuan_xam_gal_9.jpg",
+                    "ban-tieu-chuan_xam_gal_10.jpg",
+                    "ban-tieu-chuan_xam_gal_11.jpg",
+                    "ban-tieu-chuan_xam_gal_12.jpg",
+                    "ban-tieu-chuan_xam_gal_13.jpg",
+                    "ban-tieu-chuan_xam_gal_14.jpg",
+                    "ban-tieu-chuan_xam_gal_15.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "327937",
+        "name": "Túi xách chống sốc Laptop 14 inch Tomtoc A12D3Y1",
+        "base_id": "327937",
+        "category": "tui-soc",
+        "description": "Túi chống sốc Laptop 14 inch Tomtoc A12D3Y1. là sự kết hợp hoàn hảo giữa tiện lợi, thiết kế thời trang và khả năng lưu trữ vượt trội, mang đến cho bạn một giải pháp toàn diện cho việc bảo vệ và mang theo máy tính xách tay. Thiết kế tiện lợi. Một trong những điểm nổi bật của túi là dây đeo vai tiện lợi. Với thiết kế nhẹ nhàng, tay cầm và dây đeo vai được làm từ chất liệu da PU cao cấp, mềm mại, túi Tomtoc A12D3Y1 giúp bạn dễ dàng mang theo khi đi làm hoặc công tác mà không gây cảm giác mệt mỏi hay khó chịu. Túi Tomtoc A12D3Y1 không chỉ dừng lại ở tính năng bảo vệ mà còn là một túi xách đa năng. Với thiết kế thời trang, túi giúp bạn luôn nổi bật trong đám đông. Nó cung cấp không gian rộng rãi để mang theo tất cả các vật dụng cần thiết hàng ngày, và hệ thống tổ chức bên trong cực kỳ chức năng. Lưu trữ nhiều hơn món đồ phụ kiện. Khả năng lưu trữ của. túi chống sốc Tomtoc. này thật sự ấn tượng. Với bố cục đặc biệt và hệ thống tổ chức siêu chức năng, túi có bốn ngăn lớn. Ngăn trước được trang bị các túi nhỏ có lót, lý tưởng để chứa các phụ kiện công nghệ hoặc vật dụng cá nhân. Ở giữa túi, một túi từ tính tiện ích cho phép thao tác nhanh chóng, rất tiện lợi để cất giữ bàn phím không dây và các vật dụng tương tự. Ngăn chính của. túi chống sốc 14 inch. có thể chứa máy tính xách tay lên đến 14 inch, đảm bảo an toàn và bảo vệ tối đa cho thiết bị của bạn. Bên cạnh đó, túi còn có một ngăn từ tính phía sau, lý tưởng để cất giữ điện thoại, tài liệu hoặc các vật có giá trị khác. Màu vàng thời thượng. Màu vàng trên túi chống sốc Laptop 14 inch Tomtoc A12D3Y1 tạo nên một điểm nhấn đặc biệt và thu hút ánh nhìn. Đây là một màu sắc tươi sáng, rực rỡ, không chỉ mang lại cảm giác vui tươi, năng động mà còn thể hiện sự tự tin và phong cách cá nhân của người sử dụng. Màu vàng thường được liên tưởng đến sự ấm áp, sự sáng tạo và lạc quan, làm cho túi Tomtoc A12D3Y1 trở nên nổi bật giữa đám đông. Chi tiết màu vàng trên. túi chống sốc. không chỉ là một yếu tố thẩm mỹ mà còn đóng vai trò quan trọng trong việc tạo nên sự khác biệt so với các sản phẩm cùng loại. Những đường viền, dây kéo hoặc các chi tiết trang trí màu vàng được thiết kế tinh tế, hài hòa với tổng thể túi, tạo nên sự cân đối và sự hài hòa về màu sắc. Với tất cả các tính năng trên, túi chống sốc Laptop 14 inch Tomtoc A12D3Y1 không chỉ là một sản phẩm bảo vệ máy tính xách tay mà còn là một phụ kiện thời trang và tiện ích hàng ngày, đáp ứng mọi nhu cầu của bạn hiện tại. Xem thêm",
+        "price": 1342000,
+        "price_str": "1.342.000₫",
+        "img_thumb": "tui-xach-chong-soc-laptop-14-inch-tomtoc-a12d3y1_thumb.jpg",
+        "local_desc_images": [
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-a12d3y1_desc_0.jpg",
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-a12d3y1_desc_1.jpg",
+            "tui-xach-chong-soc-laptop-14-inch-tomtoc-a12d3y1_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 1342000,
+                "price_str": "1.342.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_5.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_6.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_7.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_8.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_9.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_10.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_11.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_12.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_13.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_14.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "327791",
+        "name": "Balo Laptop 15.6 inch HP Travel 25 Liter 15.6 Iron 6B8U4AA",
+        "base_id": "327791",
+        "category": "tui-soc",
+        "description": "Balo Laptop 15.6 inch HP Travel 25 Liter 15.6 Iron 6B8U4AA. không chỉ bảo vệ laptop mà còn giúp bạn mang theo mọi thứ cần thiết cho một chuyến đi ngắn ngày. Với thiết kế tối ưu không gian và trọng lượng nhẹ, chiếc balo này sẽ trở thành người bạn đồng hành đáng tin cậy, dù bạn đi làm, đi học hay thậm chí là cho một chuyến du lịch ngắn ngày. Thiết kế nhỏ gọn nhưng cực kỳ linh hoạt. Chiếc. balo. này đủ rộng rãi để bạn có thể đựng mọi vật dụng cần thiết. Balo HP Travel 25 Liter cho phép bạn linh hoạt tùy chỉnh không gian, từ những chuyến đi làm hàng ngày cho đến các kỳ nghỉ cuối tuần. Ngoài ra, thiết kế của balo mang phong cách hiện đại, thanh lịch với lớp vỏ ngoài được làm từ chất liệu nhựa tái chế 100%, góp phần bảo vệ môi trường mà vẫn đảm bảo độ bền bỉ. Bạn có thể yên tâm sử dụng chiếc balo này không chỉ vì tính năng mà còn vì những giá trị tích cực mà nó mang lại cho hành tinh của chúng ta. Thiết kế bên ngoài của balo HP Travel không chỉ hiện đại mà còn rất tinh tế. Với màu sắc tối giản, thanh lịch, balo dễ dàng phù hợp với nhiều phong cách khác nhau – từ trang phục công sở đến trang phục năng động cho những chuyến du lịch cuối tuần. Không gian lưu trữ tối ưu và tiện dụng. Với nhiều ngăn đựng đồ bên trong và bên ngoài, chiếc balo này như một \"cỗ máy sắp xếp\" hoàn hảo. Bạn có thể thoải mái sắp xếp laptop, thiết bị điện tử, quần áo, đồ ăn nhẹ, và cả những vật dụng cá nhân nhỏ khác một cách ngăn nắp, tiện lợi. Ngăn chính được thiết kế đặc biệt cho laptop có kích thước đến 15.6 inch với lớp lót mềm mại, đảm bảo bảo vệ thiết bị khỏi va đập và trầy xước. Không chỉ dành cho dân văn phòng, balo HP Travel 25 Liter còn là lựa chọn lý tưởng cho những ai yêu thích du lịch, thường xuyên di chuyển, hay đơn giản là cần một chiếc balo đa năng để mang theo laptop và các vật dụng cá nhân hàng ngày. Với khả năng chứa đựng lớn, tính năng tiện ích và sự thoải mái khi sử dụng, chiếc balo này sẽ đồng hành cùng bạn trên mọi hành trình. Balo HP. còn có các ngăn nhỏ cả bên trong và bên ngoài là một điểm cộng lớn, giúp bạn dễ dàng lấy đồ mà không cần phải mở toang cả balo để tìm kiếm. Bạn có thể để chai nước, áo khoác hay những món đồ nhỏ mà mình thường xuyên sử dụng ở những vị trí dễ thấy và dễ lấy nhất. Thoải mái khi sử dụng cả ngày dài. Một điểm đặc biệt của chiếc. balo laptop 15.6 inch. này chính là sự chú trọng vào trải nghiệm người dùng. Bạn có thể thoải mái mang balo suốt cả ngày mà không lo bị mỏi hay khó chịu nhờ hệ thống dây đeo vai và dây đeo xương ức êm ái. Dây đeo có thể điều chỉnh, phân bổ đều trọng lượng balo, giúp giảm áp lực lên vai và lưng, đặc biệt là khi bạn mang nhiều đồ. Balo cũng có phần lưng được thiết kế thoáng khí, giúp lưng bạn luôn khô ráo ngay cả trong những ngày nóng bức hoặc khi di chuyển nhiều giờ liền. Balo Laptop 15.6 inch HP Travel 25 Liter 15.6 Iron 6B8U4AA là sự kết hợp hoàn hảo giữa phong cách hiện đại, tính năng tiện lợi và khả năng chứa đựng lớn. Dù bạn đi làm, đi học hay du lịch, chiếc balo này sẽ luôn là người bạn đồng hành đáng t",
+        "price": 903000129000030,
+        "price_str": "903.000₫1.290.000₫-30%",
+        "img_thumb": "balo-laptop-156-inch-hp-travel-25-liter-156-iron-6b8u4aa_thumb.jpg",
+        "local_desc_images": [
+            "balo-laptop-156-inch-hp-travel-25-liter-156-iron-6b8u4aa_desc_0.jpg",
+            "balo-laptop-156-inch-hp-travel-25-liter-156-iron-6b8u4aa_desc_1.jpg",
+            "balo-laptop-156-inch-hp-travel-25-liter-156-iron-6b8u4aa_desc_2.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "ban-tieu-chuan",
+                "color_name": "mau-mac-dinh",
+                "price": 903000129000030,
+                "price_str": "903.000₫1.290.000₫-30%",
+                "specs": {},
+                "local_gallery": [
+                    "ban-tieu-chuan_mau-mac-dinh_gal_0.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_1.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_2.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_3.jpg",
+                    "ban-tieu-chuan_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "246129_133-inch",
+        "name": "Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 Đen 13.3 inch",
+        "base_id": "246129",
+        "category": "tui-soc",
+        "description": "Thiết kế mỏng nhẹ, tính di động cao. Kiểu dáng. túi chống sốc. tối giản, 4 góc được may bo tròn vừa ôm trọn máy, giảm khả năng bị trầy xước vừa cho tính thẩm mỹ cao. Vẻ ngoài thanh lịch với. sắc đen huyền bí,. kích thước thực tế. 36.2 x 2.2 x 26 cm,. chỉ nhẹ có. 0.24 kg. , dễ mang đi, đem lại sự tiện lợi tối ưu cho người dùng có nhu cầu làm việc thường xuyên và liên tục. Chuyên dụng cho các mẫu máy tính xách tay,. tablet. có kích thước đến 14 inch. Được sản xuất với chất liệu vải Poly, PU cao cấp, chống sốc tốt. Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 đen. có sợi vải Poly, PU chắc chắn, có khả năng chống nước hay các tác nhân gây hại từ môi trường, giữ màu đẹp, bền, dễ dàng giặt giũ, tẩy rửa tại nhà. Kết cấu khép kín với đường may tỉ mỉ kết hợp với chất liệu tốt giúp đảm bảo an toàn cho thiết bị được đặt bên trong túi. Giữ thêm nhiều đồ vật với ngăn chứa nhỏ. Với ngăn chứa này, bạn có thể mang theo. miếng lót chuột. ,. chuột máy tính. , cáp sạc, sách vở,.. Đặc biệt với. khóa kéo riêng. , khi đã đặt đồ dùng vào bên trong, bạn chỉ cần đóng lại miệng ngăn chứa, yên tâm di chuyển. túi chống sốc Targus. đến bất kỳ nơi nào mà không sợ đồ dùng bị rơi rớt, thất lạc. Túi chống sốc laptop 14 inch. này được trang bị dây khóa kéo bền chắc, dễ dùng, hạn chế gãy/vỡ khi thao tác nhiều lần. Đơn giản trong thiết kế, tin cậy về chất liệu, hấp dẫn về tiện ích và giá cả, Targus CityGear TSS931GL-80 xứng đáng đồng hành cùng chiếc máy tính xách tay hay máy tính bảng quý giá của bạn trên mọi hành trình cuộc sống. Xem thêm",
+        "price": 278000,
+        "price_str": "278.000₫",
+        "img_thumb": "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_thumb.jpg",
+        "local_desc_images": [
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_0.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_1.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_2.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_3.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_4.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "13.3 inch",
+                "color_name": "mau-mac-dinh",
+                "price": 278000,
+                "price_str": "278.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "133-inch_mau-mac-dinh_gal_0.jpg",
+                    "133-inch_mau-mac-dinh_gal_1.jpg",
+                    "133-inch_mau-mac-dinh_gal_2.jpg",
+                    "133-inch_mau-mac-dinh_gal_3.jpg",
+                    "133-inch_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "246129_156-inch",
+        "name": "Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 Đen 15.6 inch",
+        "base_id": "246129",
+        "category": "tui-soc",
+        "description": "Thiết kế mỏng nhẹ, tính di động cao. Kiểu dáng. túi chống sốc. tối giản, 4 góc được may bo tròn vừa ôm trọn máy, giảm khả năng bị trầy xước vừa cho tính thẩm mỹ cao. Vẻ ngoài thanh lịch với. sắc đen huyền bí,. kích thước thực tế. 36.2 x 2.2 x 26 cm,. chỉ nhẹ có. 0.24 kg. , dễ mang đi, đem lại sự tiện lợi tối ưu cho người dùng có nhu cầu làm việc thường xuyên và liên tục. Chuyên dụng cho các mẫu máy tính xách tay,. tablet. có kích thước đến 14 inch. Được sản xuất với chất liệu vải Poly, PU cao cấp, chống sốc tốt. Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 đen. có sợi vải Poly, PU chắc chắn, có khả năng chống nước hay các tác nhân gây hại từ môi trường, giữ màu đẹp, bền, dễ dàng giặt giũ, tẩy rửa tại nhà. Kết cấu khép kín với đường may tỉ mỉ kết hợp với chất liệu tốt giúp đảm bảo an toàn cho thiết bị được đặt bên trong túi. Giữ thêm nhiều đồ vật với ngăn chứa nhỏ. Với ngăn chứa này, bạn có thể mang theo. miếng lót chuột. ,. chuột máy tính. , cáp sạc, sách vở,.. Đặc biệt với. khóa kéo riêng. , khi đã đặt đồ dùng vào bên trong, bạn chỉ cần đóng lại miệng ngăn chứa, yên tâm di chuyển. túi chống sốc Targus. đến bất kỳ nơi nào mà không sợ đồ dùng bị rơi rớt, thất lạc. Túi chống sốc laptop 14 inch. này được trang bị dây khóa kéo bền chắc, dễ dùng, hạn chế gãy/vỡ khi thao tác nhiều lần. Đơn giản trong thiết kế, tin cậy về chất liệu, hấp dẫn về tiện ích và giá cả, Targus CityGear TSS931GL-80 xứng đáng đồng hành cùng chiếc máy tính xách tay hay máy tính bảng quý giá của bạn trên mọi hành trình cuộc sống. Xem thêm",
+        "price": 302000,
+        "price_str": "302.000₫",
+        "img_thumb": "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_thumb.jpg",
+        "local_desc_images": [
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_0.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_1.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_2.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_3.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_4.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "15.6 inch",
+                "color_name": "mau-mac-dinh",
+                "price": 302000,
+                "price_str": "302.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "156-inch_mau-mac-dinh_gal_0.jpg",
+                    "156-inch_mau-mac-dinh_gal_1.jpg",
+                    "156-inch_mau-mac-dinh_gal_2.jpg",
+                    "156-inch_mau-mac-dinh_gal_3.jpg",
+                    "156-inch_mau-mac-dinh_gal_4.jpg"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "246129_14-inch",
+        "name": "Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 Đen 14 inch",
+        "base_id": "246129",
+        "category": "tui-soc",
+        "description": "Thiết kế mỏng nhẹ, tính di động cao. Kiểu dáng. túi chống sốc. tối giản, 4 góc được may bo tròn vừa ôm trọn máy, giảm khả năng bị trầy xước vừa cho tính thẩm mỹ cao. Vẻ ngoài thanh lịch với. sắc đen huyền bí,. kích thước thực tế. 36.2 x 2.2 x 26 cm,. chỉ nhẹ có. 0.24 kg. , dễ mang đi, đem lại sự tiện lợi tối ưu cho người dùng có nhu cầu làm việc thường xuyên và liên tục. Chuyên dụng cho các mẫu máy tính xách tay,. tablet. có kích thước đến 14 inch. Được sản xuất với chất liệu vải Poly, PU cao cấp, chống sốc tốt. Túi chống sốc Laptop 14 inch Targus CityGear TSS931GL-80 đen. có sợi vải Poly, PU chắc chắn, có khả năng chống nước hay các tác nhân gây hại từ môi trường, giữ màu đẹp, bền, dễ dàng giặt giũ, tẩy rửa tại nhà. Kết cấu khép kín với đường may tỉ mỉ kết hợp với chất liệu tốt giúp đảm bảo an toàn cho thiết bị được đặt bên trong túi. Giữ thêm nhiều đồ vật với ngăn chứa nhỏ. Với ngăn chứa này, bạn có thể mang theo. miếng lót chuột. ,. chuột máy tính. , cáp sạc, sách vở,.. Đặc biệt với. khóa kéo riêng. , khi đã đặt đồ dùng vào bên trong, bạn chỉ cần đóng lại miệng ngăn chứa, yên tâm di chuyển. túi chống sốc Targus. đến bất kỳ nơi nào mà không sợ đồ dùng bị rơi rớt, thất lạc. Túi chống sốc laptop 14 inch. này được trang bị dây khóa kéo bền chắc, dễ dùng, hạn chế gãy/vỡ khi thao tác nhiều lần. Đơn giản trong thiết kế, tin cậy về chất liệu, hấp dẫn về tiện ích và giá cả, Targus CityGear TSS931GL-80 xứng đáng đồng hành cùng chiếc máy tính xách tay hay máy tính bảng quý giá của bạn trên mọi hành trình cuộc sống. Xem thêm",
+        "price": 209000,
+        "price_str": "209.000₫",
+        "img_thumb": "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_thumb.jpg",
+        "local_desc_images": [
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_0.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_1.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_2.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_3.jpg",
+            "tui-chong-soc-laptop-14-inch-targus-citygear-tss931gl-80-en_desc_4.jpg"
+        ],
+        "variants": [
+            {
+                "model_name": "14 inch",
+                "color_name": "mau-mac-dinh",
+                "price": 209000,
+                "price_str": "209.000₫",
+                "specs": {},
+                "local_gallery": [
+                    "14-inch_mau-mac-dinh_gal_0.jpg",
+                    "14-inch_mau-mac-dinh_gal_1.jpg",
+                    "14-inch_mau-mac-dinh_gal_2.jpg",
+                    "14-inch_mau-mac-dinh_gal_3.jpg"
+                ]
+            }
+        ]
+    }
+]

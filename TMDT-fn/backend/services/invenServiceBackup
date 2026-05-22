@@ -1,0 +1,389 @@
+const sql = require('../db.jsx');
+const { v4: uuidv4 } = require('uuid');
+
+const RESERVATION_TTL_MINUTES = 15;
+
+// ─── PHASE 1: GIỮ HÀNG ───────────────────────────────────────────────────────
+/**
+ * reserveInventory – Giữ hàng trong 15 phút, lưu hoàn toàn vào PostgreSQL.
+ */
+async function reserveInventory(userId, items){
+    return await sql.begin(async (trx)=>{
+        const oldReservation = await trx`
+            SELECT reservation_id, items
+            FROM inventory_reservations
+            WHERE user_id= ${userId}
+            AND status = 'ACTIVE'
+            FOR UPDATE
+        `;
+        for (const old of oldReservation){
+            const parseItems = typeof old.items === 'string' ? JSON.parse(old.items) : old.items;
+
+            for(const oldItems of parseItems){
+                await trx`
+                    UPDATE productinventory
+                    SET reserved = GREATEST(0, reserved-${oldItem.quantity}),
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE variant_id = ${oldItem.variant_id}\
+                `;
+                await trx`
+                    UPDATE inventory_reservations
+                    SET status = 'SUPERSEDED'
+                    WHERE reservation_id = ${old.reservation_id}
+                `;
+            }
+            const itemsWithPrice = [];
+            for(const item of items){
+                const [inv] = await trx`
+                    SELECT
+                        pi.variant_id,
+                        pi.quantity,
+                        pi.reserved,
+                        pv.price,
+                        pv.price_str,
+                        p.name  AS product_name,
+                        p.product_id
+                    FROM productinventory pi
+                    JOIN productvariant pv ON pi.variant_id = pv.variant_id
+                    JOIN product p ON pv.product_id = p.product_id
+                    WHERE pi.variant_id = ${item.variant_id}
+                    FOR UPDATE
+                `;
+                if(!inv){
+                    throw new Error(`Biến thể sản phẩm ID ${item.variant_id} không tồn tại.`);
+                }
+
+                const available = inv.quantity - inv.reserved;
+                if (available < item.quantity) {
+                    throw new Error(
+                        `"${inv.product_name}" không đủ hàng. ` +
+                        `Yêu cầu: ${item.quantity}, Khả dụng: ${Math.max(0, available)}.`
+                    );
+                }
+
+                const [updated] = await trx`
+                    UPDATE productinventory
+                    SET reserved     = reserved + ${item.quantity},
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE variant_id = ${item.variant_id}
+                      AND (quantity - reserved) >= ${item.quantity}
+                    RETURNING quantity, reserved
+                `;
+                if (!updated) {
+                    throw new Error(
+                        `"${inv.product_name}" vừa hết hàng. Vui lòng thử lại.`
+                    );
+                }
+
+                itemsWithPrice.push({
+                    variant_id: item.variant_id,
+                    product_id: inv.product_id,
+                    product_name: inv.product_name,
+                    quantity: item.quantity,
+                    unit_price: inv.price,   // ← Snapshot giá tại thời điểm giữ hàng
+                    price_str: inv.price_str,
+                });
+            }
+
+            const reservationId = uuidv4();
+            const expiresAt = new Date(Date.now() + RESERVATION_TTL_MINUTES * 60 * 1000);
+
+            await trx`
+                INSERT INTO inventory_reservations
+                    (reservation_id, user_id, items, status, expires_at)
+                VALUES
+                    (${reservationId}, ${userId}, ${sql.json(itemsWithPrice)}, 'ACTIVE', ${expiresAt})
+            `;
+
+            return {
+                reservation_id: reservationId,
+                expires_at: expiresAt.toISOString(),
+                items: itemsWithPrice,
+            };
+        }
+    });
+}
+// ─── PHASE 2: HOÀN TẤT THANH TOÁN ───────────────────────────────────────────
+function resolvePaymentMeta(paymentMethod) {
+    const isCOD = paymentMethod.toUpperCase() === 'COD';
+    return {
+        initialStatusId: isCOD ? 1 : 2,
+        historyNote: isCOD
+            ? 'Đơn hàng COD đang chờ xác nhận từ cửa hàng'
+            : 'Thanh toán thành công, cửa hàng đang chuẩn bị hàng'
+    };
+}
+/**
+ * confirmCheckout – Xác nhận đơn hàng và trừ kho thật sự.
+ */
+async function confirmCheckout({ userId, reservationId, addressId, paymentMethod, note }) {
+
+    // Kiểm tra reservation trong DB
+    const [reservation] = await sql`
+        SELECT
+            reservation_id,
+            items,
+            status,
+            (expires_at < CURRENT_TIMESTAMP) as is_expired
+        FROM inventory_reservations
+        WHERE reservation_id = ${reservationId}
+          AND user_id = ${userId}
+    `;
+
+    if (!reservation) {
+        throw new Error('Phiên giữ hàng không hợp lệ hoặc không tồn tại.');
+    }
+    if (reservation.status !== 'ACTIVE') {
+        throw new Error(`Phiên giữ hàng đã "${reservation.status}". Vui lòng quay lại giỏ hàng.`);
+    }
+    if (reservation.is_expired) {
+        throw new Error('Phiên giữ hàng đã hết hạn (15 phút). Vui lòng quay lại giỏ hàng và thử lại.');
+    }
+
+    const { initialStatusId, historyNote } = resolvePaymentMeta(paymentMethod);
+
+    let orderId, totalAmount;
+
+    await sql.begin(async (trx) => {
+
+        // Kiểm tra lại reservation
+        const [lockedRes] = await trx`
+            SELECT status FROM inventory_reservations
+            WHERE reservation_id = ${reservationId}
+            FOR UPDATE
+        `;
+        if (lockedRes.status !== 'ACTIVE') {
+            throw new Error('Đơn hàng này đã được xử lý. Không thể thanh toán trùng lặp.');
+        }
+
+        if (typeof reservation.items === 'string') {
+            reservation.items = JSON.parse(reservation.items);
+        }
+
+        // Tính tổng tiền từ snapshot giá trong reservation
+        totalAmount = reservation.items.reduce((sum, item) => {
+            return sum + Number(BigInt(item.unit_price) * BigInt(item.quantity));
+        }, 0);
+
+        // Tạo đơn hàng
+        const [order] = await trx`
+            INSERT INTO orders (user_id, address_id, total_amount, payment_method, status_id, note)
+            VALUES (${userId}, ${addressId}, ${totalAmount}, ${paymentMethod.toUpperCase()}, ${initialStatusId}, ${note || null})
+            RETURNING order_id
+        `;
+        orderId = order.order_id;
+
+        // Lưu chi tiết đơn hàng với snapshot giá
+        for (const item of reservation.items) {
+            await trx`
+                INSERT INTO order_details (order_id, product_id, variant_id, quantity, unit_price)
+                VALUES (${orderId}, ${item.product_id}, ${item.variant_id}, ${item.quantity}, ${item.unit_price})
+            `;
+        }
+
+        // Atomic UPDATE: Trừ kho thật + Giải phóng reserved
+        for (const item of reservation.items) {
+            const [result] = await trx`
+                UPDATE productinventory
+                SET quantity     = quantity - ${item.quantity},
+                    reserved     = reserved - ${item.quantity},
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE variant_id = ${item.variant_id}
+                  AND quantity >= ${item.quantity}
+                RETURNING quantity
+            `;
+
+            if (!result) {
+                throw new Error(`Lỗi tồn kho với biến thể ${item.variant_id}. Giao dịch đã bị hủy.`);
+            }
+        }
+
+        // Ghi lịch sử trạng thái
+        await trx`
+            INSERT INTO order_status_history (order_id, status_id, note, change_date)
+            VALUES (${orderId}, ${initialStatusId}, ${historyNote}, CURRENT_TIMESTAMP)
+        `;
+
+        // Đánh dấu reservation là CONFIRMED
+        await trx`
+            UPDATE inventory_reservations
+            SET status = 'CONFIRMED'
+            WHERE reservation_id = ${reservationId}
+        `;
+    });
+
+    return { order_id: orderId, total_amount: totalAmount, status_id: initialStatusId };
+}
+
+// ─── COD/CHUYỂN KHOẢN TRỰC TIẾP (KHÔNG GIỮ HÀNG 15 PHÚT) ─────────────────────
+/**
+ * checkoutDirect – Mua thẳng, vừa trừ tồn vừa lên đơn atomatically.
+ */
+async function checkoutDirect({ userId, items, addressId, paymentMethod, note }) {
+    // Sắp xếp ID để chống Deadlock PostgreSQL lúc mua nhiều món
+    const sortedItems = [...items].sort((a, b) => a.variant_id - b.variant_id);
+
+    const { initialStatusId, historyNote } = resolvePaymentMeta(paymentMethod);
+
+    let orderId, totalAmount = 0;
+    const calculatedItems = [];
+
+    await sql.begin(async (trx) => {
+        // Bước 1: Khóa và kiểm tra tồn kho, lấy giá
+        for (const item of sortedItems) {
+            const [inv] = await trx`
+                SELECT pi.quantity, pi.reserved, pv.price, p.product_id, p.name AS product_name
+                FROM productinventory pi
+                JOIN productvariant pv ON pi.variant_id = pv.variant_id
+                JOIN product p ON pv.product_id = p.product_id
+                WHERE pi.variant_id = ${item.variant_id}
+                FOR UPDATE
+            `;
+
+            if (!inv) throw new Error(`Sản phẩm (Variant ID: ${item.variant_id}) không tồn tại.`);
+            const available = inv.quantity - inv.reserved;
+            if (available < item.quantity) {
+                 throw new Error(`Sản phẩm "${inv.product_name}" không đủ hàng. Khả dụng: ${Math.max(0, available)}`);
+            }
+
+            calculatedItems.push({
+                product_id: inv.product_id,
+                variant_id: item.variant_id,
+                quantity: item.quantity,
+                unit_price: inv.price
+            });
+
+            totalAmount += Number(BigInt(inv.price) * BigInt(item.quantity));
+        }
+
+        // Bước 2: Tạo order
+        const [order] = await trx`
+            INSERT INTO orders (user_id, address_id, total_amount, payment_method, status_id, note)
+            VALUES (${userId}, ${addressId}, ${totalAmount}, ${paymentMethod.toUpperCase()}, ${initialStatusId}, ${note || null})
+            RETURNING order_id
+        `;
+        orderId = order.order_id;
+
+        // Bước 3: Tạo details và Trừ thẳng quantity
+        for (const cItem of calculatedItems) {
+            await trx`
+                INSERT INTO order_details (order_id, product_id, variant_id, quantity, unit_price)
+                VALUES (${orderId}, ${cItem.product_id}, ${cItem.variant_id}, ${cItem.quantity}, ${cItem.unit_price})
+            `;
+
+            const [result] = await trx`
+                UPDATE productinventory
+                SET quantity     = quantity - ${cItem.quantity},
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE variant_id = ${cItem.variant_id}
+                  AND (quantity - reserved) >= ${cItem.quantity}
+                RETURNING quantity
+            `;
+            if (!result) throw new Error("Kho hàng biến động quá nhanh, giao dịch thất bại.");
+        }
+
+        // Bước 4: Lịch sử trạng thái
+        await trx`
+            INSERT INTO order_status_history (order_id, status_id, note, change_date)
+            VALUES (${orderId}, ${initialStatusId}, ${historyNote}, CURRENT_TIMESTAMP)
+        `;
+    });
+
+    return { order_id: orderId, total_amount: totalAmount, status_id: initialStatusId };
+}
+
+// ─── HỦY RESERVATION (User chủ động) ────────────────────────────────────────
+async function cancelReservation(userId) {
+    return await sql.begin(async (trx) => {
+        const [reservation] = await trx`
+            SELECT reservation_id, items FROM inventory_reservations
+            WHERE user_id = ${userId} AND status = 'ACTIVE'
+            ORDER BY created_at DESC
+            LIMIT 1
+            FOR UPDATE
+        `;
+
+        if (!reservation) return false;
+
+        if (typeof reservation.items === 'string') {
+            reservation.items = JSON.parse(reservation.items);
+        }
+
+        for (const item of reservation.items) {
+            await trx`
+                UPDATE productinventory
+                SET reserved     = GREATEST(0, reserved - ${item.quantity}),
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE variant_id = ${item.variant_id}
+            `;
+        }
+
+        await trx`
+            UPDATE inventory_reservations
+            SET status = 'CANCELLED'
+            WHERE reservation_id = ${reservation.reservation_id}
+        `;
+
+        return true;
+    });
+}
+
+// ─── ROLLBACK HẾT HẠN (Dùng bởi Cron Job) ───────────────────────────────────
+/**
+ * rollbackExpiredReservations – Quét và rollback mọi reservation đã hết hạn.
+ */
+async function rollbackExpiredReservations() {
+    // Lấy tất cả reservation ACTIVE đã quá hạn
+    const expired = await sql`
+        SELECT reservation_id, user_id, items
+        FROM inventory_reservations
+        WHERE status = 'ACTIVE'
+          AND expires_at < CURRENT_TIMESTAMP
+    `;
+
+    if (expired.length === 0) return 0;
+
+    for (const res of expired) {
+        await sql.begin(async (trx) => {
+            // Khóa dòng để tránh xử lý trùng lặp
+            const [locked] = await trx`
+                SELECT status FROM inventory_reservations
+                WHERE reservation_id = ${res.reservation_id}
+                FOR UPDATE
+            `;
+            if (locked.status !== 'ACTIVE') return; // Đã được xử lý bởi request khác
+
+            if (typeof res.items === 'string') {
+                res.items = JSON.parse(res.items);
+            }
+
+            // Trả hàng về kho
+            for (const item of res.items) {
+                await trx`
+                    UPDATE productinventory
+                    SET reserved     = GREATEST(0, reserved - ${item.quantity}),
+                        last_updated = CURRENT_TIMESTAMP
+                    WHERE variant_id = ${item.variant_id}
+                `;
+            }
+
+            await trx`
+                UPDATE inventory_reservations
+                SET status = 'EXPIRED'
+                WHERE reservation_id = ${res.reservation_id}
+            `;
+        });
+
+        console.log(`[Cleanup] Rolled back expired reservation ${res.reservation_id} (user: ${res.user_id})`);
+    }
+
+    return expired.length;
+}
+
+module.exports = {
+    reserveInventory,
+    confirmCheckout,
+    checkoutDirect,
+    cancelReservation,
+    rollbackExpiredReservations,
+};
