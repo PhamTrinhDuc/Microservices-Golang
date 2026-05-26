@@ -36,55 +36,57 @@ func (sw *slidingWindowStrategy) Name() string {
 	return StrategySlidingWindow
 }
 
-func (rw *slidingWindowStrategy) Compact(ctx agent.CallbackContext, req *model.LLMRequest) error {
+func (sw *slidingWindowStrategy) Compact(ctx agent.CallbackContext, req *model.LLMRequest) error {
 	existingSummary := loadSummary(ctx)
 	indexContentAtlastCompact := loadContentsAtCompaction(ctx)
 
 	totalContents := len(req.Contents)
 	turnsSinceCompact := totalContents - indexContentAtlastCompact
 
-	if turnsSinceCompact <= rw.maxTurns {
+	if turnsSinceCompact <= sw.maxTurns {
 		if existingSummary != "" {
 			injectSummary(req, existingSummary, indexContentAtlastCompact)
 		}
 	}
-	slog.Info("%s [%s]: turn limit exceeded, summarizing",
+
+	slog.Info(
+		fmt.Sprintf("%s [%s]: turn limit exceeded, summarizing", PackageName, StrategySlidingWindow),
 		"agent", ctx.AgentName(),
 		"session", ctx.SessionID(),
 		"totalContents", totalContents,
 		"indexContentAtLastCompact", indexContentAtlastCompact,
 		"turnsSinceCompact", turnsSinceCompact,
-		"maxTurns", rw.maxTurns,
+		"maxTurns", sw.maxTurns,
 	)
 
 	// lock to avoid 2 goroutines compacting same session at same time.
-	rw.mu.Lock()
-	defer rw.mu.Unlock()
+	sw.mu.Lock()
+	defer sw.mu.Unlock()
 
-	contextWindow := rw.registry.ContextWindow(req.Model)
+	contextWindow := sw.registry.ContextWindow(req.Model)
 	buffer := computeBuffer(contextWindow)
 	threshold := contextWindow - buffer
 
 	userContent := ctx.UserContent()
 	todos := loadTodos(ctx)
-	recentKeep := max(3, 0.3*float64(rw.maxTurns))
+	recentKeep := max(3, 0.3*float64(sw.maxTurns))
 
-	for attemp := range rw.maxCompactionAttempts {
+	for attemp := range sw.maxCompactionAttempts {
 		splitIdx := safeSplitIndex(req.Contents, len(req.Contents)-int(recentKeep))
 		oldMessages := req.Contents[:splitIdx]
 		recentMessages := req.Contents[splitIdx:]
 
 		if len(oldMessages) == 0 {
-			slog.Warn("%s [%s]: nothing to compact (split at 0), aborting",
+			slog.Warn(fmt.Sprintf("%s [%s]: nothing to compact (split at 0), aborting", PackageName, StrategySlidingWindow),
 				"agent", ctx.AgentName(),
 				"attempt", attemp+1,
 			)
 			break
 		}
 
-		summary, err := summarize(ctx, rw.llm, oldMessages, existingSummary, todos, buffer)
+		summary, err := summarize(ctx, sw.llm, oldMessages, existingSummary, todos, buffer)
 		if err != nil {
-			slog.Error("ContextGuard [sliding_window]: summarization FAILED",
+			slog.Error(fmt.Sprintf("%s [%s]: summarization FAILED", PackageName, StrategySlidingWindow),
 				"agent", ctx.AgentName(),
 				"session", ctx.SessionID(),
 				"error", err,
@@ -101,5 +103,22 @@ func (rw *slidingWindowStrategy) Compact(ctx agent.CallbackContext, req *model.L
 		injectContinuation(req, userContent)
 
 		newTokens := estimateTokens(req)
+
+		if newTokens < threshold {
+			break
+		}
+
+		if attemp < sw.maxCompactionAttempts {
+			recentKeep = max(3, recentKeep/2)
+			slog.Warn(
+				fmt.Sprintf("%s [%s]: still over threshold, reducing kept turns", PackageName, StrategySlidingWindow),
+				"agent", ctx.AgentName(),
+				"session", ctx.SessionID(),
+				"recentKeep", recentKeep,
+				"newTokens", newTokens,
+				"threshold", threshold,
+			)
+		}
 	}
+	return nil
 }

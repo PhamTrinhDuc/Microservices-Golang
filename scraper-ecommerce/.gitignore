@@ -1,0 +1,24 @@
+data
+
+# Dependency directories
+node_modules/
+thegioibatdong2/node_modules/
+cellphonex_server/node_modules/
+
+# Build outputs
+dist/
+thegioibatdong2/dist/
+
+# Logs and local files
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.vscode/
+.idea/
+
+
+fileserver
+file-banner
