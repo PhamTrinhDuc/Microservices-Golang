@@ -83,7 +83,7 @@ def scrape_policy_text(driver, url):
 
 def main():
     parser = argparse.ArgumentParser(description="TGDD Policy & Terms Crawler for RAG")
-    parser.add_argument("--output-dir", default="data/policies", help="Directory to save policy Markdown files")
+    parser.add_argument("--output-dir", default="../data/policies", help="Directory to save policy Markdown files")
     parser.add_argument("--limit", type=int, help="Limit the number of policies to crawl (for quick testing)")
     
     args = parser.parse_args()

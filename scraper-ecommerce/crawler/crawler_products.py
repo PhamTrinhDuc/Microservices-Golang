@@ -13,6 +13,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 sys.stdout.reconfigure(encoding='utf-8')
 
+OUTPUT_DIR = "../data"
+
 def init_driver():
     options = Options()
     options.add_argument("--headless")
@@ -430,9 +432,8 @@ def crawl_category(category_url, category_name, limit=5):
     finally:
         driver.quit()
         
-    output_dir = "./data"
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, "products.json")
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    output_file = os.path.join(OUTPUT_DIR, "products.json")
     
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(all_products, f, indent=4, ensure_ascii=False)
@@ -454,9 +455,8 @@ def main():
         try:
             res = parse_tgdd_product(args.url, driver)
             
-            output_dir = "./data"
-            os.makedirs(output_dir, exist_ok=True)
-            output_file = os.path.join(output_dir, "test_product_schema_aligned.json")
+            os.makedirs(OUTPUT_DIR, exist_ok=True)
+            output_file = os.path.join(OUTPUT_DIR, "products_variant.json")
             
             with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(res, f, indent=4, ensure_ascii=False)
@@ -492,9 +492,8 @@ def main():
         finally:
             driver.quit()
             
-        output_dir = "./data"
-        os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, "products.json")
+        os.makedirs(OUTPUT_DIR, exist_ok=True)
+        output_file = os.path.join(OUTPUT_DIR, "test_products.json")
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(demo_results, f, indent=4, ensure_ascii=False)
         print(f"\nDemo finished. Saved results to: {os.path.abspath(output_file)}")

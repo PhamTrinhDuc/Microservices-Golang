@@ -178,7 +178,7 @@ def main():
     parser = argparse.ArgumentParser(description="TGDD Retail Stores Crawler")
     parser.add_argument("--limit-provinces", type=int, help="Limit number of provinces to crawl (for quick testing)")
     parser.add_argument("--limit-stores", type=int, help="Limit number of stores per province")
-    parser.add_argument("--output", default="data/stores.json", help="Path to save output JSON file")
+    parser.add_argument("--output", default="../data/stores.json", help="Path to save output JSON file")
     
     args = parser.parse_args()
     

@@ -54,6 +54,7 @@ def scrape_reviews_for_product(driver, product_url, max_pages=3, max_reviews=50)
         time.sleep(3)
         
         try:
+                
             comment_list = driver.find_elements(By.CSS_SELECTOR, "ul.comment-list li.par")
             print(f"    Found {len(comment_list)} reviews on this page.")
             
@@ -134,7 +135,7 @@ def main():
     parser.add_argument("--url", default="https://www.thegioididong.com/dtdd/iphone-17", help="Product detail page URL or reviews page URL")
     parser.add_argument("--pages", type=int, default=3, help="Max number of pages to scrape")
     parser.add_argument("--limit", type=int, default=30, help="Max total reviews to scrape")
-    parser.add_argument("--output", default="data/reviews.json", help="Path to save output JSON file")
+    parser.add_argument("--output", default="../data/reviews.json", help="Path to save output JSON file")
     
     args = parser.parse_args()
     
@@ -146,8 +147,22 @@ def main():
         output_dir = os.path.dirname(args.output)
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
-            
+        
+        # Get product name
+        product_name = None
+        for selector in ["div.box-product h3", "ul.breadcrumb-rating a", "div.product-name h1", "section.detail h1"]:
+            try:
+                product_name = driver.find_element(By.CSS_SELECTOR, selector).get_attribute("textContent").strip()
+                if product_name:
+                    break
+            except Exception:
+                continue
+        
+        if not product_name:
+            product_name = "Unknown Product"
+        
         result = {
+            "product_name": product_name,
             "product_url": args.url,
             "product_slug": get_product_slug(args.url),
             "reviews": reviews_data

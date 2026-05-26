@@ -11,7 +11,7 @@ services:
     volumes:
       # Sửa từ /var/lib/postgresql/data thành /var/lib/postgresql
       - postgres_data:/var/lib/postgresql
-      - ./docker.config/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./docker.config/database/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mcp_user -d salon_chain"]
       interval: 10s
@@ -28,7 +28,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./docker.config/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./docker.config/redis/redis.conf:/usr/local/etc/redis/redis.conf
     command: redis-server /usr/local/etc/redis/redis.conf
     healthcheck:
       test: ["CMD", "redis-cli", "-u", "redis://jiyuu:a2amcpgo@localhost:6379", "ping"]
@@ -66,7 +66,7 @@ services:
   #   ports:
   #     - "9090:9090"
   #   volumes:
-  #     - ./docker.config/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./docker.config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
   #     - prometheus_data:/prometheus
   #   command:
   #     - '--config.file=/etc/prometheus/prometheus.yml'
@@ -88,7 +88,7 @@ services:
   #     GF_INSTALL_PLUGINS: grafana-piechart-panel
   #   volumes:
   #     - grafana_data:/var/lib/grafana
-  #     - ./docker.config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+  #     - ./docker.config/monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
   #   depends_on:
   #     - prometheus
   #   networks:
