@@ -36,7 +36,9 @@ def clean_product_name(raw_name):
         r'Tai nghe chụp tai', r'Tai nghe', r'Pin sạc dự phòng', r'Sạc dự phòng', r'Cáp sạc', r'Adapter sạc', 
         r'Sạc xe hơi', r'Chuột không dây', r'Chuột có dây', r'Chuột gaming', r'Chuột', r'Bàn phím không dây', 
         r'Bàn phím có dây', r'Bàn phím gaming', r'Bàn phím', r'Thẻ nhớ', r'Loa Bluetooth', r'Loa vi tính', 
-        r'Loa', r'Ốp lưng điện thoại', r'Ốp lưng máy tính bảng', r'Ốp lưng', r'Vỏ bảo vệ'
+        r'Loa', r'Ốp lưng điện thoại', r'Ốp lưng máy tính bảng', r'Ốp lưng', r'Vỏ bảo vệ',
+        r'Màn hình máy tính', r'Màn hình', r'Máy tính để bàn', r'Máy chơi game cầm tay', r'Máy chơi game',
+        r'Micro', r'Hub chuyển đổi', r'Giá treo màn hình', r'Thiết bị mạng'
     ]
     name = raw_name
     for p in prefixes:
@@ -447,6 +449,8 @@ def main():
     parser.add_argument("--category", help="Category listing page URL to crawl in bulk")
     parser.add_argument("--name", default="Sản phẩm", help="Name of the category being crawled in bulk")
     parser.add_argument("--limit", type=int, default=3, help="Max number of products to crawl in bulk")
+    parser.add_argument("--file", help="Path to a JSON file containing list of product URLs to crawl")
+    parser.add_argument("--output", default="../data/products.json", help="Path to save output JSON file")
     
     args = parser.parse_args()
     
@@ -467,6 +471,71 @@ def main():
             print(f"Promotions count: {len(res['promotions'])}")
         finally:
             driver.quit()
+    elif args.file:
+        print(f"Reading product links from: {args.file}...")
+        try:
+            with open(args.file, "r", encoding="utf-8") as f:
+                links = json.load(f)
+        except Exception as e:
+            print(f"Error reading file {args.file}: {e}")
+            sys.exit(1)
+            
+        print(f"Found {len(links)} links. Starting crawl...")
+        driver = init_driver()
+        all_products = []
+        try:
+            for idx, url in enumerate(links):
+                print(f"\n[{idx+1}/{len(links)}] Crawling: {url}")
+                try:
+                    res = parse_tgdd_product(url, driver)
+                    # Infer category name from URL
+                    cat_name = args.name
+                    if "dtdd" in url:
+                        cat_name = "Điện thoại"
+                    elif "laptop" in url:
+                        cat_name = "Laptop"
+                    elif "may-tinh-bang" in url:
+                        cat_name = "Máy tính bảng"
+                    elif "may-tinh-de-ban" in url:
+                        cat_name = "Máy tính để bàn"
+                    elif "man-hinh-may-tinh" in url:
+                        cat_name = "Màn hình"
+                    elif "may-choi-game" in url:
+                        cat_name = "Máy chơi game"
+                    elif "tai-nghe" in url:
+                        cat_name = "Tai nghe"
+                    elif "dong-ho-thong-minh" in url:
+                        cat_name = "Đồng hồ thông minh"
+                    elif "dong-ho-deo-tay" in url:
+                        cat_name = "Đồng hồ"
+                    elif "pin-sac-du-phong" in url or "pin-backup" in url:
+                        cat_name = "Sạc dự phòng"
+                    elif "loa" in url:
+                        cat_name = "Loa"
+                    elif "thiet-bi-mang" in url:
+                        cat_name = "Thiết bị mạng"
+                    elif "micro" in url:
+                        cat_name = "Micro"
+                    elif any(k in url for k in ["sac-dt-dd", "op-lung", "phu-kien", "adapter", "cap-sac", "ban-phim", "chuot-may-tinh", "hub-chuyen-doi", "gia-treo-man-hinh"]):
+                        cat_name = "Phụ kiện"
+                    res["category_name"] = cat_name
+                    
+                    print(f"  -> Extracted: {res['product_info']['clean_name']}")
+                    all_products.append(res)
+                    time.sleep(2)
+                except Exception as e:
+                    print(f"  Error crawling {url}: {e}")
+        finally:
+            driver.quit()
+            
+        out_path = args.output
+        out_dir = os.path.dirname(out_path)
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+            
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(all_products, f, indent=4, ensure_ascii=False)
+        print(f"\nSuccessfully crawled {len(all_products)} products. Saved to {out_path}")
     elif args.category:
         crawl_category(args.category, args.name, args.limit)
     else:
@@ -500,3 +569,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# python crawler/crawler_products.py --file "./data/product_links.json" --output "./data/products.json"

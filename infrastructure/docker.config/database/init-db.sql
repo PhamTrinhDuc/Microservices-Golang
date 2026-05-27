@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS memory_entries (
 
 
 -- ============================================================
--- NHÓM 3: E-COMMERCE CORE TABLES
+-- NHÓM 2: E-COMMERCE CORE TABLES
 -- ============================================================
 
 -- 1. Users & Address
@@ -140,7 +140,7 @@ CREATE TABLE product_spec (
     product_id VARCHAR(50) NOT NULL REFERENCES product(id) ON DELETE CASCADE,
     "group" VARCHAR(100) NOT NULL,
     key VARCHAR(100) NOT NULL,
-    value VARCHAR(255) NOT NULL,
+    value TEXT NOT NULL,
     unit VARCHAR(50),
     sort_order INTEGER NOT NULL DEFAULT 0
 );
