@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { LoginRequest, LoginResponse, RegisterRequest, User } from '../types'
+import type { LoginRequest, LoginResponse, RegisterRequest, User, GoogleLoginRequest } from '../types'
 
 export const authAPI = {
   login: async (payload: LoginRequest): Promise<LoginResponse> => {
@@ -8,6 +8,10 @@ export const authAPI = {
   },
   register: async (payload: RegisterRequest): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/register', payload)
+    return response.data
+  },
+  googleAuth: async (payload: GoogleLoginRequest): Promise<LoginResponse> => {
+    const response = await api.post<LoginResponse>('/auth/google', payload)
     return response.data
   },
   getProfile: async (): Promise<User> => {

@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { authAPI } from '../../services/authAPI'
-import type { LoginRequest, LoginResponse, RegisterRequest, User } from '../../types'
+import type { LoginRequest, LoginResponse, RegisterRequest, User, GoogleLoginRequest } from '../../types'
 import { tokenManager } from '../../utils/tokenManager'
 
 interface AuthState {
@@ -8,6 +8,7 @@ interface AuthState {
   token: string | null
   isAuthenticated: boolean
   loading: boolean
+  googleLoading: boolean
   error: string | null
 }
 
@@ -16,6 +17,7 @@ const initialState: AuthState = {
   token: tokenManager.getToken(),
   isAuthenticated: tokenManager.isAuthenticated(),
   loading: false,
+  googleLoading: false,
   error: null,
 }
 
@@ -37,6 +39,17 @@ export const register = createAsyncThunk<LoginResponse, RegisterRequest, { rejec
       return await authAPI.register(payload)
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Registration failed')
+    }
+  },
+)
+
+export const googleAuth = createAsyncThunk<LoginResponse, GoogleLoginRequest, { rejectValue: string }>(
+  'auth/googleAuth',
+  async (payload, { rejectWithValue }) => {
+    try {
+      return await authAPI.googleAuth(payload)
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Google authentication failed')
     }
   },
 )
@@ -74,6 +87,7 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Login handlers
       .addCase(login.pending, (state) => {
         state.loading = true
         state.error = null
@@ -89,6 +103,7 @@ const authSlice = createSlice({
         state.loading = false
         state.error = action.payload ?? 'Login failed'
       })
+      // Register handlers
       .addCase(register.pending, (state) => {
         state.loading = true
         state.error = null
@@ -104,12 +119,30 @@ const authSlice = createSlice({
         state.loading = false
         state.error = action.payload ?? 'Registration failed'
       })
+      // Google auth handlers
+      .addCase(googleAuth.pending, (state) => {
+        state.googleLoading = true
+        state.error = null
+      })
+      .addCase(googleAuth.fulfilled, (state, action) => {
+        state.googleLoading = false
+        state.isAuthenticated = true
+        state.user = action.payload.user
+        state.token = action.payload.token
+        tokenManager.setToken(action.payload.token)
+      })
+      .addCase(googleAuth.rejected, (state, action) => {
+        state.googleLoading = false
+        state.error = action.payload ?? 'Google authentication failed'
+      })
+      // Logout handler
       .addCase(logout.fulfilled, (state) => {
         state.isAuthenticated = false
         state.user = null
         state.token = null
         state.error = null
       })
+      // Profile handler
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.user = action.payload
       })
