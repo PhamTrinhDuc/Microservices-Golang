@@ -216,7 +216,8 @@ CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address TEXT,
-    phone VARCHAR(50)
+    phone VARCHAR(50),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE import_invoices (
@@ -237,6 +238,19 @@ CREATE TABLE import_invoice_details (
     stock_before INTEGER NOT NULL,
     price_import NUMERIC(15, 2) NOT NULL
 );
+
+CREATE TABLE inventory_log (
+    id SERIAL PRIMARY KEY,
+    variant_id INTEGER NOT NULL REFERENCES product_variant(id) ON DELETE CASCADE,
+    store_id INTEGER NOT NULL REFERENCES store(id) ON DELETE CASCADE,
+    change_qty INTEGER NOT NULL,      -- dương = nhập, âm = xuất
+    qty_after INTEGER NOT NULL,       -- snapshot sau thay đổi
+    reason VARCHAR(100) NOT NULL,     -- "order_confirmed", "order_cancelled", "import", "manual_adjust"
+    ref_id VARCHAR(100),              -- order_id hoặc invoice_id tương ứng
+    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 
 -- 7. Cart
 CREATE TABLE cart_items (
@@ -316,6 +330,8 @@ CREATE TABLE orders (
     voucher_discount NUMERIC(15, 2) NOT NULL DEFAULT 0,
     shipping_price NUMERIC(15, 2) NOT NULL DEFAULT 0,
     payment_method VARCHAR(50),
+    payment_code VARCHAR(100),
+    payos_order_code VARCHAR(100),
     note TEXT,
     receiver_name VARCHAR(255) NOT NULL,
     receiver_address TEXT NOT NULL,
@@ -323,6 +339,8 @@ CREATE TABLE orders (
     sender_name VARCHAR(255),
     sender_address TEXT,
     sender_phone VARCHAR(50),
+    shipping_provider  VARCHAR(50),   -- "ghn", "ghtk"
+shipping_code      VARCHAR(100),  -- mã vận đơn
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -347,13 +365,13 @@ CREATE TABLE order_details (
 
 CREATE TABLE order_status_history (
     id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    order_status_id INTEGER NOT NULL REFERENCES order_status(id),
-    payment_status_id INTEGER NOT NULL REFERENCES payment_status(id),
-    shipping_status_id INTEGER NOT NULL REFERENCES shipping_status(id),
-    changed_by INTEGER NOT NULL REFERENCES users(id),
-    note TEXT,
-    changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    order_id      INTEGER NOT NULL REFERENCES orders(id),
+    status_type   VARCHAR(20) NOT NULL,  -- "order", "payment", "shipping"
+    from_status   VARCHAR(50),
+    to_status     VARCHAR(50) NOT NULL,
+    changed_by    INTEGER REFERENCES users(id),
+    note          TEXT,
+    changed_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 10. Reviews
@@ -390,6 +408,8 @@ CREATE INDEX IF NOT EXISTS idx_inventory_res_expiry ON inventory_reservations(ex
 CREATE INDEX IF NOT EXISTS idx_import_invoices_supplier ON import_invoices(supplier_id);
 CREATE INDEX IF NOT EXISTS idx_import_invoices_store ON import_invoices(store_id);
 CREATE INDEX IF NOT EXISTS idx_import_invoice_details_invoice ON import_invoice_details(invoice_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_log_store_var ON inventory_log(store_id, variant_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_log_created ON inventory_log(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cart_items_user ON cart_items(user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_cart_items_session ON cart_items(session_id) WHERE session_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_promotions_product ON promotions(product_id, variant_id);

@@ -62,3 +62,113 @@ func SetupCatalogRoutes(router *gin.RouterGroup, cc *controller.CatalogControlle
 		admin.POST("/products/:id/variants", cc.GenerateVariant)
 	}
 }
+
+// SetupInventoryRoutes sets up store, suppliers, and inventory routes
+func SetupInventoryRoutes(router *gin.RouterGroup, ic *controller.InventoryController, authMiddleware *middleware.AuthMiddleware) {
+	// Public store list
+	router.GET("/stores", ic.ListStores)
+
+	// Admin control endpoints
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		// Store management
+		admin.POST("/stores", ic.CreateStore)
+		admin.GET("/stores/:id", ic.GetStoreByID)
+		admin.PUT("/stores/:id", ic.UpdateStore)
+		admin.DELETE("/stores/:id", ic.DeactivateStore)
+
+		// Suppliers
+		admin.POST("/suppliers", ic.CreateSupplier)
+		admin.GET("/suppliers", ic.ListSuppliers)
+		admin.PUT("/suppliers/:id", ic.UpdateSupplier)
+		admin.DELETE("/suppliers/:id", ic.DeleteSupplier)
+
+		// Inventory & Logs
+		admin.GET("/stores/:id/inventory", ic.ListStoreInventory)
+		admin.PUT("/stores/:id/inventory", ic.AdjustInventory)
+		admin.POST("/inventory/import", ic.ImportGoods)
+		admin.GET("/inventory/imports", ic.ListImportInvoices)
+		admin.GET("/inventory/imports/:id", ic.GetImportInvoiceDetails)
+		admin.GET("/inventory/low-stock", ic.GetLowStockAlerts)
+		admin.GET("/inventory/logs", ic.GetInventoryLogs)
+	}
+}
+
+// SetupCartRoutes sets up the cart management endpoints
+func SetupCartRoutes(router *gin.RouterGroup, cc *controller.CartController, authMiddleware *middleware.AuthMiddleware) {
+	// Guest & Authenticated Cart Management (Optional Token)
+	cart := router.Group("/cart")
+	cart.Use(authMiddleware.OptionalHandler())
+	{
+		cart.GET("", cc.GetCart)
+		cart.POST("", cc.AddToCart)
+		cart.PUT("/items/:id", cc.UpdateItemQuantity)
+		cart.DELETE("/items/:id", cc.RemoveItem)
+		cart.DELETE("", cc.ClearCart)
+	}
+
+	// Authenticated Cart Merging (Required Token)
+	authenticatedCart := router.Group("/cart")
+	authenticatedCart.Use(authMiddleware.Handler())
+	{
+		authenticatedCart.POST("/merge", cc.MergeCart)
+	}
+}
+
+// SetupPromotionVoucherRoutes sets up promotions and vouchers endpoints
+func SetupPromotionVoucherRoutes(router *gin.RouterGroup, pvc *controller.PromotionVoucherController, authMiddleware *middleware.AuthMiddleware) {
+	// Public / customer endpoints
+	router.GET("/vouchers", pvc.ListActiveVouchers)
+
+	// Apply voucher requires authenticated user
+	customer := router.Group("")
+	customer.Use(authMiddleware.Handler())
+	{
+		customer.POST("/vouchers/apply", pvc.ApplyVoucher)
+	}
+
+	// Admin endpoints
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		// Promotions CRUD
+		admin.POST("/promotions", pvc.CreatePromotion)
+		admin.GET("/promotions", pvc.ListPromotions)
+		admin.GET("/promotions/:id", pvc.GetPromotionByID)
+		admin.PUT("/promotions/:id", pvc.UpdatePromotion)
+		admin.DELETE("/promotions/:id", pvc.DeletePromotion)
+
+		// Vouchers CRUD
+		admin.POST("/vouchers", pvc.CreateVoucher)
+		admin.GET("/vouchers", pvc.ListVouchers)
+		admin.GET("/vouchers/:id", pvc.GetVoucherByID)
+		admin.PUT("/vouchers/:id", pvc.UpdateVoucher)
+		admin.DELETE("/vouchers/:id", pvc.DeleteVoucher)
+	}
+}
+
+// SetupOrderRoutes sets up order creation, management and payment webhook routes
+func SetupOrderRoutes(router *gin.RouterGroup, oc *controller.OrderController, authMiddleware *middleware.AuthMiddleware) {
+	// Public webhook for PayOS payments
+	router.POST("/payments/webhook", oc.ConfirmPaymentWebhook)
+
+	// Protected customer routes
+	customer := router.Group("")
+	customer.Use(authMiddleware.Handler())
+	{
+		customer.POST("/orders/checkout", oc.Checkout)
+		customer.GET("/orders", oc.ListMyOrders)
+		customer.GET("/orders/:id", oc.GetMyOrderDetails)
+		customer.POST("/orders/:id/cancel", oc.CancelMyOrder)
+	}
+
+	// Protected admin routes
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		admin.GET("/orders", oc.AdminListOrders)
+		admin.PUT("/orders/:id/status", oc.AdminUpdateStatus)
+	}
+}
+

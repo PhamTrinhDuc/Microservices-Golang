@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"backend/domain"
@@ -18,184 +17,457 @@ func NewCatalogUsecase(repo domain.CatalogRepository) *CatalogUsecase {
 	return &CatalogUsecase{repo: repo}
 }
 
-// slugify formats a string into a URL-friendly slug
-func slugify(s string) string {
-	s = strings.ToLower(s)
-	// Replace non-alphanumeric chars with hyphens
-	reg := regexp.MustCompile(`[^a-z0-9\s-]`)
-	s = reg.ReplaceAllString(s, "")
-	// Replace whitespace with hyphens
-	s = strings.Join(strings.Fields(s), "-")
-	return s
+// --- slug generator helper ---
+
+func generateSlug(src string) string {
+	src = strings.ToLower(src)
+	vietnameseChars := map[string][]string{
+		"a": {"á", "à", "ả", "ã", "ạ", "ă", "ắ", "ằ", "ẳ", "ẵ", "ặ", "â", "ấ", "ầ", "ẩ", "ẫ", "ậ"},
+		"d": {"đ"},
+		"e": {"é", "è", "ẻ", "ẽ", "ẹ", "ê", "ế", "ề", "ể", "ễ", "ệ"},
+		"i": {"í", "ì", "ỉ", "ĩ", "ị"},
+		"o": {"ó", "ò", "ỏ", "õ", "ọ", "ô", "ố", "ồ", "ổ", "ỗ", "ộ", "ơ", "ớ", "ờ", "ở", "ỡ", "ợ"},
+		"u": {"ú", "ù", "ủ", "ũ", "ụ", "ư", "ứ", "ừ", "ử", "ữ", "ự"},
+		"y": {"ý", "ỳ", "ỷ", "ỹ", "ỵ"},
+	}
+	for replace, list := range vietnameseChars {
+		for _, char := range list {
+			src = strings.ReplaceAll(src, char, replace)
+		}
+	}
+	var sb strings.Builder
+	lastWasHyphen := false
+	for _, r := range src {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			sb.WriteRune(r)
+			lastWasHyphen = false
+		} else {
+			if !lastWasHyphen && sb.Len() > 0 {
+				sb.WriteRune('-')
+				lastWasHyphen = true
+			}
+		}
+	}
+	result := sb.String()
+	result = strings.Trim(result, "-")
+	return result
 }
 
-// ===================== Category operations =====================
+func getBaseProductName(name string) string {
+	parts := strings.Split(name, " ")
+	if len(parts) <= 1 {
+		return name
+	}
+	var baseParts []string
+	for _, part := range parts {
+		p := strings.ToLower(part)
+		// Stop if we hit a capacity suffix or spec keyword
+		if strings.HasSuffix(p, "gb") || strings.HasSuffix(p, "tb") {
+			break
+		}
+		baseParts = append(baseParts, part)
+	}
+	if len(baseParts) == 0 {
+		return parts[0]
+	}
+	return strings.Join(baseParts, " ")
+}
 
-func (uc *CatalogUsecase) CreateCategory(ctx context.Context, c *domain.Category) (*domain.Category, error) {
-	if c.Name == "" {
-		return nil, errors.New("category name is required")
+// --- Category ---
+
+func (uc *CatalogUsecase) CreateCategory(ctx context.Context, req *domain.CreateCategoryRequest) (*domain.Category, error) {
+	if req == nil {
+		return nil, errors.New("category request cannot be nil")
 	}
 
-	if c.Slug == "" {
-		c.Slug = slugify(c.Name)
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
 	}
 
-	// Validate parent if provided
-	if c.ParentID != nil {
-		_, err := uc.repo.GetCategoryByID(ctx, *c.ParentID)
+	if req.ParentID != nil {
+		// Validate parent category exists
+		_, err := uc.repo.GetCategoryByID(ctx, *req.ParentID)
 		if err != nil {
-			return nil, fmt.Errorf("parent category not found: %w", err)
+			if errors.Is(err, domain.ErrCategoryNotFound) {
+				return nil, fmt.Errorf("parent category ID %d does not exist", *req.ParentID)
+			}
+			return nil, err
 		}
 	}
 
-	return uc.repo.CreateCategory(ctx, c)
+	cat := &domain.Category{
+		Name:      req.Name,
+		ParentID:  req.ParentID,
+		Icon:      req.Icon,
+		Slug:      slug,
+		SortOrder: req.SortOrder,
+	}
+
+	return uc.repo.CreateCategory(ctx, cat)
 }
 
-func (uc *CatalogUsecase) ListCategoryTree(ctx context.Context) ([]*domain.CategoryNode, error) {
-	all, err := uc.repo.ListCategories(ctx)
+func (uc *CatalogUsecase) ListCategories(ctx context.Context) ([]*domain.Category, error) {
+	return uc.repo.ListCategories(ctx)
+}
+
+func (uc *CatalogUsecase) UpdateCategory(ctx context.Context, id int, req *domain.UpdateCategoryRequest) (*domain.Category, error) {
+	if req == nil {
+		return nil, errors.New("category request cannot be nil")
+	}
+
+	// 1. Check if category exists
+	existing, err := uc.repo.GetCategoryByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create mapping nodes
-	nodesMap := make(map[int]*domain.CategoryNode)
-	for _, c := range all {
-		nodesMap[c.ID] = &domain.CategoryNode{
-			Category: c,
-			Children: make([]*domain.CategoryNode, 0),
+	// 2. Validate ParentID
+	if req.ParentID != nil {
+		if *req.ParentID == id {
+			return nil, errors.New("a category cannot be its own parent")
+		}
+		_, err := uc.repo.GetCategoryByID(ctx, *req.ParentID)
+		if err != nil {
+			return nil, fmt.Errorf("parent category ID %d does not exist", *req.ParentID)
 		}
 	}
 
-	rootNodes := make([]*domain.CategoryNode, 0)
-	for _, c := range all {
-		node := nodesMap[c.ID]
-		if c.ParentID == nil {
-			rootNodes = append(rootNodes, node)
-		} else {
-			parent, exists := nodesMap[*c.ParentID]
-			if exists {
-				parent.Children = append(parent.Children, node)
-			} else {
-				// Parent not active/deleted, treat as root
-				rootNodes = append(rootNodes, node)
-			}
-		}
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
 	}
 
-	return rootNodes, nil
+	existing.Name = req.Name
+	existing.ParentID = req.ParentID
+	existing.Icon = req.Icon
+	existing.Slug = slug
+	existing.SortOrder = req.SortOrder
+
+	return uc.repo.UpdateCategory(ctx, existing)
 }
 
-// ===================== Brand operations =====================
+func (uc *CatalogUsecase) DeleteCategory(ctx context.Context, id int) error {
+	return uc.repo.DeleteCategory(ctx, id)
+}
 
-func (uc *CatalogUsecase) CreateBrand(ctx context.Context, b *domain.Brand) (*domain.Brand, error) {
-	if b.Name == "" {
-		return nil, errors.New("brand name is required")
+// --- Brand ---
+
+func (uc *CatalogUsecase) CreateBrand(ctx context.Context, req *domain.CreateBrandRequest) (*domain.Brand, error) {
+	if req == nil {
+		return nil, errors.New("brand request cannot be nil")
 	}
 
-	if b.Slug == "" {
-		b.Slug = slugify(b.Name)
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
 	}
 
-	return uc.repo.CreateBrand(ctx, b)
+	brand := &domain.Brand{
+		Name:     req.Name,
+		Slug:     slug,
+		LogoURL:  req.LogoURL,
+		IsActive: req.IsActive,
+	}
+
+	return uc.repo.CreateBrand(ctx, brand)
 }
 
 func (uc *CatalogUsecase) ListBrands(ctx context.Context) ([]*domain.Brand, error) {
 	return uc.repo.ListBrands(ctx)
 }
 
-// ===================== Product operations =====================
-
-func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateProductRequest) (*domain.Product, error) {
-	p := req.Product
-	if p == nil {
-		return nil, errors.New("product metadata cannot be nil")
+func (uc *CatalogUsecase) UpdateBrand(ctx context.Context, id int, req *domain.UpdateBrandRequest) (*domain.Brand, error) {
+	if req == nil {
+		return nil, errors.New("brand request cannot be nil")
 	}
 
-	if p.ID == "" {
-		return nil, errors.New("product ID is required")
-	}
-
-	if p.Slug == "" {
-		p.Slug = slugify(p.Name)
-	}
-
-	// 1. Verify Category exists
-	_, err := uc.repo.GetCategoryByID(ctx, p.CategoryID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid category: %w", err)
-	}
-
-	// 2. Verify Brand exists
-	_, err = uc.repo.GetBrandByID(ctx, p.BrandID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid brand: %w", err)
-	}
-
-	// 3. Create Product with Specs & Options inside Repository transaction
-	return uc.repo.CreateProduct(ctx, p, req.Specs, req.OptionTypes)
-}
-
-func (uc *CatalogUsecase) SearchProducts(ctx context.Context, query string, categoryID *int, brandID *int, specsQuery map[string]interface{}, page, limit int) ([]*domain.Product, int64, error) {
-	// Defaults fallback
-	if page <= 0 {
-		page = 1
-	}
-	if limit <= 0 {
-		limit = 10
-	}
-
-	return uc.repo.ListProducts(ctx, query, categoryID, brandID, specsQuery, page, limit)
-}
-
-func (uc *CatalogUsecase) GetProductDetails(ctx context.Context, id string) (*domain.ProductDetail, error) {
-	p, err := uc.repo.GetProductByID(ctx, id)
+	existing, err := uc.repo.GetBrandByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	brand, _ := uc.repo.GetBrandByID(ctx, p.BrandID)
-	cat, _ := uc.repo.GetCategoryByID(ctx, p.CategoryID)
-	specs, _ := uc.repo.GetSpecs(ctx, p.ID)
-	optionTypes, _ := uc.repo.GetOptionTypes(ctx, p.ID)
-	variants, _ := uc.repo.GetVariants(ctx, p.ID)
-	images, _ := uc.repo.GetImages(ctx, p.ID)
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
+	}
 
-	return &domain.ProductDetail{
-		Product:     p,
-		Brand:       brand,
-		Category:    cat,
+	existing.Name = req.Name
+	existing.Slug = slug
+	existing.LogoURL = req.LogoURL
+	existing.IsActive = req.IsActive
+
+	return uc.repo.UpdateBrand(ctx, existing)
+}
+
+func (uc *CatalogUsecase) DeleteBrand(ctx context.Context, id int) error {
+	return uc.repo.DeleteBrand(ctx, id)
+}
+
+// --- Product ---
+
+func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateProductRequest) (*domain.Product, error) {
+	if req == nil {
+		return nil, errors.New("product request cannot be nil")
+	}
+
+	// 1. Validate Category and Brand
+	_, err := uc.repo.GetCategoryByID(ctx, req.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = uc.repo.GetBrandByID(ctx, req.BrandID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Slug generation
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
+	}
+
+	// 3. Mapping Product Specs
+	specs := make([]*domain.ProductSpec, 0, len(req.Specs))
+	for _, specDTO := range req.Specs {
+		specs = append(specs, &domain.ProductSpec{
+			ProductID: req.ID,
+			Group:     specDTO.Group,
+			Key:       specDTO.Key,
+			Value:     specDTO.Value,
+			Unit:      specDTO.Unit,
+			SortOrder: specDTO.SortOrder,
+		})
+	}
+
+	// 4. Mapping Product Options
+	optionTypes := make([]*domain.ProductOptionType, 0, len(req.Options))
+	for idx, optDTO := range req.Options {
+		values := make([]domain.ProductOptionValue, 0, len(optDTO.Values))
+		for _, valDTO := range optDTO.Values {
+			values = append(values, domain.ProductOptionValue{
+				Value:     valDTO.Value,
+				ColorCode: valDTO.ColorCode,
+				SortOrder: valDTO.SortOrder,
+			})
+		}
+
+		optionTypes = append(optionTypes, &domain.ProductOptionType{
+			ProductID: req.ID,
+			Name:      optDTO.Name,
+			SortOrder: idx,
+			Values:    values,
+		})
+	}
+
+	// 5. Mapping Variants
+	variants := make([]*domain.ProductVariant, 0, len(req.Variants))
+	for _, vDTO := range req.Variants {
+		// Find which option type this value belongs to
+		var optTypeName string
+		found := false
+		for _, opt := range req.Options {
+			for _, val := range opt.Values {
+				if val.Value == vDTO.OptionValue {
+					optTypeName = opt.Name
+					found = true
+					break
+				}
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			if len(req.Options) > 0 {
+				optTypeName = req.Options[0].Name
+			} else {
+				optTypeName = "Màu sắc"
+			}
+		}
+
+		variants = append(variants, &domain.ProductVariant{
+			ProductID: req.ID,
+			Name:      vDTO.Name,
+			SKU:       vDTO.SKU,
+			Price:     vDTO.Price,
+			PriceBase: vDTO.PriceBase,
+			Weight:    vDTO.Weight,
+			Options: []domain.VariantOption{
+				{
+					OptionTypeName: optTypeName,
+					Value:          vDTO.OptionValue,
+				},
+			},
+		})
+	}
+
+	input := &domain.CreateProductInput{
+		Product: &domain.Product{
+			ID:                req.ID,
+			CategoryID:        req.CategoryID,
+			BrandID:           req.BrandID,
+			Name:              req.Name,
+			Slug:              slug,
+			MetaTitle:         req.MetaTitle,
+			MetaDescription:   req.MetaDescription,
+			ImgThumb:          req.ImgThumb,
+			Weight:            req.Weight,
+			LowStockThreshold: req.LowStockThreshold,
+			SpecsJSONB:        req.SpecsJSONB,
+		},
 		Specs:       specs,
 		OptionTypes: optionTypes,
 		Variants:    variants,
-		Images:      images,
-	}, nil
+	}
+
+	return uc.repo.CreateProduct(ctx, input)
 }
 
-// ===================== Option & Variant operations =====================
-
-func (uc *CatalogUsecase) AddOptionValues(ctx context.Context, optionTypeID int, values []domain.ProductOptionValue) ([]domain.ProductOptionValue, error) {
-	if len(values) == 0 {
-		return nil, errors.New("values list cannot be empty")
-	}
-
-	return uc.repo.CreateOptionValues(ctx, optionTypeID, values)
+func (uc *CatalogUsecase) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
+	return uc.repo.SearchProducts(ctx, query)
 }
 
-func (uc *CatalogUsecase) GenerateVariant(ctx context.Context, req *domain.GenerateVariantRequest) (*domain.ProductVariant, error) {
-	v := req.Variant
-	if v == nil {
-		return nil, errors.New("variant cannot be nil")
-	}
-
-	if v.ProductID == "" || v.SKU == "" {
-		return nil, errors.New("product_id and sku are required")
-	}
-
-	// Verify parent product exists
-	_, err := uc.repo.GetProductByID(ctx, v.ProductID)
+func (uc *CatalogUsecase) GetProductDetails(ctx context.Context, id string) (*domain.ProductDetailsResponse, error) {
+	// 1. Get Product Details
+	res, err := uc.repo.GetProductDetails(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("invalid parent product: %w", err)
+		return nil, err
 	}
 
-	return uc.repo.CreateVariant(ctx, v, req.OptionValueIDs, req.Images)
+	// 2. TGDD Feature: Query Sibling Products (e.g. iPhone 17 128GB, iPhone 17 512GB)
+	baseName := getBaseProductName(res.Product.Name)
+	siblingQuery := &domain.ProductSearchQuery{
+		CategoryID: &res.Product.CategoryID,
+		BrandID:    &res.Product.BrandID,
+		Query:      baseName,
+		Page:       1,
+		Limit:      50,
+	}
+
+	siblingRes, err := uc.repo.SearchProducts(ctx, siblingQuery)
+	if err == nil && siblingRes != nil {
+		// Filter out the current product from siblings
+		siblings := make([]*domain.Product, 0)
+		for _, p := range siblingRes.Products {
+			if p.ID != res.Product.ID {
+				siblings = append(siblings, p)
+			}
+		}
+		res.Siblings = siblings
+	}
+
+	return res, nil
+}
+
+func (uc *CatalogUsecase) UpdateProduct(ctx context.Context, id string, req *domain.UpdateProductRequest) (*domain.Product, error) {
+	if req == nil {
+		return nil, errors.New("product update request cannot be nil")
+	}
+
+	// 1. Check if product exists
+	existing, err := uc.repo.GetProductByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Validate Category and Brand
+	_, err = uc.repo.GetCategoryByID(ctx, req.CategoryID)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = uc.repo.GetBrandByID(ctx, req.BrandID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Slug generation
+	slug := req.Slug
+	if slug == "" {
+		slug = generateSlug(req.Name)
+	}
+
+	existing.CategoryID = req.CategoryID
+	existing.BrandID = req.BrandID
+	existing.Name = req.Name
+	existing.Slug = slug
+	existing.MetaTitle = req.MetaTitle
+	existing.MetaDescription = req.MetaDescription
+	existing.ImgThumb = req.ImgThumb
+	existing.Weight = req.Weight
+	existing.LowStockThreshold = req.LowStockThreshold
+	existing.SpecsJSONB = req.SpecsJSONB
+
+	// 4. Map specs
+	specs := make([]*domain.ProductSpec, 0, len(req.Specs))
+	for _, specDTO := range req.Specs {
+		specs = append(specs, &domain.ProductSpec{
+			ProductID: id,
+			Group:     specDTO.Group,
+			Key:       specDTO.Key,
+			Value:     specDTO.Value,
+			Unit:      specDTO.Unit,
+			SortOrder: specDTO.SortOrder,
+		})
+	}
+
+	return uc.repo.UpdateProduct(ctx, existing, specs)
+}
+
+func (uc *CatalogUsecase) DeleteProduct(ctx context.Context, id string) error {
+	// Check product exists
+	_, err := uc.repo.GetProductByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return uc.repo.DeleteProduct(ctx, id)
+}
+
+func (uc *CatalogUsecase) AddOptionValues(ctx context.Context, req *domain.AddOptionValuesRequest) ([]*domain.ProductOptionValue, error) {
+	if req == nil {
+		return nil, errors.New("request payload cannot be nil")
+	}
+
+	// Check product exists
+	_, err := uc.repo.GetProductByID(ctx, req.ProductID)
+	if err != nil {
+		return nil, err
+	}
+
+	values := make([]*domain.ProductOptionValue, 0, len(req.Values))
+	for _, vReq := range req.Values {
+		values = append(values, &domain.ProductOptionValue{
+			Value:     vReq.Value,
+			ColorCode: vReq.ColorCode,
+			SortOrder: vReq.SortOrder,
+		})
+	}
+
+	return uc.repo.AddOptionValues(ctx, req.ProductID, req.OptionName, values)
+}
+
+func (uc *CatalogUsecase) GenerateVariant(ctx context.Context, productID string, req *domain.GenerateVariantRequest) (*domain.ProductVariant, error) {
+	if req == nil {
+		return nil, errors.New("request payload cannot be nil")
+	}
+
+	// Check product exists
+	_, err := uc.repo.GetProductByID(ctx, productID)
+	if err != nil {
+		return nil, err
+	}
+
+	variant := &domain.ProductVariant{
+		ProductID: productID,
+		Name:      req.Name,
+		SKU:       req.SKU,
+		Price:     req.Price,
+		PriceBase: req.PriceBase,
+		Weight:    req.Weight,
+	}
+
+	return uc.repo.CreateVariant(ctx, variant, req.OptionValueIDs)
 }

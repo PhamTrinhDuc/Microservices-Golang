@@ -100,6 +100,10 @@ func main() {
 	route.SetupUserRoutes(v1, container.UserCtl, authMiddleware)
 	route.SetupAddressRoutes(v1, container.AddressCtl, authMiddleware)
 	route.SetupCatalogRoutes(v1, container.CatalogCtl, authMiddleware)
+	route.SetupInventoryRoutes(v1, container.InventoryCtl, authMiddleware)
+	route.SetupCartRoutes(v1, container.CartCtl, authMiddleware)
+	route.SetupPromotionVoucherRoutes(v1, container.PromotionVoucherCtl, authMiddleware)
+	route.SetupOrderRoutes(v1, container.OrderCtl, authMiddleware)
 
 	// 5. Start Server
 	serverPort := cfg.Port

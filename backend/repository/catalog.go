@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"backend/domain"
+
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,18 +21,31 @@ func NewCatalogRepository(db *pgxpool.Pool) *CatalogRepository {
 	return &CatalogRepository{db: db}
 }
 
-// ===================== Category operations =====================
+// --- Category ---
 
-func (r *CatalogRepository) CreateCategory(ctx context.Context, c *domain.Category) (*domain.Category, error) {
+func (r *CatalogRepository) CreateCategory(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
 		INSERT INTO category (name, parent_id, icon, slug, sort_order, is_deleted)
 		VALUES ($1, $2, $3, $4, $5, false)
 		RETURNING id`
-	err := r.db.QueryRow(ctx, query, c.Name, c.ParentID, c.Icon, c.Slug, c.SortOrder).Scan(&c.ID)
+
+	err := r.db.QueryRow(ctx, query,
+		cat.Name,
+		cat.ParentID,
+		cat.Icon,
+		cat.Slug,
+		cat.SortOrder,
+	).Scan(&cat.ID)
+
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
 		return nil, fmt.Errorf("failed to create category: %w", err)
 	}
-	return c, nil
+
+	return cat, nil
 }
 
 func (r *CatalogRepository) ListCategories(ctx context.Context) ([]*domain.Category, error) {
@@ -38,60 +53,134 @@ func (r *CatalogRepository) ListCategories(ctx context.Context) ([]*domain.Categ
 		SELECT id, name, parent_id, icon, slug, sort_order, is_deleted
 		FROM category
 		WHERE is_deleted = false
-		ORDER BY sort_order ASC, id ASC`
+		ORDER BY sort_order ASC, name ASC`
 
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list categories: %w", err)
+		return nil, fmt.Errorf("failed to query categories: %w", err)
 	}
 	defer rows.Close()
 
 	categories := make([]*domain.Category, 0)
 	for rows.Next() {
-		c := &domain.Category{}
-		err := rows.Scan(&c.ID, &c.Name, &c.ParentID, &c.Icon, &c.Slug, &c.SortOrder, &c.IsDeleted)
+		cat := &domain.Category{}
+		err := rows.Scan(
+			&cat.ID,
+			&cat.Name,
+			&cat.ParentID,
+			&cat.Icon,
+			&cat.Slug,
+			&cat.SortOrder,
+			&cat.IsDeleted,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan category: %w", err)
 		}
-		categories = append(categories, c)
+		categories = append(categories, cat)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("category rows iteration error: %w", err)
+		return nil, fmt.Errorf("categories rows error: %w", err)
 	}
 
 	return categories, nil
 }
 
 func (r *CatalogRepository) GetCategoryByID(ctx context.Context, id int) (*domain.Category, error) {
-	c := &domain.Category{}
+	cat := &domain.Category{}
 	query := `
 		SELECT id, name, parent_id, icon, slug, sort_order, is_deleted
 		FROM category
 		WHERE id = $1 AND is_deleted = false`
 
-	err := r.db.QueryRow(ctx, query, id).Scan(&c.ID, &c.Name, &c.ParentID, &c.Icon, &c.Slug, &c.SortOrder, &c.IsDeleted)
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&cat.ID,
+		&cat.Name,
+		&cat.ParentID,
+		&cat.Icon,
+		&cat.Slug,
+		&cat.SortOrder,
+		&cat.IsDeleted,
+	)
+
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.New("category not found")
+			return nil, domain.ErrCategoryNotFound
 		}
-		return nil, fmt.Errorf("failed to get category: %w", err)
+		return nil, fmt.Errorf("failed to get category by ID: %w", err)
 	}
-	return c, nil
+
+	return cat, nil
 }
 
-// ===================== Brand operations =====================
+func (r *CatalogRepository) UpdateCategory(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
+	query := `
+		UPDATE category
+		SET name = $1, parent_id = $2, icon = $3, slug = $4, sort_order = $5
+		WHERE id = $6 AND is_deleted = false`
 
-func (r *CatalogRepository) CreateBrand(ctx context.Context, b *domain.Brand) (*domain.Brand, error) {
+	tag, err := r.db.Exec(ctx, query,
+		cat.Name,
+		cat.ParentID,
+		cat.Icon,
+		cat.Slug,
+		cat.SortOrder,
+		cat.ID,
+	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
+		return nil, fmt.Errorf("failed to update category: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return nil, domain.ErrCategoryNotFound
+	}
+
+	return cat, nil
+}
+
+func (r *CatalogRepository) DeleteCategory(ctx context.Context, id int) error {
+	// Soft delete category
+	query := `UPDATE category SET is_deleted = true WHERE id = $1 AND is_deleted = false`
+	tag, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete category: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return domain.ErrCategoryNotFound
+	}
+
+	return nil
+}
+
+// --- Brand ---
+
+func (r *CatalogRepository) CreateBrand(ctx context.Context, brand *domain.Brand) (*domain.Brand, error) {
 	query := `
 		INSERT INTO brand (name, slug, logo_url, is_active, is_deleted)
-		VALUES ($1, $2, $3, true, false)
+		VALUES ($1, $2, $3, $4, false)
 		RETURNING id`
-	err := r.db.QueryRow(ctx, query, b.Name, b.Slug, b.LogoURL).Scan(&b.ID)
+
+	err := r.db.QueryRow(ctx, query,
+		brand.Name,
+		brand.Slug,
+		brand.LogoURL,
+		brand.IsActive,
+	).Scan(&brand.ID)
+
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
 		return nil, fmt.Errorf("failed to create brand: %w", err)
 	}
-	return b, nil
+
+	return brand, nil
 }
 
 func (r *CatalogRepository) ListBrands(ctx context.Context) ([]*domain.Brand, error) {
@@ -99,445 +188,805 @@ func (r *CatalogRepository) ListBrands(ctx context.Context) ([]*domain.Brand, er
 		SELECT id, name, slug, logo_url, is_active, is_deleted
 		FROM brand
 		WHERE is_deleted = false AND is_active = true
-		ORDER BY id ASC`
+		ORDER BY name ASC`
 
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list brands: %w", err)
+		return nil, fmt.Errorf("failed to query brands: %w", err)
 	}
 	defer rows.Close()
 
 	brands := make([]*domain.Brand, 0)
 	for rows.Next() {
-		b := &domain.Brand{}
-		err := rows.Scan(&b.ID, &b.Name, &b.Slug, &b.LogoURL, &b.IsActive, &b.IsDeleted)
+		brand := &domain.Brand{}
+		err := rows.Scan(
+			&brand.ID,
+			&brand.Name,
+			&brand.Slug,
+			&brand.LogoURL,
+			&brand.IsActive,
+			&brand.IsDeleted,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan brand: %w", err)
 		}
-		brands = append(brands, b)
+		brands = append(brands, brand)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("brands rows error: %w", err)
 	}
 
 	return brands, nil
 }
 
 func (r *CatalogRepository) GetBrandByID(ctx context.Context, id int) (*domain.Brand, error) {
-	b := &domain.Brand{}
+	brand := &domain.Brand{}
 	query := `
 		SELECT id, name, slug, logo_url, is_active, is_deleted
 		FROM brand
 		WHERE id = $1 AND is_deleted = false`
 
-	err := r.db.QueryRow(ctx, query, id).Scan(&b.ID, &b.Name, &b.Slug, &b.LogoURL, &b.IsActive, &b.IsDeleted)
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&brand.ID,
+		&brand.Name,
+		&brand.Slug,
+		&brand.LogoURL,
+		&brand.IsActive,
+		&brand.IsDeleted,
+	)
+
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.New("brand not found")
+			return nil, domain.ErrBrandNotFound
 		}
-		return nil, fmt.Errorf("failed to get brand: %w", err)
+		return nil, fmt.Errorf("failed to get brand by ID: %w", err)
 	}
-	return b, nil
+
+	return brand, nil
 }
 
-// ===================== Product operations =====================
+func (r *CatalogRepository) UpdateBrand(ctx context.Context, brand *domain.Brand) (*domain.Brand, error) {
+	query := `
+		UPDATE brand
+		SET name = $1, slug = $2, logo_url = $3, is_active = $4
+		WHERE id = $5 AND is_deleted = false`
 
-func (r *CatalogRepository) CreateProduct(ctx context.Context, p *domain.Product, specs []domain.ProductSpec, opts []domain.ProductOptionType) (*domain.Product, error) {
+	tag, err := r.db.Exec(ctx, query,
+		brand.Name,
+		brand.Slug,
+		brand.LogoURL,
+		brand.IsActive,
+		brand.ID,
+	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
+		return nil, fmt.Errorf("failed to update brand: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return nil, domain.ErrBrandNotFound
+	}
+
+	return brand, nil
+}
+
+func (r *CatalogRepository) DeleteBrand(ctx context.Context, id int) error {
+	// Soft delete brand
+	query := `UPDATE brand SET is_deleted = true WHERE id = $1 AND is_deleted = false`
+	tag, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete brand: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return domain.ErrBrandNotFound
+	}
+
+	return nil
+}
+
+// --- Product & Specs & Options & Variants ---
+
+func (r *CatalogRepository) CreateProduct(ctx context.Context, input *domain.CreateProductInput) (*domain.Product, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback(ctx)
 
-	// Serialize specs_jsonb if present
-	var specsJSONBytes []byte
-	if p.SpecsJSONB != nil {
-		specsJSONBytes, err = json.Marshal(p.SpecsJSONB)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal specs_jsonb: %w", err)
-		}
-	}
-
 	// 1. Insert product
-	productQuery := `
+	prodQuery := `
 		INSERT INTO product (id, category_id, brand_id, name, slug, meta_title, meta_description, img_thumb, weight, low_stock_threshold, specs_jsonb, is_active, is_deleted, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, false, NOW(), NOW())
-		RETURNING created_at, updated_at`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, false, NOW(), NOW())`
 
-	err = tx.QueryRow(ctx, productQuery,
-		p.ID, p.CategoryID, p.BrandID, p.Name, p.Slug, p.MetaTitle, p.MetaDescription, p.ImgThumb, p.Weight, p.LowStockThreshold, specsJSONBytes,
-	).Scan(&p.CreatedAt, &p.UpdatedAt)
-
+	_, err = tx.Exec(ctx, prodQuery,
+		input.Product.ID,
+		input.Product.CategoryID,
+		input.Product.BrandID,
+		input.Product.Name,
+		input.Product.Slug,
+		input.Product.MetaTitle,
+		input.Product.MetaDescription,
+		input.Product.ImgThumb,
+		input.Product.Weight,
+		input.Product.LowStockThreshold,
+		input.Product.SpecsJSONB,
+	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
 		return nil, fmt.Errorf("failed to insert product: %w", err)
 	}
 
-	// 2. Insert specifications
+	// 2. Insert specs
 	specQuery := `
 		INSERT INTO product_spec (product_id, "group", key, value, unit, sort_order)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id`
-	for idx, spec := range specs {
-		err = tx.QueryRow(ctx, specQuery, p.ID, spec.Group, spec.Key, spec.Value, spec.Unit, spec.SortOrder).Scan(&specs[idx].ID)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+
+	for _, spec := range input.Specs {
+		_, err = tx.Exec(ctx, specQuery,
+			input.Product.ID,
+			spec.Group,
+			spec.Key,
+			spec.Value,
+			spec.Unit,
+			spec.SortOrder,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to insert spec %s: %w", spec.Key, err)
+			return nil, fmt.Errorf("failed to insert product spec: %w", err)
 		}
 	}
 
-	// 3. Insert option types
-	optQuery := `
+	// 3. Insert Option Types & Option Values, build mapping
+	// Map to store: OptionType.Name + ":" + OptionValue.Value -> OptionValue.ID
+	valueMap := make(map[string]int)
+
+	optTypeQuery := `
 		INSERT INTO product_option_type (product_id, name, sort_order)
 		VALUES ($1, $2, $3)
 		RETURNING id`
-	for idx, opt := range opts {
-		err = tx.QueryRow(ctx, optQuery, p.ID, opt.Name, opt.SortOrder).Scan(&opts[idx].ID)
+
+	optValQuery := `
+		INSERT INTO product_option_value (option_type_id, value, color_code, sort_order)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id`
+
+	for _, optType := range input.OptionTypes {
+		var optTypeID int
+		err = tx.QueryRow(ctx, optTypeQuery, input.Product.ID, optType.Name, optType.SortOrder).Scan(&optTypeID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to insert option type %s: %w", opt.Name, err)
+			return nil, fmt.Errorf("failed to insert option type: %w", err)
+		}
+
+		for _, optVal := range optType.Values {
+			var optValID int
+			err = tx.QueryRow(ctx, optValQuery, optTypeID, optVal.Value, optVal.ColorCode, optVal.SortOrder).Scan(&optValID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to insert option value: %w", err)
+			}
+			// Map value
+			key := fmt.Sprintf("%s:%s", optType.Name, optVal.Value)
+			valueMap[key] = optValID
+		}
+	}
+
+	// 4. Insert Variants and link Variant Options
+	variantQuery := `
+		INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active, is_deleted)
+		VALUES ($1, $2, $3, $4, $5, $6, true, false)
+		RETURNING id`
+
+	varOptionQuery := `
+		INSERT INTO product_variant_option (variant_id, option_value_id)
+		VALUES ($1, $2)`
+
+	for _, variant := range input.Variants {
+		var variantID int
+		err = tx.QueryRow(ctx, variantQuery,
+			input.Product.ID,
+			variant.Name,
+			variant.SKU,
+			variant.Price,
+			variant.PriceBase,
+			variant.Weight,
+		).Scan(&variantID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert variant: %w", err)
+		}
+
+		for _, optSel := range variant.Options {
+			// Find Value ID from option name and option value
+			key := fmt.Sprintf("%s:%s", optSel.OptionTypeName, optSel.Value)
+			valID, exists := valueMap[key]
+			if !exists {
+				return nil, fmt.Errorf("option value %s for type %s not found in mapping", optSel.Value, optSel.OptionTypeName)
+			}
+
+			_, err = tx.Exec(ctx, varOptionQuery, variantID, valID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to link variant option: %w", err)
+			}
 		}
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit product: %w", err)
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return p, nil
+	return input.Product, nil
 }
 
 func (r *CatalogRepository) GetProductByID(ctx context.Context, id string) (*domain.Product, error) {
-	p := &domain.Product{}
-	var specsJSONBytes []byte
-
+	prod := &domain.Product{}
 	query := `
 		SELECT id, category_id, brand_id, name, slug, meta_title, meta_description, img_thumb, weight, low_stock_threshold, specs_jsonb, is_active, is_deleted, created_at, updated_at
 		FROM product
 		WHERE id = $1 AND is_deleted = false`
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&p.ID, &p.CategoryID, &p.BrandID, &p.Name, &p.Slug, &p.MetaTitle, &p.MetaDescription, &p.ImgThumb, &p.Weight, &p.LowStockThreshold, &specsJSONBytes, &p.IsActive, &p.IsDeleted, &p.CreatedAt, &p.UpdatedAt,
+		&prod.ID,
+		&prod.CategoryID,
+		&prod.BrandID,
+		&prod.Name,
+		&prod.Slug,
+		&prod.MetaTitle,
+		&prod.MetaDescription,
+		&prod.ImgThumb,
+		&prod.Weight,
+		&prod.LowStockThreshold,
+		&prod.SpecsJSONB,
+		&prod.IsActive,
+		&prod.IsDeleted,
+		&prod.CreatedAt,
+		&prod.UpdatedAt,
 	)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			return nil, errors.New("product not found")
+			return nil, domain.ErrProductNotFound
 		}
-		return nil, fmt.Errorf("failed to get product: %w", err)
+		return nil, fmt.Errorf("failed to get product by ID: %w", err)
 	}
 
-	if len(specsJSONBytes) > 0 {
-		var temp any
-		if err := json.Unmarshal(specsJSONBytes, &temp); err == nil {
-			p.SpecsJSONB = &temp
-		}
-	}
-
-	return p, nil
+	return prod, nil
 }
 
-func (r *CatalogRepository) ListProducts(ctx context.Context, query string, categoryID *int, brandID *int, specsQuery map[string]interface{}, page, limit int) ([]*domain.Product, int64, error) {
-	offset := (page - 1) * limit
+func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
+	countQueryStr := `SELECT COUNT(*) FROM product WHERE is_deleted = false AND is_active = true`
+	selectQueryStr := `
+		SELECT id, category_id, brand_id, name, slug, meta_title, meta_description, img_thumb, weight, low_stock_threshold, specs_jsonb, is_active, is_deleted, created_at, updated_at
+		FROM product
+		WHERE is_deleted = false AND is_active = true`
 
-	// Dynamic query building
-	sqlQuery := `SELECT id, category_id, brand_id, name, slug, img_thumb, specs_jsonb, is_active, created_at, updated_at FROM product WHERE is_deleted = false AND is_active = true`
-	countQuery := `SELECT COUNT(*) FROM product WHERE is_deleted = false AND is_active = true`
-	args := make([]interface{}, 0)
-	argCount := 1
+	var conditions []string
+	var args []interface{}
+	placeholderIdx := 1
 
-	if query != "" {
-		sqlQuery += fmt.Sprintf(" AND (name ILIKE $%d OR meta_description ILIKE $%d)", argCount, argCount)
-		countQuery += fmt.Sprintf(" AND (name ILIKE $%d OR meta_description ILIKE $%d)", argCount, argCount)
-		args = append(args, "%"+query+"%")
-		argCount++
+	if query.CategoryID != nil {
+		conditions = append(conditions, fmt.Sprintf("category_id = $%d", placeholderIdx))
+		args = append(args, *query.CategoryID)
+		placeholderIdx++
 	}
 
-	if categoryID != nil {
-		sqlQuery += fmt.Sprintf(" AND category_id = $%d", argCount)
-		countQuery += fmt.Sprintf(" AND category_id = $%d", argCount)
-		args = append(args, *categoryID)
-		argCount++
+	if query.BrandID != nil {
+		conditions = append(conditions, fmt.Sprintf("brand_id = $%d", placeholderIdx))
+		args = append(args, *query.BrandID)
+		placeholderIdx++
 	}
 
-	if brandID != nil {
-		sqlQuery += fmt.Sprintf(" AND brand_id = $%d", argCount)
-		countQuery += fmt.Sprintf(" AND brand_id = $%d", argCount)
-		args = append(args, *brandID)
-		argCount++
+	if query.Query != "" {
+		conditions = append(conditions, fmt.Sprintf("(name ILIKE $%d OR slug ILIKE $%d OR id ILIKE $%d)", placeholderIdx, placeholderIdx, placeholderIdx))
+		args = append(args, "%"+query.Query+"%")
+		placeholderIdx++
 	}
 
-	if len(specsQuery) > 0 {
-		jsonBytes, err := json.Marshal(specsQuery)
-		if err == nil {
-			sqlQuery += fmt.Sprintf(" AND specs_jsonb @> $%d", argCount)
-			countQuery += fmt.Sprintf(" AND specs_jsonb @> $%d", argCount)
-			args = append(args, jsonBytes)
-			argCount++
-		}
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = " AND " + strings.Join(conditions, " AND ")
 	}
 
 	// 1. Get total count
-	var total int64
-	err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total)
+	var totalCount int
+	err := r.db.QueryRow(ctx, countQueryStr+whereClause, args...).Scan(&totalCount)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to count products: %w", err)
+		return nil, fmt.Errorf("failed to count products: %w", err)
 	}
 
-	// 2. Query actual list
-	sqlQuery += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argCount, argCount+1)
-	args = append(args, limit, offset)
+	// 2. Add Sort
+	sortCol := "created_at"
+	sortOrder := "DESC"
+	if query.Sort != "" {
+		switch query.Sort {
+		case "name_asc":
+			sortCol = "name"
+			sortOrder = "ASC"
+		case "name_desc":
+			sortCol = "name"
+			sortOrder = "DESC"
+		case "oldest":
+			sortCol = "created_at"
+			sortOrder = "ASC"
+		default:
+			sortCol = "created_at"
+			sortOrder = "DESC"
+		}
+	}
+	orderByClause := fmt.Sprintf(" ORDER BY %s %s", sortCol, sortOrder)
 
-	rows, err := r.db.Query(ctx, sqlQuery, args...)
+	// 3. Add Pagination
+	limit := query.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	offset := (query.Page - 1) * limit
+	if offset < 0 {
+		offset = 0
+	}
+
+	limitPlaceholder := placeholderIdx
+	placeholderIdx++
+	args = append(args, limit)
+
+	offsetPlaceholder := placeholderIdx
+	args = append(args, offset)
+
+	paginationClause := fmt.Sprintf(" LIMIT $%d OFFSET $%d", limitPlaceholder, offsetPlaceholder)
+
+	// 4. Query products
+	rows, err := r.db.Query(ctx, selectQueryStr+whereClause+orderByClause+paginationClause, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to list products: %w", err)
+		return nil, fmt.Errorf("failed to query products list: %w", err)
 	}
 	defer rows.Close()
 
 	products := make([]*domain.Product, 0)
 	for rows.Next() {
-		p := &domain.Product{}
-		var specsJSONBytes []byte
-		err := rows.Scan(&p.ID, &p.CategoryID, &p.BrandID, &p.Name, &p.Slug, &p.ImgThumb, &specsJSONBytes, &p.IsActive, &p.CreatedAt, &p.UpdatedAt)
+		prod := &domain.Product{}
+		err := rows.Scan(
+			&prod.ID,
+			&prod.CategoryID,
+			&prod.BrandID,
+			&prod.Name,
+			&prod.Slug,
+			&prod.MetaTitle,
+			&prod.MetaDescription,
+			&prod.ImgThumb,
+			&prod.Weight,
+			&prod.LowStockThreshold,
+			&prod.SpecsJSONB,
+			&prod.IsActive,
+			&prod.IsDeleted,
+			&prod.CreatedAt,
+			&prod.UpdatedAt,
+		)
 		if err != nil {
-			return nil, 0, fmt.Errorf("failed to scan product: %w", err)
+			return nil, fmt.Errorf("failed to scan product row: %w", err)
 		}
-		if len(specsJSONBytes) > 0 {
-			var temp any
-			if err := json.Unmarshal(specsJSONBytes, &temp); err == nil {
-				p.SpecsJSONB = &temp
-			}
-		}
-		products = append(products, p)
+		products = append(products, prod)
 	}
 
-	return products, total, nil
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("products list rows error: %w", err)
+	}
+
+	return &domain.ProductSearchResult{
+		Products:   products,
+		TotalCount: totalCount,
+		Page:       query.Page,
+		Limit:      limit,
+	}, nil
 }
 
-// ===================== Option & Variant operations =====================
+func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*domain.ProductDetailsResponse, error) {
+	// 1. Get Product along with Category & Brand Names
+	prod := &domain.Product{}
+	var brandName, categoryName string
 
-func (r *CatalogRepository) CreateOptionValues(ctx context.Context, optionTypeID int, vals []domain.ProductOptionValue) ([]domain.ProductOptionValue, error) {
-	tx, err := r.db.Begin(ctx)
+	prodQuery := `
+		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
+		       b.name as brand_name, c.name as category_name
+		FROM product p
+		JOIN brand b ON p.brand_id = b.id
+		JOIN category c ON p.category_id = c.id
+		WHERE (p.id = $1 OR p.slug = $1) AND p.is_deleted = false`
+
+	err := r.db.QueryRow(ctx, prodQuery, id).Scan(
+		&prod.ID,
+		&prod.CategoryID,
+		&prod.BrandID,
+		&prod.Name,
+		&prod.Slug,
+		&prod.MetaTitle,
+		&prod.MetaDescription,
+		&prod.ImgThumb,
+		&prod.Weight,
+		&prod.LowStockThreshold,
+		&prod.SpecsJSONB,
+		&prod.IsActive,
+		&prod.IsDeleted,
+		&prod.CreatedAt,
+		&prod.UpdatedAt,
+		&brandName,
+		&categoryName,
+	)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
-	}
-	defer tx.Rollback(ctx)
-
-	query := `
-		INSERT INTO product_option_value (option_type_id, value, color_code, sort_order)
-		VALUES ($1, $2, $3, $4)
-		RETURNING id`
-
-	for idx, val := range vals {
-		err = tx.QueryRow(ctx, query, optionTypeID, val.Value, val.ColorCode, val.SortOrder).Scan(&vals[idx].ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert option value %s: %w", val.Value, err)
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrProductNotFound
 		}
-		vals[idx].OptionTypeID = optionTypeID
+		return nil, fmt.Errorf("failed to query product: %w", err)
 	}
 
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit option values: %w", err)
-	}
-
-	return vals, nil
-}
-
-func (r *CatalogRepository) CreateVariant(ctx context.Context, v *domain.ProductVariant, optionValueIDs []int, images []domain.ProductImage) (*domain.ProductVariant, error) {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
-	}
-	defer tx.Rollback(ctx)
-
-	// 1. Insert product_variant
-	variantQuery := `
-		INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active, is_deleted)
-		VALUES ($1, $2, $3, $4, $5, $6, true, false)
-		RETURNING id`
-	err = tx.QueryRow(ctx, variantQuery, v.ProductID, v.Name, v.SKU, v.Price, v.PriceBase, v.Weight).Scan(&v.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to insert variant: %w", err)
-	}
-
-	// 2. Link variants options
-	linkQuery := `
-		INSERT INTO product_variant_option (variant_id, option_value_id)
-		VALUES ($1, $2)`
-	for _, valID := range optionValueIDs {
-		_, err = tx.Exec(ctx, linkQuery, v.ID, valID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to link variant option %d: %w", valID, err)
-		}
-	}
-
-	// 3. Insert images
-	imgQuery := `
-		INSERT INTO product_image (product_id, variant_id, url, alt_text, sort_order, is_thumbnail)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id`
-	for idx, img := range images {
-		err = tx.QueryRow(ctx, imgQuery, v.ProductID, v.ID, img.URL, img.AltText, img.SortOrder, img.IsThumbnail).Scan(&images[idx].ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert variant image: %w", err)
-		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("failed to commit variant: %w", err)
-	}
-
-	return v, nil
-}
-
-// ===================== Aggregate Details loaders =====================
-
-func (r *CatalogRepository) GetSpecs(ctx context.Context, productID string) ([]domain.ProductSpec, error) {
-	query := `
+	// 2. Get Specs
+	specsQuery := `
 		SELECT id, product_id, "group", key, value, unit, sort_order
 		FROM product_spec
 		WHERE product_id = $1
 		ORDER BY sort_order ASC, id ASC`
 
-	rows, err := r.db.Query(ctx, query, productID)
+	specsRows, err := r.db.Query(ctx, specsQuery, prod.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get product specs: %w", err)
+		return nil, fmt.Errorf("failed to query specs: %w", err)
 	}
-	defer rows.Close()
+	defer specsRows.Close()
 
-	specs := make([]domain.ProductSpec, 0)
-	for rows.Next() {
-		s := domain.ProductSpec{}
-		err := rows.Scan(&s.ID, &s.ProductID, &s.Group, &s.Key, &s.Value, &s.Unit, &s.SortOrder)
+	specs := make([]*domain.ProductSpec, 0)
+	for specsRows.Next() {
+		spec := &domain.ProductSpec{}
+		err := specsRows.Scan(&spec.ID, &spec.ProductID, &spec.Group, &spec.Key, &spec.Value, &spec.Unit, &spec.SortOrder)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan spec: %w", err)
 		}
-		specs = append(specs, s)
+		specs = append(specs, spec)
 	}
 
-	return specs, nil
-}
-
-func (r *CatalogRepository) GetOptionTypes(ctx context.Context, productID string) ([]domain.OptionTypeDetail, error) {
-	query := `
+	// 3. Get Option Types
+	optTypesQuery := `
 		SELECT id, product_id, name, sort_order
 		FROM product_option_type
 		WHERE product_id = $1
 		ORDER BY sort_order ASC, id ASC`
 
-	rows, err := r.db.Query(ctx, query, productID)
+	optTypesRows, err := r.db.Query(ctx, optTypesQuery, prod.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get option types: %w", err)
+		return nil, fmt.Errorf("failed to query option types: %w", err)
 	}
-	defer rows.Close()
+	defer optTypesRows.Close()
 
-	types := make([]domain.OptionTypeDetail, 0)
-	for rows.Next() {
-		t := domain.OptionTypeDetail{}
-		err := rows.Scan(&t.ID, &t.ProductID, &t.Name, &t.SortOrder)
+	optionTypes := make([]*domain.ProductOptionType, 0)
+	optionTypesMap := make(map[int]*domain.ProductOptionType)
+
+	for optTypesRows.Next() {
+		ot := &domain.ProductOptionType{}
+		err := optTypesRows.Scan(&ot.ID, &ot.ProductID, &ot.Name, &ot.SortOrder)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan option type: %w", err)
 		}
-		types = append(types, t)
+		ot.Values = make([]domain.ProductOptionValue, 0)
+		optionTypes = append(optionTypes, ot)
+		optionTypesMap[ot.ID] = ot
 	}
 
-	// Load values for each type
-	valQuery := `
-		SELECT id, option_type_id, value, color_code, sort_order
-		FROM product_option_value
-		WHERE option_type_id = $1
-		ORDER BY sort_order ASC, id ASC`
+	// 4. Get Option Values
+	optValsQuery := `
+		SELECT pov.id, pov.option_type_id, pov.value, pov.color_code, pov.sort_order
+		FROM product_option_value pov
+		JOIN product_option_type pot ON pov.option_type_id = pot.id
+		WHERE pot.product_id = $1
+		ORDER BY pov.sort_order ASC, pov.id ASC`
 
-	for idx, t := range types {
-		valRows, err := r.db.Query(ctx, valQuery, t.ID)
+	optValsRows, err := r.db.Query(ctx, optValsQuery, prod.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query option values: %w", err)
+	}
+	defer optValsRows.Close()
+
+	for optValsRows.Next() {
+		val := domain.ProductOptionValue{}
+		err := optValsRows.Scan(&val.ID, &val.OptionTypeID, &val.Value, &val.ColorCode, &val.SortOrder)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get option values: %w", err)
+			return nil, fmt.Errorf("failed to scan option value: %w", err)
 		}
-		
-		vals := make([]domain.ProductOptionValue, 0)
-		for valRows.Next() {
-			v := domain.ProductOptionValue{}
-			err := valRows.Scan(&v.ID, &v.OptionTypeID, &v.Value, &v.ColorCode, &v.SortOrder)
-			if err != nil {
-				valRows.Close()
-				return nil, fmt.Errorf("failed to scan option value: %w", err)
-			}
-			vals = append(vals, v)
+		if ot, exists := optionTypesMap[val.OptionTypeID]; exists {
+			ot.Values = append(ot.Values, val)
 		}
-		valRows.Close()
-		types[idx].Values = vals
 	}
 
-	return types, nil
-}
-
-func (r *CatalogRepository) GetVariants(ctx context.Context, productID string) ([]domain.VariantDetail, error) {
-	query := `
+	// 5. Get Variants
+	variantsQuery := `
 		SELECT id, product_id, name, sku, price, price_base, weight, is_active, is_deleted
 		FROM product_variant
-		WHERE product_id = $1 AND is_deleted = false`
+		WHERE product_id = $1 AND is_deleted = false
+		ORDER BY id ASC`
 
-	rows, err := r.db.Query(ctx, query, productID)
+	variantsRows, err := r.db.Query(ctx, variantsQuery, prod.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get variants: %w", err)
+		return nil, fmt.Errorf("failed to query variants: %w", err)
 	}
-	defer rows.Close()
+	defer variantsRows.Close()
 
-	variants := make([]domain.VariantDetail, 0)
-	for rows.Next() {
-		v := domain.VariantDetail{}
-		err := rows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.Price, &v.PriceBase, &v.Weight, &v.IsActive, &v.IsDeleted)
+	variants := make([]*domain.ProductVariant, 0)
+	variantsMap := make(map[int]*domain.ProductVariant)
+
+	for variantsRows.Next() {
+		v := &domain.ProductVariant{}
+		err := variantsRows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.Price, &v.PriceBase, &v.Weight, &v.IsActive, &v.IsDeleted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan variant: %w", err)
 		}
+		v.Options = make([]domain.VariantOption, 0)
 		variants = append(variants, v)
+		variantsMap[v.ID] = v
 	}
 
-	// Load linked options for each variant
-	optQuery := `
-		SELECT pov.id, pov.option_type_id, pov.value, pov.color_code, pov.sort_order
-		FROM product_option_value pov
-		JOIN product_variant_option pvo ON pov.id = pvo.option_value_id
-		WHERE pvo.variant_id = $1`
+	// 6. Get Variant Options Map
+	varOptsQuery := `
+		SELECT pvo.variant_id, pvo.option_value_id, pov.value, pov.color_code, pot.id as option_type_id, pot.name as option_type_name
+		FROM product_variant_option pvo
+		JOIN product_option_value pov ON pvo.option_value_id = pov.id
+		JOIN product_option_type pot ON pov.option_type_id = pot.id
+		JOIN product_variant pv ON pvo.variant_id = pv.id
+		WHERE pv.product_id = $1 AND pv.is_deleted = false`
 
-	for idx, v := range variants {
-		optRows, err := r.db.Query(ctx, optQuery, v.ID)
+	varOptsRows, err := r.db.Query(ctx, varOptsQuery, prod.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query variant option mappings: %w", err)
+	}
+	defer varOptsRows.Close()
+
+	for varOptsRows.Next() {
+		var variantID, optValID, optTypeID int
+		var optVal, optTypeName string
+		var colorCode *string
+
+		err := varOptsRows.Scan(&variantID, &optValID, &optVal, &colorCode, &optTypeID, &optTypeName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get variant options: %w", err)
+			return nil, fmt.Errorf("failed to scan variant option map row: %w", err)
 		}
 
-		opts := make([]domain.ProductOptionValue, 0)
-		for optRows.Next() {
-			o := domain.ProductOptionValue{}
-			err := optRows.Scan(&o.ID, &o.OptionTypeID, &o.Value, &o.ColorCode, &o.SortOrder)
-			if err != nil {
-				optRows.Close()
-				return nil, fmt.Errorf("failed to scan variant option value: %w", err)
-			}
-			opts = append(opts, o)
+		if v, exists := variantsMap[variantID]; exists {
+			v.Options = append(v.Options, domain.VariantOption{
+				OptionTypeID:   optTypeID,
+				OptionTypeName: optTypeName,
+				ValueID:        optValID,
+				Value:          optVal,
+				ColorCode:      colorCode,
+			})
 		}
-		optRows.Close()
-		variants[idx].Options = opts
 	}
 
-	return variants, nil
-}
-
-func (r *CatalogRepository) GetImages(ctx context.Context, productID string) ([]domain.ProductImage, error) {
-	query := `
+	// 7. Get Images
+	imagesQuery := `
 		SELECT id, product_id, variant_id, url, alt_text, sort_order, is_thumbnail
 		FROM product_image
 		WHERE product_id = $1
 		ORDER BY sort_order ASC, id ASC`
 
-	rows, err := r.db.Query(ctx, query, productID)
+	imagesRows, err := r.db.Query(ctx, imagesQuery, prod.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get product images: %w", err)
+		return nil, fmt.Errorf("failed to query images: %w", err)
 	}
-	defer rows.Close()
+	defer imagesRows.Close()
 
-	images := make([]domain.ProductImage, 0)
-	for rows.Next() {
-		img := domain.ProductImage{}
-		err := rows.Scan(&img.ID, &img.ProductID, &img.VariantID, &img.URL, &img.AltText, &img.SortOrder, &img.IsThumbnail)
+	images := make([]*domain.ProductImage, 0)
+	for imagesRows.Next() {
+		img := &domain.ProductImage{}
+		err := imagesRows.Scan(&img.ID, &img.ProductID, &img.VariantID, &img.URL, &img.AltText, &img.SortOrder, &img.IsThumbnail)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan image: %w", err)
 		}
 		images = append(images, img)
 	}
 
-	return images, nil
+	return &domain.ProductDetailsResponse{
+		Product:      prod,
+		BrandName:    brandName,
+		CategoryName: categoryName,
+		Specs:        specs,
+		OptionTypes:  optionTypes,
+		Variants:     variants,
+		Images:       images,
+	}, nil
+}
+
+func (r *CatalogRepository) UpdateProduct(ctx context.Context, prod *domain.Product, specs []*domain.ProductSpec) (*domain.Product, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Update product
+	query := `
+		UPDATE product
+		SET category_id = $1, brand_id = $2, name = $3, slug = $4, meta_title = $5, meta_description = $6, img_thumb = $7, weight = $8, low_stock_threshold = $9, specs_jsonb = $10, updated_at = NOW()
+		WHERE id = $11 AND is_deleted = false`
+
+	tag, err := tx.Exec(ctx, query,
+		prod.CategoryID,
+		prod.BrandID,
+		prod.Name,
+		prod.Slug,
+		prod.MetaTitle,
+		prod.MetaDescription,
+		prod.ImgThumb,
+		prod.Weight,
+		prod.LowStockThreshold,
+		prod.SpecsJSONB,
+		prod.ID,
+	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrDuplicateSlug
+		}
+		return nil, fmt.Errorf("failed to update product row: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return nil, domain.ErrProductNotFound
+	}
+
+	// 2. Delete existing specs
+	_, err = tx.Exec(ctx, `DELETE FROM product_spec WHERE product_id = $1`, prod.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clear old product specs: %w", err)
+	}
+
+	// 3. Insert new specs
+	specQuery := `
+		INSERT INTO product_spec (product_id, "group", key, value, unit, sort_order)
+		VALUES ($1, $2, $3, $4, $5, $6)`
+
+	for _, spec := range specs {
+		_, err = tx.Exec(ctx, specQuery,
+			prod.ID,
+			spec.Group,
+			spec.Key,
+			spec.Value,
+			spec.Unit,
+			spec.SortOrder,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert product spec during update: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return prod, nil
+}
+
+func (r *CatalogRepository) DeleteProduct(ctx context.Context, id string) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Soft delete product
+	prodQuery := `UPDATE product SET is_deleted = true, updated_at = NOW() WHERE id = $1 AND is_deleted = false`
+	tag, err := tx.Exec(ctx, prodQuery, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete product: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return domain.ErrProductNotFound
+	}
+
+	// 2. Soft delete variants of product
+	_, err = tx.Exec(ctx, `UPDATE product_variant SET is_deleted = true WHERE product_id = $1 AND is_deleted = false`, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete variants: %w", err)
+	}
+
+	return tx.Commit(ctx)
+}
+
+// --- Option Types & Values ---
+
+func (r *CatalogRepository) AddOptionValues(ctx context.Context, productID string, optionName string, values []*domain.ProductOptionValue) ([]*domain.ProductOptionValue, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Find option type
+	var optTypeID int
+	findQuery := `SELECT id FROM product_option_type WHERE product_id = $1 AND name = $2`
+	err = tx.QueryRow(ctx, findQuery, productID, optionName).Scan(&optTypeID)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			// Create new option type
+			insertQuery := `
+				INSERT INTO product_option_type (product_id, name, sort_order)
+				VALUES ($1, $2, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM product_option_type WHERE product_id = $1))
+				RETURNING id`
+			err = tx.QueryRow(ctx, insertQuery, productID, optionName).Scan(&optTypeID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create product option type: %w", err)
+			}
+		} else {
+			return nil, fmt.Errorf("failed to query product option type: %w", err)
+		}
+	}
+
+	// Insert option values
+	insertValQuery := `
+		INSERT INTO product_option_value (option_type_id, value, color_code, sort_order)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id`
+
+	for _, val := range values {
+		val.OptionTypeID = optTypeID
+		err = tx.QueryRow(ctx, insertValQuery, optTypeID, val.Value, val.ColorCode, val.SortOrder).Scan(&val.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert option value: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return values, nil
+}
+
+// --- Variant ---
+
+func (r *CatalogRepository) CreateVariant(ctx context.Context, variant *domain.ProductVariant, optionValueIDs []int) (*domain.ProductVariant, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Insert Variant
+	query := `
+		INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active, is_deleted)
+		VALUES ($1, $2, $3, $4, $5, $6, true, false)
+		RETURNING id`
+
+	err = tx.QueryRow(ctx, query,
+		variant.ProductID,
+		variant.Name,
+		variant.SKU,
+		variant.Price,
+		variant.PriceBase,
+		variant.Weight,
+	).Scan(&variant.ID)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, errors.New("sku already in use")
+		}
+		return nil, fmt.Errorf("failed to create variant: %w", err)
+	}
+
+	// 2. Link options
+	linkQuery := `INSERT INTO product_variant_option (variant_id, option_value_id) VALUES ($1, $2)`
+	for _, valID := range optionValueIDs {
+		_, err = tx.Exec(ctx, linkQuery, variant.ID, valID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to link variant to option value ID %d: %w", valID, err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return variant, nil
 }
