@@ -37,6 +37,10 @@ type RegisterRequest struct {
 	Password string `json:"password" validate:"required,min=6"`
 }
 
+type GoogleLoginRequest struct {
+	Credential string `json:"credential" validate:"required"`
+}
+
 type UserRepository interface {
 	Create(ctx context.Context, u *User) (*User, error)
 	GetByID(ctx context.Context, id int) (*User, error)
@@ -47,6 +51,7 @@ type UserRepository interface {
 type UserUsecase interface {
 	Register(ctx context.Context, req *RegisterRequest) (*User, error)
 	Authenticate(ctx context.Context, email, password string) (*User, string, error)
+	LoginOrRegisterWithGoogle(ctx context.Context, idToken string) (*User, string, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	LockUser(ctx context.Context, id int, isLock bool) error
 }

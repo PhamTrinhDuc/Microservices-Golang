@@ -14,6 +14,7 @@ func SetupUserRoutes(router *gin.RouterGroup, uc *controller.UserController, aut
 	{
 		auth.POST("/register", uc.Register)
 		auth.POST("/login", uc.Login)
+		auth.POST("/google", uc.GoogleAuth)
 	}
 
 	// Protected user profiles

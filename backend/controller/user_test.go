@@ -16,10 +16,11 @@ import (
 )
 
 type mockUserUsecase struct {
-	RegisterFunc     func(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error)
-	AuthenticateFunc func(ctx context.Context, email, password string) (*domain.User, string, error)
-	GetByIDFunc      func(ctx context.Context, id int) (*domain.User, error)
-	LockUserFunc     func(ctx context.Context, id int, isLock bool) error
+	RegisterFunc                  func(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error)
+	AuthenticateFunc              func(ctx context.Context, email, password string) (*domain.User, string, error)
+	LoginOrRegisterWithGoogleFunc func(ctx context.Context, idToken string) (*domain.User, string, error)
+	GetByIDFunc                   func(ctx context.Context, id int) (*domain.User, error)
+	LockUserFunc                  func(ctx context.Context, id int, isLock bool) error
 }
 
 func (m *mockUserUsecase) Register(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error) {
@@ -28,6 +29,10 @@ func (m *mockUserUsecase) Register(ctx context.Context, req *domain.RegisterRequ
 
 func (m *mockUserUsecase) Authenticate(ctx context.Context, email, password string) (*domain.User, string, error) {
 	return m.AuthenticateFunc(ctx, email, password)
+}
+
+func (m *mockUserUsecase) LoginOrRegisterWithGoogle(ctx context.Context, idToken string) (*domain.User, string, error) {
+	return m.LoginOrRegisterWithGoogleFunc(ctx, idToken)
 }
 
 func (m *mockUserUsecase) GetByID(ctx context.Context, id int) (*domain.User, error) {
@@ -75,6 +80,34 @@ func TestUserController_Register(t *testing.T) {
 				Password: "password123",
 			},
 			setupMock:      func(m *mockUserUsecase) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "validation error - weak password",
+			body: domain.RegisterRequest{
+				FullName: "John Doe",
+				Email:    "john@example.com",
+				Password: "weak",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.RegisterFunc = func(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error) {
+					return nil, domain.ErrWeakPassword
+				}
+			},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "validation error - invalid email format custom check",
+			body: domain.RegisterRequest{
+				FullName: "John Doe",
+				Email:    "john@com",
+				Password: "password123",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.RegisterFunc = func(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error) {
+					return nil, domain.ErrInvalidEmail
+				}
+			},
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
@@ -363,3 +396,107 @@ func TestUserController_LockUser(t *testing.T) {
 		})
 	}
 }
+
+func TestUserController_GoogleAuth(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	tests := []struct {
+		name           string
+		body           interface{}
+		setupMock      func(m *mockUserUsecase)
+		expectedStatus int
+	}{
+		{
+			name: "success google auth - existing user login",
+			body: domain.GoogleLoginRequest{
+				Credential: "mock-valid-token",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.LoginOrRegisterWithGoogleFunc = func(ctx context.Context, idToken string) (*domain.User, string, error) {
+					return &domain.User{ID: 1, Email: "google-user@example.com"}, "mock-token", nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name: "success google auth - new user registration",
+			body: domain.GoogleLoginRequest{
+				Credential: "mock-new-user-token",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.LoginOrRegisterWithGoogleFunc = func(ctx context.Context, idToken string) (*domain.User, string, error) {
+					return &domain.User{ID: 2, Email: "new-user@example.com"}, "mock-token", nil
+				}
+			},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "invalid json body",
+			body:           "invalid-json",
+			setupMock:      func(m *mockUserUsecase) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "validation error - empty credential",
+			body: domain.GoogleLoginRequest{
+				Credential: "",
+			},
+			setupMock:      func(m *mockUserUsecase) {},
+			expectedStatus: http.StatusBadRequest,
+		},
+		{
+			name: "google token verification failed",
+			body: domain.GoogleLoginRequest{
+				Credential: "mock-invalid-token",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.LoginOrRegisterWithGoogleFunc = func(ctx context.Context, idToken string) (*domain.User, string, error) {
+					return nil, "", domain.ErrGoogleLoginFailed
+				}
+			},
+			expectedStatus: http.StatusUnauthorized,
+		},
+		{
+			name: "account is locked",
+			body: domain.GoogleLoginRequest{
+				Credential: "mock-locked-token",
+			},
+			setupMock: func(m *mockUserUsecase) {
+				m.LoginOrRegisterWithGoogleFunc = func(ctx context.Context, idToken string) (*domain.User, string, error) {
+					return nil, "", domain.ErrLocked
+				}
+			},
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			is := assert.New(t)
+			mockUC := &mockUserUsecase{}
+			tt.setupMock(mockUC)
+
+			ctl := controller.NewUserController(mockUC)
+			r := gin.New()
+			r.POST("/google", ctl.GoogleAuth)
+
+			var jsonBytes []byte
+			var err error
+			if strBody, ok := tt.body.(string); ok {
+				jsonBytes = []byte(strBody)
+			} else {
+				jsonBytes, err = json.Marshal(tt.body)
+				is.NoError(err)
+			}
+
+			req := httptest.NewRequest(http.MethodPost, "/google", bytes.NewReader(jsonBytes))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+
+			r.ServeHTTP(w, req)
+
+			is.Equal(tt.expectedStatus, w.Code)
+		})
+	}
+}
+

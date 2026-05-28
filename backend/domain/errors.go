@@ -4,12 +4,15 @@ import "errors"
 
 var (
 	// User
-	ErrUserNotFound    = errors.New("user not found")
-	ErrEmailTaken      = errors.New("email already in use")
-	ErrInvalidPassword = errors.New("invalid credentials")
-	ErrUnauthorized    = errors.New("unauthorized access")
-	ErrAddressNotFound = errors.New("address not found")
-	ErrLocked          = errors.New("account is locked")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrEmailTaken        = errors.New("email already in use")
+	ErrInvalidPassword   = errors.New("invalid credentials")
+	ErrUnauthorized      = errors.New("unauthorized access")
+	ErrAddressNotFound   = errors.New("address not found")
+	ErrLocked            = errors.New("account is locked")
+	ErrWeakPassword      = errors.New("password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters")
+	ErrInvalidEmail      = errors.New("invalid email address format")
+	ErrGoogleLoginFailed = errors.New("google authentication failed")
 	// Catalog
 	ErrCategoryNotFound      = errors.New("category not found")
 	ErrBrandNotFound         = errors.New("brand not found")

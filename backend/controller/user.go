@@ -42,6 +42,10 @@ func (uc *UserController) Register(ctx *gin.Context) {
 			ctx.JSON(http.StatusConflict, utils.HTTPResponse{Error: err.Error()})
 			return
 		}
+		if errors.Is(err, domain.ErrWeakPassword) || errors.Is(err, domain.ErrInvalidEmail) {
+			utils.RespondBadRequest(ctx, err.Error())
+			return
+		}
 		utils.RespondInternalError(ctx, err.Error())
 		return
 	}
@@ -70,6 +74,39 @@ func (uc *UserController) Login(ctx *gin.Context) {
 		}
 		if errors.Is(err, domain.ErrLocked) {
 			utils.RespondForbidden(ctx, err.Error())
+			return
+		}
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, domain.LoginResponse{
+		User:  user,
+		Token: token,
+	})
+}
+
+// GoogleAuth handles POST /auth/google.
+func (uc *UserController) GoogleAuth(ctx *gin.Context) {
+	var req domain.GoogleLoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	if err := uc.validate.Struct(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	user, token, err := uc.useCase.LoginOrRegisterWithGoogle(ctx.Request.Context(), req.Credential)
+	if err != nil {
+		if errors.Is(err, domain.ErrLocked) {
+			utils.RespondForbidden(ctx, err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrGoogleLoginFailed) {
+			utils.RespondUnauthorized(ctx, err.Error())
 			return
 		}
 		utils.RespondInternalError(ctx, err.Error())
