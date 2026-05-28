@@ -16,7 +16,7 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = tokenManager.getToken()
   if (token) {
-    config.headers.Authorization = `JWT ${token}`
+    config.headers.Authorization = 'Bearer ' + token
   }
   return config
 })

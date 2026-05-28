@@ -1,4 +1,5 @@
 const TOKEN_KEY = 'auth_token'
+const EXPIRY_BUFFER_SECONDS = 30
 
 const decodePayload = (token: string): { exp?: number } | null => {
   try {
@@ -35,7 +36,7 @@ export const tokenManager = {
       return true
     }
 
-    return payload.exp <= Math.floor(Date.now() / 1000)
+    return payload.exp <= Math.floor(Date.now() / 1000) + EXPIRY_BUFFER_SECONDS
   },
   isAuthenticated: (): boolean => {
     const token = localStorage.getItem(TOKEN_KEY)
