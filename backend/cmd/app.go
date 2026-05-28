@@ -26,27 +26,6 @@ const (
 	defaultDBPort = 5433
 )
 
-type Config struct {
-	Port     string
-	Database bootstrap.DBConfig
-}
-
-func loadConfig() Config {
-	return Config{
-		Port: utils.GetEnvString("PORT", defaultPort),
-		Database: bootstrap.DBConfig{
-			Host:     utils.GetEnvString("DB_HOST", defaultDBHost),
-			Port:     utils.GetEnvInt("DB_PORT", defaultDBPort),
-			User:     utils.GetEnvString("DB_USER", "jiyuu_user"),
-			Password: utils.GetEnvString("DB_PASSWORD", "jiyuu_password"),
-			DBName:   utils.GetEnvString("DB_NAME", "ecommerce_db"),
-			SSLMode:  utils.GetEnvString("DB_SSLMODE", "disable"),
-			MaxConns: int32(utils.GetEnvInt("DB_MAX_CONNS", 25)),
-			MinConns: int32(utils.GetEnvInt("DB_MIN_CONNS", 5)),
-		},
-	}
-}
-
 func main() {
 	// Load godotenv first
 	if err := godotenv.Load(); err != nil {
@@ -57,10 +36,8 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	cfg := loadConfig()
-
 	// 1. Initialize database
-	db, err := bootstrap.NewDB(ctx, cfg.Database)
+	db, err := bootstrap.NewDB(ctx)
 	if err != nil {
 		log.Fatalf("Database connection failed: %v", err)
 	}
@@ -106,14 +83,14 @@ func main() {
 	route.SetupOrderRoutes(v1, container.OrderCtl, authMiddleware)
 
 	// 5. Start Server
-	serverPort := cfg.Port
+	serverPort := utils.GetEnvString("BACKEND_PORT", defaultPort)
 	log.Printf("Starting HTTP server on port %s...", serverPort)
-	
+
 	// Convert port string to int to pass to Run
 	portInt, err := strconv.Atoi(serverPort)
 	if err != nil {
 		portInt = 8082
 	}
-	
+
 	r.Run(":" + strconv.Itoa(portInt))
 }
