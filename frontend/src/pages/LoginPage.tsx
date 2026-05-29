@@ -6,7 +6,7 @@ import { validateEmail, validatePassword } from '../utils/validation'
 
 const LoginPage = () => {
   const navigate = useNavigate()
-  const { login, isAuthenticated, loading, error, clearError, googleAuth, googleLoading } = useAuth()
+  const { login, isAuthenticated, loading, error, clearError, googleAuth } = useAuth()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -48,53 +48,66 @@ const LoginPage = () => {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-10">
-      <form className="w-full rounded-lg border bg-white p-6 shadow-sm" onSubmit={handleSubmit}>
-        <h1 className="mb-6 text-center text-2xl font-bold text-gray-900">Login</h1>
+    <div className="bg-mesh flex-1 flex items-center justify-center py-16 px-6">
+      <form className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-8 shadow-premium animate-fade-in-up" onSubmit={handleSubmit}>
+        
+        {/* Title Header */}
+        <h1 className="text-2xl font-extrabold text-slate-800 text-center tracking-tight">Chào mừng quay lại</h1>
+        <p className="text-xs text-slate-500 text-center mt-1.5 mb-6">Đăng nhập vào tài khoản Jiyuu Store của bạn</p>
 
-        <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="mb-1 w-full rounded border px-3 py-2"
-          autoComplete="email"
-        />
-        {emailError && <p className="mb-3 text-sm text-red-600">{emailError}</p>}
+        {/* Email Field */}
+        <div className="mb-4">
+          <label htmlFor="email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
+            Địa chỉ Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm transition-all focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            autoComplete="email"
+            placeholder="name@example.com"
+          />
+          {emailError && <p className="mt-1 text-xs font-semibold text-red-500">{emailError}</p>}
+        </div>
 
-        <label htmlFor="password" className="mb-1 block text-sm font-medium text-gray-700">
-          Password
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="mb-1 w-full rounded border px-3 py-2"
-          autoComplete="current-password"
-        />
-        {passwordError && <p className="mb-3 text-sm text-red-600">{passwordError}</p>}
+        {/* Password Field */}
+        <div className="mb-4">
+          <label htmlFor="password" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
+            Mật khẩu
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-sm transition-all focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+            autoComplete="current-password"
+            placeholder="••••••••"
+          />
+          {passwordError && <p className="mt-1 text-xs font-semibold text-red-500">{passwordError}</p>}
+        </div>
 
-        {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="mb-4 text-xs font-bold text-red-500 text-center">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-gray-900 px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl bg-slate-950 py-3 text-xs font-extrabold tracking-wider uppercase text-white shadow-md shadow-slate-950/10 transition-all hover:bg-brand-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
         </button>
 
-        <div className="my-4 flex items-center">
-          <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-2 text-sm text-gray-500">Or</span>
-          <div className="flex-1 border-t border-gray-300"></div>
+        {/* Divider */}
+        <div className="my-5 flex items-center">
+          <div className="flex-1 border-t border-slate-100"></div>
+          <span className="px-3 text-xs font-bold uppercase tracking-widest text-slate-400">Hoặc</span>
+          <div className="flex-1 border-t border-slate-100"></div>
         </div>
 
-        <div className="mb-4 flex justify-center">
+        {/* Google Authentication */}
+        <div className="mb-5 flex justify-center">
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => clearError()}
@@ -102,14 +115,16 @@ const LoginPage = () => {
           />
         </div>
 
-        <p className="text-center text-sm text-gray-600">
-          No account?{' '}
-          <Link to="/register" className="font-medium text-gray-900">
-            Register
+        {/* Footer Navigation link */}
+        <p className="text-center text-xs text-slate-500">
+          Chưa có tài khoản?{' '}
+          <Link to="/register" className="font-bold text-brand-600 hover:text-brand-700 transition-colors">
+            Đăng ký ngay
           </Link>
         </p>
+
       </form>
-    </section>
+    </div>
   )
 }
 
