@@ -15,7 +15,7 @@ export const authAPI = {
     return response.data
   },
   getProfile: async (): Promise<User> => {
-    const response = await api.get<User>('/auth/profile')
+    const response = await api.get<User>('/profile')
     return response.data
   },
 }
