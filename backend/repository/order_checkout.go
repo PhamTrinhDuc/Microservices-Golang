@@ -649,3 +649,15 @@ func (r *OrderRepository) DeleteVoucherUsage(ctx context.Context, voucherID int,
 	}
 	return nil
 }
+
+func (r *OrderRepository) CountUserVoucherUsages(ctx context.Context, voucherID int, userID int) (int, error) {
+	executor := r.getExecutor(ctx)
+	query := `SELECT COUNT(*) FROM voucher_usages WHERE voucher_id = $1 AND user_id = $2`
+	var count int
+	err := executor.QueryRow(ctx, query, voucherID, userID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count user voucher usages: %w", err)
+	}
+	return count, nil
+}
+

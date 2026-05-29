@@ -149,6 +149,7 @@ type OrderRepository interface {
 	RecordVoucherUsage(ctx context.Context, voucherID int, userID int, orderID int) error
 	DeleteVoucherUsage(ctx context.Context, voucherID int, userID int, orderID int) error
 	LockVoucherByID(ctx context.Context, voucherID int) (*Voucher, error)
+	CountUserVoucherUsages(ctx context.Context, voucherID int, userID int) (int, error)
 }
 
 type OrderUsecase interface {

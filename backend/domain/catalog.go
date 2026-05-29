@@ -40,6 +40,10 @@ type Product struct {
 	SpecsJSONB        interface{} `json:"specs_jsonb,omitempty" db:"specs_jsonb"`
 	IsActive          bool        `json:"is_active" db:"is_active"`
 	IsDeleted         bool        `json:"is_deleted" db:"is_deleted"`
+	Price             float64     `json:"price"`
+	DiscountPrice     *float64    `json:"discount_price"`
+	DiscountPercent   int         `json:"discount_percent"`
+	Stock             int         `json:"stock"`
 	CreatedAt         time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time   `json:"updated_at" db:"updated_at"`
 }

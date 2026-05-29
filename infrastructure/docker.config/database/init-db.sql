@@ -247,7 +247,7 @@ CREATE TABLE inventory_log (
     qty_after INTEGER NOT NULL,       -- snapshot sau thay đổi
     reason VARCHAR(100) NOT NULL,     -- "order_confirmed", "order_cancelled", "import", "manual_adjust"
     ref_id VARCHAR(100),              -- order_id hoặc invoice_id tương ứng
-    created_by INTEGER NOT NULL REFERENCES users(id),
+    created_by INTEGER REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
