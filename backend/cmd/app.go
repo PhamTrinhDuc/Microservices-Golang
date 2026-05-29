@@ -60,6 +60,9 @@ func main() {
 	// 3. Setup Gin Engine
 	r := gin.Default()
 
+	// Đăng ký CORS middleware
+	r.Use(middleware.CORSMiddleware())
+
 	// Request logging middleware
 	r.Use(func(c *gin.Context) {
 		start := time.Now()

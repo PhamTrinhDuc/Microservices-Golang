@@ -141,6 +141,15 @@ func (u *OrderUsecase) CheckoutOrder(ctx context.Context, userID int, req *domai
 				return domain.ErrVoucherLimitReached
 			}
 
+			// Validate user usage limit
+			userUsages, err := u.orderRepo.CountUserVoucherUsages(txCtx, v.ID, userID)
+			if err != nil {
+				return err
+			}
+			if userUsages >= v.MaxUsagePerUser {
+				return domain.ErrVoucherUserLimitReached
+			}
+
 			// Minimum order subtotal check
 			if subtotal < v.MinOrderValue {
 				return domain.ErrVoucherMinAmountNotMet

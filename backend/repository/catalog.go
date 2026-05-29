@@ -460,9 +460,26 @@ func (r *CatalogRepository) GetProductByID(ctx context.Context, id string) (*dom
 func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
 	countQueryStr := `SELECT COUNT(*) FROM product WHERE is_deleted = false AND is_active = true`
 	selectQueryStr := `
-		SELECT id, category_id, brand_id, name, slug, meta_title, meta_description, img_thumb, weight, low_stock_threshold, specs_jsonb, is_active, is_deleted, created_at, updated_at
-		FROM product
-		WHERE is_deleted = false AND is_active = true`
+		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
+		       COALESCE(min_var.price_base, min_var.price, 0) as price,
+		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
+		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
+		       COALESCE(inv.total_qty, 0) as stock
+		FROM product p
+		LEFT JOIN (
+			SELECT product_id, MIN(price) as price, MIN(price_base) as price_base
+			FROM product_variant
+			WHERE is_deleted = false AND is_active = true
+			GROUP BY product_id
+		) min_var ON p.id = min_var.product_id
+		LEFT JOIN (
+			SELECT pv.product_id, SUM(pi.quantity - pi.reserved) as total_qty
+			FROM product_variant pv
+			JOIN product_inventory pi ON pv.id = pi.variant_id
+			WHERE pv.is_deleted = false AND pv.is_active = true
+			GROUP BY pv.product_id
+		) inv ON p.id = inv.product_id
+		WHERE p.is_deleted = false AND p.is_active = true`
 
 	var conditions []string
 	var args []interface{}
@@ -564,6 +581,10 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 			&prod.IsDeleted,
 			&prod.CreatedAt,
 			&prod.UpdatedAt,
+			&prod.Price,
+			&prod.DiscountPrice,
+			&prod.DiscountPercent,
+			&prod.Stock,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan product row: %w", err)
@@ -590,10 +611,27 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 
 	prodQuery := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
-		       b.name as brand_name, c.name as category_name
+		       b.name as brand_name, c.name as category_name,
+		       COALESCE(min_var.price_base, min_var.price, 0) as price,
+		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
+		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
+		       COALESCE(inv.total_qty, 0) as stock
 		FROM product p
 		JOIN brand b ON p.brand_id = b.id
 		JOIN category c ON p.category_id = c.id
+		LEFT JOIN (
+			SELECT product_id, MIN(price) as price, MIN(price_base) as price_base
+			FROM product_variant
+			WHERE is_deleted = false AND is_active = true
+			GROUP BY product_id
+		) min_var ON p.id = min_var.product_id
+		LEFT JOIN (
+			SELECT pv.product_id, SUM(pi.quantity - pi.reserved) as total_qty
+			FROM product_variant pv
+			JOIN product_inventory pi ON pv.id = pi.variant_id
+			WHERE pv.is_deleted = false AND pv.is_active = true
+			GROUP BY pv.product_id
+		) inv ON p.id = inv.product_id
 		WHERE (p.id = $1 OR p.slug = $1) AND p.is_deleted = false`
 
 	err := r.db.QueryRow(ctx, prodQuery, id).Scan(
@@ -614,6 +652,10 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		&prod.UpdatedAt,
 		&brandName,
 		&categoryName,
+		&prod.Price,
+		&prod.DiscountPrice,
+		&prod.DiscountPercent,
+		&prod.Stock,
 	)
 
 	if err != nil {
