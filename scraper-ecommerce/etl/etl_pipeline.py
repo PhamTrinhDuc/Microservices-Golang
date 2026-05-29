@@ -8,11 +8,7 @@ from pathlib import Path
 import psycopg2
 from psycopg2 import extras
 
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+
 
 # Database Connection Settings
 DB_HOST = os.getenv("DB_HOST", "localhost")
@@ -67,6 +63,7 @@ def slugify(value):
         res.append(vietnamese_map.get(c, c))
     value = "".join(res)
     value = value.lower()
+    value = value.replace('+', ' plus')
     value = re.sub(r'[^\w\s-]', '', value)
     value = re.sub(r'[-\s]+', '-', value)
     return value.strip('-')
@@ -137,17 +134,17 @@ def ingest_stores(cursor, stores_data):
     
     for store in stores_data:
         # Clean address details
-        name = store.get("name", "").strip()
-        hotline = store.get("hotline", "18001060").strip()
-        province = store.get("province", "Hồ Chí Minh").strip()
-        ward = store.get("ward", "").strip()
-        road = store.get("road", "").strip()
+        name = (store.get("name") or "").strip()
+        hotline = (store.get("hotline") or "18001060").strip()
+        province = (store.get("province") or "Hồ Chí Minh").strip()
+        ward = (store.get("ward") or "").strip()
+        road = (store.get("road") or "").strip()
         lat = store.get("lat")
         lng = store.get("lng")
         is_active = store.get("is_active", True)
         
         # Approximate district from name or road if missing, or use a default
-        district = store.get("district", "").strip()
+        district = (store.get("district") or "").strip()
         if not district:
             # Simple heuristic: try to extract 'Quận/Huyện' from road
             match = re.search(r'(Quận\s+\d+|Quận\s+\w+|Huyện\s+\w+)', road, re.IGNORECASE)
@@ -214,14 +211,18 @@ def ingest_products_catalog(cursor, products_data, store_ids):
     # Track variants created to seed inventory later
     created_variants = []
 
+    # Load existing product slug mappings from database to handle duplicate slugs
+    cursor.execute("SELECT id, slug FROM product;")
+    existing_slugs = {row[1]: str(row[0]) for row in cursor.fetchall()}
+
     for item in products_data:
         info = item.get("product_info", {})
         if not info:
             continue
             
         p_id = str(info.get("id"))
-        brand_name = info.get("brand_name", "Khác").strip()
-        category_name = item.get("category_name", "Điện thoại").strip()
+        brand_name = (info.get("brand_name") or "Khác").strip()
+        category_name = (item.get("category_name") or "Điện thoại").strip()
         
         # Ingest Brand
         if brand_name not in brand_cache:
@@ -248,12 +249,21 @@ def ingest_products_catalog(cursor, products_data, store_ids):
         category_id = category_cache[category_name]
         
         # Ingest Product
-        clean_name = info.get("clean_name", info.get("raw_name", "")).strip()
-        slug = info.get("slug", slugify(clean_name)).strip()
-        meta_title = info.get("meta_title", "").strip()
-        meta_description = info.get("meta_description", "").strip()
-        img_thumb = info.get("img_thumb", "").strip()
-        weight = info.get("weight", 180.0)
+        clean_name = (info.get("clean_name") or info.get("raw_name") or "").strip()
+        base_slug = (info.get("slug") or slugify(clean_name)).strip()
+        
+        # Resolve duplicate slugs for different product IDs
+        slug = base_slug
+        counter = 1
+        while slug in existing_slugs and existing_slugs[slug] != p_id:
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        existing_slugs[slug] = p_id
+        
+        meta_title = (info.get("meta_title") or "").strip()
+        meta_description = (info.get("meta_description") or "").strip()
+        img_thumb = (info.get("img_thumb") or "").strip()
+        weight = float(info.get("weight") or 180.0)
         is_active = info.get("is_active", True)
         
         # Convert specifications to JSON string
@@ -285,9 +295,9 @@ def ingest_products_catalog(cursor, products_data, store_ids):
             for key, val_dict in group_data.items():
                 if not isinstance(val_dict, dict):
                     continue
-                raw_val = val_dict.get("raw_value", "").strip()
-                val = val_dict.get("value", raw_val).strip()
-                unit = val_dict.get("unit", "").strip()
+                raw_val = (val_dict.get("raw_value") or "").strip()
+                val = (val_dict.get("value") or raw_val).strip()
+                unit = (val_dict.get("unit") or "").strip()
                 
                 # Truncate strings to match DB schema limits (keeping group, key, and unit limits)
                 group_truncated = group_name[:100].strip()
@@ -321,7 +331,7 @@ def ingest_products_catalog(cursor, products_data, store_ids):
         # Ingest Option Values
         color_val_ids = {}
         for col in item.get("colors", []):
-            c_label = col.get("label", "").strip()
+            c_label = (col.get("label") or "").strip()
             if not c_label:
                 continue
             c_code = col.get("bg_color") or ""
@@ -336,7 +346,7 @@ def ingest_products_catalog(cursor, products_data, store_ids):
             
         capacity_val_ids = {}
         for cap in item.get("capacities", []):
-            cap_label = cap.get("label", "").strip()
+            cap_label = (cap.get("label") or "").strip()
             if not cap_label:
                 continue
             cursor.execute("SELECT id FROM product_option_value WHERE option_type_id = %s AND value = %s;", (capacity_type_id, cap_label))
@@ -371,7 +381,7 @@ def ingest_products_catalog(cursor, products_data, store_ids):
                 cap_def_id = cursor.fetchone()[0]
             capacity_val_ids["Mặc định"] = cap_def_id
 
-        base_price = float(info.get("price", 0.0))
+        base_price = float(info.get("price") or 0.0)
         if base_price == 0.0:
             base_price = 150000.0  # default base price for missing
 
@@ -508,6 +518,11 @@ def ingest_reviews_and_users(cursor, reviews_data, store_ids):
     cursor.execute("SELECT code, id FROM shipping_status;")
     shipping_status_map = {row[0]: row[1] for row in cursor.fetchall()}
     
+    # Load all product slugs and IDs from database, sorted by slug length descending
+    cursor.execute("SELECT id, slug FROM product;")
+    db_products = cursor.fetchall()
+    db_products_sorted = sorted(db_products, key=lambda x: len(x[1]), reverse=True)
+    
     total_reviews_ingested = 0
     
     for item in reviews_data_list:
@@ -516,19 +531,16 @@ def ingest_reviews_and_users(cursor, reviews_data, store_ids):
         if not reviews_list:
             continue
             
-        # Query product detail
-        cursor.execute("SELECT id FROM product WHERE slug = %s;", (prod_slug,))
-        p_row = cursor.fetchone()
-        if not p_row:
-            # Fallback search by slug
-            cursor.execute("SELECT id FROM product WHERE slug LIKE %s;", (f"%{prod_slug}%",))
-            p_row = cursor.fetchone()
-            
-        if not p_row:
+        # Find the matching product using prefix matching
+        p_id = None
+        for p_id_val, p_slug_val in db_products_sorted:
+            if prod_slug == p_slug_val or prod_slug.startswith(p_slug_val + "-"):
+                p_id = p_id_val
+                break
+                
+        if not p_id:
             print(f"Skipping reviews: Product with slug '{prod_slug}' not found in database.")
             continue
-            
-        p_id = p_row[0]
         
         # Grab a variant for orders
         cursor.execute("SELECT id, price FROM product_variant WHERE product_id = %s LIMIT 1;", (p_id,))
@@ -541,10 +553,10 @@ def ingest_reviews_and_users(cursor, reviews_data, store_ids):
         print(f"Ingesting {len(reviews_list)} reviews for product '{prod_slug}'...")
         
         for rev in reviews_list:
-            reviewer_name = rev.get("reviewer_name", "Khách hàng ẩn danh").strip().title()
+            reviewer_name = (rev.get("reviewer_name") or "Khách hàng ẩn danh").strip().title()
             reviewer_name = reviewer_name[:255]
-            rating = int(rev.get("rating", 5))
-            comment = rev.get("comment", "").strip()
+            rating = int(rev.get("rating") or 5)
+            comment = (rev.get("comment") or "").strip()
             
             # 1. Ingest User
             email_part = slugify(reviewer_name)
@@ -679,6 +691,8 @@ def main():
             print("\nETL Transaction COMMITTED successfully.")
             
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         conn.rollback()
         print(f"\nETL Ingestion FAILED. Transaction ROLLED BACK. Detail: {e}")
         sys.exit(1)
