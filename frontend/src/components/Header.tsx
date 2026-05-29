@@ -50,7 +50,7 @@ const Header = () => {
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-neutral-800">
-                  Hi, {user?.full_name || user?.name || user?.email}
+                  Hi, {user?.full_name || user?.email}
                 </span>
                 <span className="h-3 w-px bg-neutral-350"></span>
                 <button
@@ -156,7 +156,7 @@ const Header = () => {
             {isAuthenticated && (
               <Link to="/profile" className="flex items-center justify-center h-8 w-8 rounded-full border border-neutral-200 overflow-hidden hover:border-black transition-colors bg-neutral-100">
                 <div className="font-bold text-xs text-neutral-700">
-                  {(user?.full_name || user?.name || 'U')[0].toUpperCase()}
+                  {(user?.full_name || 'U')[0].toUpperCase()}
                 </div>
               </Link>
             )}

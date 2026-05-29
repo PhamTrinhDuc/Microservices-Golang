@@ -20,7 +20,7 @@ const ProductDetailPage = () => {
       try {
         setLoading(true)
         setError(null)
-        const data = await productAPI.getProductById(parseInt(id))
+        const data = await productAPI.getProductById(id)
         setProduct(data)
         setSelectedImage(data.image || null)
         if (data.variants && data.variants.length > 0) {

@@ -17,7 +17,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
     : 0
 
   // Calculate a realistic sold count for premium aesthetics
-  const soldCount = (product.review_count || 0) * 4 + (product.id % 7) * 3 + 2
+  const idNum = typeof product.id === 'string' 
+    ? product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) 
+    : product.id
+  const soldCount = (product.review_count || 0) * 4 + (idNum % 7) * 3 + 2
 
   return (
     <div className="relative flex flex-col h-full bg-white rounded-lg border border-neutral-200 overflow-hidden hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group">
