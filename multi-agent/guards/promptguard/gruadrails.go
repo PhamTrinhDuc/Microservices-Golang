@@ -1,0 +1,79 @@
+package promptguard
+
+import (
+	"context"
+)
+
+type Guardrails struct {
+	inputGuards  []Guard
+	outputGuards []Guard
+	parallel     bool // true: execute guard input/output parallel
+	failFast     bool // true: stop execute when found first unsafe guard
+}
+
+// AddInputGuard: add guards to list inputGuards to process input sequence/parallel
+func (g *Guardrails) AddInputGuard(guards ...Guard) *Guardrails {
+	g.inputGuards = append(g.inputGuards, guards...)
+	return g
+}
+
+// AddOutputGuard: add guards to list outputGuards to process output sequence/parallel
+func (g *Guardrails) AddOutputGuard(guards ...Guard) *Guardrails {
+	g.outputGuards = append(g.outputGuards, guards...)
+	return g
+}
+
+// runSequential present 
+func (g *Guardrails) runSequential(ctx context.Context, guards []Guard, input, output string) (*GuardResult, error) {
+	result := &GuardResult{}
+
+	isInput := true
+	if output != "" {
+		isInput = false
+	}
+
+	for _, guard := range guards {
+		if isInput && !guard.SupportInput() {
+			continue
+		}
+		if !isInput && !guard.SupportOutput() {
+			continue
+		}
+
+		var (
+			verdict GuardVerdict
+			err     error
+		)
+
+		if isInput {
+			verdict, err = guard.GuardInput(ctx, input)
+		} else {
+			verdict, err = guard.GuardOutput(ctx, input, output)
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		result.Verdicts = append(result.Verdicts, verdict)
+
+		if verdict.Verdict == VerdictUnsafe || verdict.Verdict == VerdictUncertain {
+			result.Breached = true
+			if g.failFast {
+				return result, nil
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func (g *Guardrails) runParallel(ctx context.Context, guards []Guard)
+
+// GuardInput present method to guard input from user/developer before send to LLM
+func (g *Guardrails) GuardInput(ctx context.Context, input string) (*GuardResult, error) {
+	if !g.parallel {
+		return g.runSequential(ctx, g.inputGuards, input)
+	}
+	return g.runParallel(ctx, g.inputGuards, input)
+}
