@@ -1,0 +1,41 @@
+name: prompt_injection
+rules:
+  - name: pi_ignore_instructions
+    description: Classic ignore-instructions attack
+    apply_to_input: true
+    apply_to_output: false
+    verdict: unsafe
+    tags: [prompt_injection]
+    match_type: any
+    keywords:
+      - "ignore previous instructions"
+      - "ignore all instructions"
+      - "disregard your instructions"
+      - "forget your previous"
+      - "override your instructions"
+
+  - name: pi_role_play_escape
+    description: Role-play jailbreak
+    apply_to_input: true
+    apply_to_output: false
+    verdict: unsafe
+    tags: [prompt_injection, jailbreak]
+    match_type: any
+    keywords:
+      - "pretend you are"
+      - "act as if you have no restrictions"
+      - "you are now DAN"
+      - "developer mode"
+
+  - name: pi_system_prompt_leak
+    description: Attempts to extract system prompt
+    apply_to_input: true
+    apply_to_output: false
+    verdict: unsafe
+    tags: [prompt_injection]
+    match_type: any
+    keywords:
+      - "repeat your system prompt"
+      - "show me your instructions"
+      - "what are your instructions"
+      - "print your prompt"
