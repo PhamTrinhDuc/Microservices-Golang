@@ -286,6 +286,22 @@ def ingest_products_catalog(cursor, products_data, store_ids):
             RETURNING id;
         """, (p_id, category_id, brand_id, clean_name, slug, meta_title, meta_description, img_thumb, weight, specs_json, is_active))
         
+        # Ingest Gallery Images
+        cursor.execute("DELETE FROM product_image WHERE product_id = %s AND variant_id IS NULL;", (p_id,))
+        gallery_images = item.get("gallery_images", [])
+        for img in gallery_images:
+            img_url = (img.get("url") or "").strip()
+            if not img_url:
+                continue
+            alt_text = (img.get("alt_text") or clean_name).strip()
+            sort_order = int(img.get("sort_order") or 0)
+            is_thumb_flag = bool(img.get("is_thumbnail") or False)
+            
+            cursor.execute("""
+                INSERT INTO product_image (product_id, variant_id, url, alt_text, sort_order, is_thumbnail)
+                VALUES (%s, NULL, %s, %s, %s, %s);
+            """, (p_id, img_url, alt_text, sort_order, is_thumb_flag))
+            
         # Ingest Specifications (Product Specs EAV table)
         cursor.execute("DELETE FROM product_spec WHERE product_id = %s;", (p_id,))
         specs = item.get("specifications", {})
