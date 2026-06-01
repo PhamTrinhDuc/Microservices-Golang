@@ -44,6 +44,8 @@ type Product struct {
 	DiscountPrice     *float64    `json:"discount_price"`
 	DiscountPercent   int         `json:"discount_percent"`
 	Stock             int         `json:"stock"`
+	Rating            float64     `json:"rating"`
+	ReviewCount       int         `json:"review_count"`
 	CreatedAt         time.Time   `json:"created_at" db:"created_at"`
 	UpdatedAt         time.Time   `json:"updated_at" db:"updated_at"`
 }
@@ -103,6 +105,20 @@ type ProductImage struct {
 	AltText     *string `json:"alt_text" db:"alt_text"`
 	SortOrder   int     `json:"sort_order" db:"sort_order"`
 	IsThumbnail bool    `json:"is_thumbnail" db:"is_thumbnail"`
+}
+
+type Review struct {
+	ID           int       `json:"id" db:"id"`
+	UserID       int       `json:"user_id" db:"user_id"`
+	UserFullName string    `json:"user_full_name" db:"user_full_name"`
+	ProductID    string    `json:"product_id" db:"product_id"`
+	OrderID      int       `json:"order_id" db:"order_id"`
+	Rating       int       `json:"rating" db:"rating"`
+	Comment      *string   `json:"comment" db:"comment"`
+	Images       interface{} `json:"images" db:"images"` // JSONB
+	Status       string    `json:"status" db:"status"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 // --- request & response dtos ---
@@ -242,6 +258,7 @@ type ProductDetailsResponse struct {
 	Variants     []*ProductVariant    `json:"variants"`
 	Images       []*ProductImage      `json:"images"`
 	Siblings     []*Product           `json:"siblings,omitempty"` // For capacity switching like TGDD
+	Reviews      []*Review            `json:"reviews"`
 }
 
 type CreateProductInput struct {
