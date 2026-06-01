@@ -464,7 +464,9 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 		       COALESCE(min_var.price_base, min_var.price, 0) as price,
 		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
 		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
-		       COALESCE(inv.total_qty, 0) as stock
+		       COALESCE(inv.total_qty, 0) as stock,
+		       COALESCE(avg_rev.rating, 0.0) as rating,
+		       COALESCE(avg_rev.review_count, 0) as review_count
 		FROM product p
 		LEFT JOIN (
 			SELECT product_id, MIN(price) as price, MIN(price_base) as price_base
@@ -479,6 +481,11 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 			WHERE pv.is_deleted = false AND pv.is_active = true
 			GROUP BY pv.product_id
 		) inv ON p.id = inv.product_id
+		LEFT JOIN (
+			SELECT product_id, COALESCE(AVG(rating), 0.0) as rating, COUNT(*) as review_count
+			FROM reviews
+			GROUP BY product_id
+		) avg_rev ON p.id = avg_rev.product_id
 		WHERE p.is_deleted = false AND p.is_active = true`
 
 	var conditions []string
@@ -585,6 +592,8 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 			&prod.DiscountPrice,
 			&prod.DiscountPercent,
 			&prod.Stock,
+			&prod.Rating,
+			&prod.ReviewCount,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan product row: %w", err)
@@ -615,7 +624,9 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		       COALESCE(min_var.price_base, min_var.price, 0) as price,
 		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
 		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
-		       COALESCE(inv.total_qty, 0) as stock
+		       COALESCE(inv.total_qty, 0) as stock,
+		       COALESCE(avg_rev.rating, 0.0) as rating,
+		       COALESCE(avg_rev.review_count, 0) as review_count
 		FROM product p
 		JOIN brand b ON p.brand_id = b.id
 		JOIN category c ON p.category_id = c.id
@@ -632,6 +643,11 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 			WHERE pv.is_deleted = false AND pv.is_active = true
 			GROUP BY pv.product_id
 		) inv ON p.id = inv.product_id
+		LEFT JOIN (
+			SELECT product_id, COALESCE(AVG(rating), 0.0) as rating, COUNT(*) as review_count
+			FROM reviews
+			GROUP BY product_id
+		) avg_rev ON p.id = avg_rev.product_id
 		WHERE (p.id = $1 OR p.slug = $1) AND p.is_deleted = false`
 
 	err := r.db.QueryRow(ctx, prodQuery, id).Scan(
@@ -656,6 +672,8 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		&prod.DiscountPrice,
 		&prod.DiscountPercent,
 		&prod.Stock,
+		&prod.Rating,
+		&prod.ReviewCount,
 	)
 
 	if err != nil {
@@ -826,6 +844,42 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		images = append(images, img)
 	}
 
+	// 8. Get Reviews
+	reviewsQuery := `
+		SELECT r.id, r.user_id, u.full_name, r.product_id, r.order_id, r.rating, r.comment, r.images, r.status, r.created_at, r.updated_at
+		FROM reviews r
+		JOIN users u ON r.user_id = u.id
+		WHERE r.product_id = $1 AND r.status = 'approved'
+		ORDER BY r.created_at DESC`
+
+	reviewsRows, err := r.db.Query(ctx, reviewsQuery, prod.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query reviews: %w", err)
+	}
+	defer reviewsRows.Close()
+
+	reviews := make([]*domain.Review, 0)
+	for reviewsRows.Next() {
+		rev := &domain.Review{}
+		err := reviewsRows.Scan(
+			&rev.ID,
+			&rev.UserID,
+			&rev.UserFullName,
+			&rev.ProductID,
+			&rev.OrderID,
+			&rev.Rating,
+			&rev.Comment,
+			&rev.Images,
+			&rev.Status,
+			&rev.CreatedAt,
+			&rev.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan review: %w", err)
+		}
+		reviews = append(reviews, rev)
+	}
+
 	return &domain.ProductDetailsResponse{
 		Product:      prod,
 		BrandName:    brandName,
@@ -834,6 +888,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		OptionTypes:  optionTypes,
 		Variants:     variants,
 		Images:       images,
+		Reviews:      reviews,
 	}, nil
 }
 
