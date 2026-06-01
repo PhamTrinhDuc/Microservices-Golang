@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Footer from './components/Footer'
@@ -9,16 +10,40 @@ import LoginPage from './pages/LoginPage'
 import ProductDetailPage from './pages/ProductDetailPage'
 import RegisterPage from './pages/RegisterPage'
 import SearchPage from './pages/SearchPage'
+import CartPage from './pages/CartPage'
+import { useCart } from './hooks/useCart'
+import { useAuth } from './hooks/useAuth'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const App = () => {
+  const { fetchCart } = useCart()
+  const { isAuthenticated, user, fetchProfile } = useAuth()
+
+  useEffect(() => {
+    void fetchCart()
+  }, [fetchCart])
+
+  useEffect(() => {
+    if (isAuthenticated && !user) {
+      void fetchProfile()
+    }
+  }, [isAuthenticated, user, fetchProfile])
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
         <main className="flex flex-col flex-1 w-full">
           <Routes>
+            <Route
+              path="/cart"
+              element={
+                <ProtectedRoute>
+                  <CartPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/"
               element={

@@ -81,6 +81,7 @@ export const productAPI = {
   getProductById: async (id: string): Promise<Product> => {
     const response = await api.get<any>(`/products/${id}`)
     const details = response.data
+    console.log("data:", details)
 
     if (!details || !details.product) {
       throw new Error('Product not found')
@@ -90,6 +91,7 @@ export const productAPI = {
     const specs = details.specs || []
     const variants = details.variants || []
     const images = details.images || []
+    const reviews = details.reviews || []
 
     return {
       id: p.id,
@@ -106,8 +108,8 @@ export const productAPI = {
       discount_price: p.discount_price || null,
       discount_percent: p.discount_percent || 0,
       stock: p.stock || 0,
-      rating: p.rating || 4.9, // Premium aesthetic default rating
-      review_count: p.review_count || 24, // Premium aesthetic default reviews
+      rating: p.rating ?? 0,
+      review_count: p.review_count ?? 0,
       created_at: p.created_at,
       updated_at: p.updated_at,
       category: {
@@ -144,6 +146,19 @@ export const productAPI = {
         options: v.options || [],
       })),
       images: images.length > 0 ? images.map((img: any) => img.url) : [p.img_thumb || p.image || '/placeholder-product.png'],
+      reviews: reviews.map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id,
+        user_full_name: r.user_full_name,
+        product_id: r.product_id,
+        order_id: r.order_id,
+        rating: r.rating,
+        comment: r.comment,
+        images: r.images,
+        status: r.status,
+        created_at: r.created_at,
+        updated_at: r.updated_at,
+      })),
     }
   },
 }

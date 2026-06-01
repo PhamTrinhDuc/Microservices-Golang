@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, useMemo } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { useCatalog } from '../hooks/useCatalog'
@@ -9,6 +9,9 @@ const BrowsePage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { categories, brands, loading: catalogLoading } = useCatalog()
   const [, startTransition] = useTransition()
+
+  const [categorySearch, setCategorySearch] = useState('')
+  const [brandSearch, setBrandSearch] = useState('')
 
   // Extract query params
   const categoryIdParam = searchParams.get('category')
@@ -96,6 +99,55 @@ const BrowsePage = () => {
   const selectedCategory = categories.find(c => String(c.id) === categoryIdParam)
   const selectedBrand = brands.find(b => String(b.id) === brandIdParam)
 
+  const filteredCategories = useMemo(() => {
+    return categories.filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
+  }, [categories, categorySearch])
+
+  const filteredBrands = useMemo(() => {
+    return brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()))
+  }, [brands, brandSearch])
+
+  const getPageNumbers = useMemo(() => {
+    const total = pagination.total_pages
+    const current = activePage
+    const pages: (number | string)[] = []
+
+    let left = current - 2
+    let right = current + 2
+
+    if (left < 1) {
+      right += (1 - left)
+      left = 1
+    }
+    if (right > total) {
+      left -= (right - total)
+      right = total
+    }
+
+    left = Math.max(1, left)
+    right = Math.min(total, right)
+
+    for (let i = left; i <= right; i++) {
+      pages.push(i)
+    }
+
+    if (left > 1) {
+      if (left > 2) {
+        pages.unshift('...')
+      }
+      pages.unshift(1)
+    }
+
+    if (right < total) {
+      if (right < total - 1) {
+        pages.push('...')
+      }
+      pages.push(total)
+    }
+
+    return Array.from(new Set(pages))
+  }, [pagination.total_pages, activePage])
+
   return (
     <div className="bg-neutral-50 min-h-screen py-8 font-sans">
       <div className="mx-auto max-w-7xl px-4">
@@ -177,8 +229,19 @@ const BrowsePage = () => {
             )}
 
             {/* Categories filter box */}
-            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-4 shadow-sm">
+            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
               <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Danh Mục</h3>
+              
+              {!catalogLoading && categories.length > 8 && (
+                <input
+                  type="text"
+                  placeholder="Tìm danh mục..."
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  className="w-full text-xs border border-neutral-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-black placeholder-neutral-400 transition-colors focus:ring-1 focus:ring-black bg-neutral-50"
+                />
+              )}
+
               {catalogLoading ? (
                 <div className="space-y-2">
                   {[...Array(5)].map((_, i) => (
@@ -186,29 +249,45 @@ const BrowsePage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   <button
                     onClick={() => updateParam('category', null)}
-                    className={`text-left text-xs py-1.5 font-bold transition-colors ${!categoryIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
+                    className={`text-left text-xs py-1 font-bold transition-colors ${!categoryIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
                   >
                     Tất cả danh mục
                   </button>
-                  {categories.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => updateParam('category', String(c.id))}
-                      className={`text-left text-xs py-1.5 font-bold transition-colors ${categoryIdParam === String(c.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                    >
-                      {c.name}
-                    </button>
-                  ))}
+                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
+                    {filteredCategories.map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => updateParam('category', String(c.id))}
+                        className={`text-left text-xs py-1.5 font-bold transition-colors ${categoryIdParam === String(c.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
+                      >
+                        {c.name}
+                      </button>
+                    ))}
+                    {filteredCategories.length === 0 && (
+                      <span className="text-[10px] text-neutral-450 italic py-1">Không tìm thấy</span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Brands filter box */}
-            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-4 shadow-sm">
+            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
               <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Thương Hiệu</h3>
+
+              {!catalogLoading && brands.length > 8 && (
+                <input
+                  type="text"
+                  placeholder="Tìm thương hiệu..."
+                  value={brandSearch}
+                  onChange={(e) => setBrandSearch(e.target.value)}
+                  className="w-full text-xs border border-neutral-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-black placeholder-neutral-400 transition-colors focus:ring-1 focus:ring-black bg-neutral-50"
+                />
+              )}
+
               {catalogLoading ? (
                 <div className="space-y-2">
                   {[...Array(5)].map((_, i) => (
@@ -216,22 +295,27 @@ const BrowsePage = () => {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-1.5">
                   <button
                     onClick={() => updateParam('brand', null)}
-                    className={`text-left text-xs py-1.5 font-bold transition-colors ${!brandIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
+                    className={`text-left text-xs py-1 font-bold transition-colors ${!brandIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
                   >
                     Tất cả thương hiệu
                   </button>
-                  {brands.map((b) => (
-                    <button
-                      key={b.id}
-                      onClick={() => updateParam('brand', String(b.id))}
-                      className={`text-left text-xs py-1.5 font-bold transition-colors ${brandIdParam === String(b.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                    >
-                      {b.name}
-                    </button>
-                  ))}
+                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
+                    {filteredBrands.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => updateParam('brand', String(b.id))}
+                        className={`text-left text-xs py-1.5 font-bold transition-colors ${brandIdParam === String(b.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
+                      >
+                        {b.name}
+                      </button>
+                    ))}
+                    {filteredBrands.length === 0 && (
+                      <span className="text-[10px] text-neutral-450 italic py-1">Không tìm thấy</span>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -282,8 +366,14 @@ const BrowsePage = () => {
                     >
                       Trước
                     </button>
-                    {[...Array(pagination.total_pages)].map((_, idx) => {
-                      const pageNum = idx + 1
+                    {getPageNumbers.map((pageNum, idx) => {
+                      if (pageNum === '...') {
+                        return (
+                          <span key={`dots-${idx}`} className="px-2 text-neutral-400 text-xs font-bold select-none">
+                            ...
+                          </span>
+                        )
+                      }
                       return (
                         <button
                           key={pageNum}

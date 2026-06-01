@@ -1,10 +1,6 @@
-import axios, { AxiosError } from 'axios'
+import axios from 'axios'
 import { tokenManager } from '../utils/tokenManager'
-
-interface APIErrorResponse {
-  error?: string
-  message?: string
-}
+import { sessionManager } from '../utils/sessionManager'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
@@ -19,6 +15,9 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = 'Bearer ' + token
   }
+  
+  config.headers['X-Session-ID'] = sessionManager.getSessionId()
+  
   return config
 })
 
@@ -75,15 +74,15 @@ api.interceptors.response.use(
     }
     return response
   },
-  (error: AxiosError<APIErrorResponse>) => {
-    if (error.response?.status === 401) {
+  (error: any) => {
+    if (error?.response?.status === 401) {
       tokenManager.removeToken()
     }
 
     const message =
-      error.response?.data?.error ??
-      error.response?.data?.message ??
-      error.message ??
+      error?.response?.data?.error ??
+      error?.response?.data?.message ??
+      error?.message ??
       'An unexpected error occurred. Please try again.'
 
     return Promise.reject(new Error(message))

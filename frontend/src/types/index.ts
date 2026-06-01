@@ -111,5 +111,40 @@ export interface Product {
   specifications?: ProductSpec[]
   variants?: ProductVariant[]
   images?: string[]
+  reviews?: Review[]
 }
+
+export interface Review {
+  id: number
+  user_id: number
+  user_full_name: string
+  product_id: string
+  order_id: number
+  rating: number
+  comment?: string | null
+  images?: any
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CartItem {
+  id: number
+  variant_id: number
+  variant_name: string
+  sku: string
+  price: number
+  price_base: number
+  product_id: string
+  product_name: string
+  image_url?: string
+  quantity: number
+}
+
+export interface AddToCartRequest {
+  variant_id: number
+  quantity: number
+  session_id?: string
+}
+
 

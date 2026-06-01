@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice, type PayloadAction } from '@reduxjs/tool
 import { authAPI } from '../../services/authAPI'
 import type { LoginRequest, LoginResponse, RegisterRequest, User, GoogleLoginRequest } from '../../types'
 import { tokenManager } from '../../utils/tokenManager'
+import { fetchCart, mergeCart, clearCartState } from './cartSlice'
 
 interface AuthState {
   user: User | null
@@ -23,39 +24,61 @@ const initialState: AuthState = {
 
 export const login = createAsyncThunk<LoginResponse, LoginRequest, { rejectValue: string }>(
   'auth/login',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { dispatch, rejectWithValue }) => {
     try {
-      return await authAPI.login(payload)
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Login failed')
+      const res = await authAPI.login(payload)
+      const guestSession = localStorage.getItem('guest_session_id')
+      if (guestSession) {
+        void dispatch(mergeCart(guestSession))
+      } else {
+        void dispatch(fetchCart())
+      }
+      return res
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Login failed')
     }
   },
 )
 
 export const register = createAsyncThunk<LoginResponse, RegisterRequest, { rejectValue: string }>(
   'auth/register',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { dispatch, rejectWithValue }) => {
     try {
-      return await authAPI.register(payload)
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Registration failed')
+      const res = await authAPI.register(payload)
+      const guestSession = localStorage.getItem('guest_session_id')
+      if (guestSession) {
+        void dispatch(mergeCart(guestSession))
+      } else {
+        void dispatch(fetchCart())
+      }
+      return res
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Registration failed')
     }
   },
 )
 
 export const googleAuth = createAsyncThunk<LoginResponse, GoogleLoginRequest, { rejectValue: string }>(
   'auth/googleAuth',
-  async (payload, { rejectWithValue }) => {
+  async (payload, { dispatch, rejectWithValue }) => {
     try {
-      return await authAPI.googleAuth(payload)
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Google authentication failed')
+      const res = await authAPI.googleAuth(payload)
+      const guestSession = localStorage.getItem('guest_session_id')
+      if (guestSession) {
+        void dispatch(mergeCart(guestSession))
+      } else {
+        void dispatch(fetchCart())
+      }
+      return res
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Google authentication failed')
     }
   },
 )
 
-export const logout = createAsyncThunk('auth/logout', async () => {
+export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   tokenManager.removeToken()
+  dispatch(clearCartState())
 })
 
 export const fetchProfile = createAsyncThunk<User, void, { rejectValue: string }>(
@@ -63,8 +86,8 @@ export const fetchProfile = createAsyncThunk<User, void, { rejectValue: string }
   async (_, { rejectWithValue }) => {
     try {
       return await authAPI.getProfile()
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch profile')
+    } catch (error: any) {
+      return rejectWithValue(error?.message || 'Failed to fetch profile')
     }
   },
 )
@@ -147,7 +170,11 @@ const authSlice = createSlice({
         state.user = action.payload
       })
       .addCase(fetchProfile.rejected, (state, action) => {
+        state.isAuthenticated = false
+        state.user = null
+        state.token = null
         state.error = action.payload ?? 'Failed to fetch profile'
+        tokenManager.removeToken()
       })
   },
 })
