@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
-import { useAuth } from '../hooks/useAuth'
 import { useCatalog } from '../hooks/useCatalog'
 import { useFeaturedProducts } from '../hooks/useProducts'
 
 const HomePage = () => {
-  const { user, fetchProfile } = useAuth()
   const { categories, brands, loading: catalogLoading } = useCatalog()
   const { products: featuredProducts, loading: productsLoading } = useFeaturedProducts(24)
 
@@ -15,12 +13,6 @@ const HomePage = () => {
 
   // Flash Sale Countdown timer state
   const [timeLeft, setTimeLeft] = useState({ hours: 9, minutes: 17, seconds: 56 })
-
-  useEffect(() => {
-    if (!user) {
-      void fetchProfile()
-    }
-  }, [fetchProfile, user])
 
   useEffect(() => {
     const timer = setInterval(() => {

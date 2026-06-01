@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useEffect, useState, useMemo } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { productAPI } from '../services/productAPI'
 import { type Product, type ProductVariant } from '../types'
+import { useCart } from '../hooks/useCart'
 
 const ProductDetailPage = () => {
   const { id } = useParams<{ id: string }>()
@@ -12,6 +13,94 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1)
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [detailTab, setDetailTab] = useState<'description' | 'styling' | 'reviews'>('description')
+
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
+  const [adding, setAdding] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+  const groupedSpecs = useMemo(() => {
+    if (!product?.specifications) return {}
+    return product.specifications.reduce<Record<string, typeof product.specifications>>((acc, spec) => {
+      const groupName = spec.group || 'Thông số khác'
+      if (!acc[groupName]) {
+        acc[groupName] = []
+      }
+      acc[groupName].push(spec)
+      return acc
+    }, {})
+  }, [product?.specifications])
+
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({})
+
+  // Initialize all groups as expanded by default
+  useEffect(() => {
+    if (groupedSpecs) {
+      const initial: Record<string, boolean> = {}
+      Object.keys(groupedSpecs).forEach(group => {
+        initial[group] = true
+      })
+      setExpandedGroups(initial)
+    }
+  }, [groupedSpecs])
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [groupName]: !prev[groupName]
+    }))
+  }
+
+  const ratingStats = useMemo(() => {
+    const reviews = product?.reviews || []
+    const total = reviews.length
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    
+    reviews.forEach(r => {
+      const rVal = Math.round(r.rating)
+      if (rVal >= 1 && rVal <= 5) {
+        distribution[rVal as 1|2|3|4|5]++
+      }
+    })
+    
+    // Calculate satisfied percentage
+    const satisfiedCount = distribution[5] + distribution[4]
+    const satisfiedPct = total > 0 ? Math.round((satisfiedCount / total) * 100) : 100
+    
+    return {
+      total,
+      satisfiedPct,
+      distribution: Object.entries(distribution).map(([stars, count]) => ({
+        stars: Number(stars),
+        pct: total > 0 ? Math.round((count / total) * 100) : 0
+      })).reverse()
+    }
+  }, [product?.reviews])
+
+  const imagesList = useMemo(() => {
+    if (!product) return []
+    const rawList = [product.image, ...(product.images || [])].filter((img): img is string => !!img)
+    return Array.from(new Set(rawList))
+  }, [product?.image, product?.images])
+
+  // Dynamic SEO meta tags update based on product meta_title and meta_description
+  useEffect(() => {
+    if (product) {
+      document.title = product.meta_title || `${product.name} | Jiyuu Store`
+      
+      let metaDesc = document.querySelector('meta[name="description"]')
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta')
+        metaDesc.setAttribute('name', 'description')
+        document.head.appendChild(metaDesc)
+      }
+      metaDesc.setAttribute('content', product.meta_description || `${product.name} - Mua sắm sản phẩm chất lượng tốt nhất tại Jiyuu Store.`)
+    }
+    
+    return () => {
+      document.title = 'Jiyuu Store'
+    }
+  }, [product])
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -88,7 +177,50 @@ const ProductDetailPage = () => {
 
   const activeStock = selectedVariant ? selectedVariant.stock : product.stock
 
-  const imagesList = [product.image, ...(product.images || [])].filter((img): img is string => !!img)
+  const currentImgIdx = imagesList.indexOf(selectedImage || product.image || '')
+
+  const handleAddToCart = async () => {
+    if (!selectedVariant) {
+      alert('Vui lòng chọn một phiên bản sản phẩm')
+      return
+    }
+    try {
+      setAdding(true)
+      setSuccessMessage(null)
+      await addToCart(selectedVariant.id, quantity).unwrap()
+      setSuccessMessage(`Đã thêm ${quantity} sản phẩm vào giỏ hàng thành công!`)
+      setTimeout(() => setSuccessMessage(null), 4000)
+    } catch (err: any) {
+      alert(err || 'Không thể thêm sản phẩm vào giỏ hàng')
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const handleBuyNow = async () => {
+    if (!selectedVariant) return
+    try {
+      setAdding(true)
+      await addToCart(selectedVariant.id, quantity).unwrap()
+      navigate('/cart')
+    } catch (err: any) {
+      alert(err || 'Không thể thêm sản phẩm vào giỏ hàng')
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const handlePrevImage = () => {
+    if (imagesList.length <= 1) return
+    const nextIdx = (currentImgIdx - 1 + imagesList.length) % imagesList.length
+    setSelectedImage(imagesList[nextIdx])
+  }
+
+  const handleNextImage = () => {
+    if (imagesList.length <= 1) return
+    const nextIdx = (currentImgIdx + 1) % imagesList.length
+    setSelectedImage(imagesList[nextIdx])
+  }
 
   return (
     <section className="flex-1 bg-neutral-55 py-8 font-sans">
@@ -115,9 +247,9 @@ const ProductDetailPage = () => {
           
           {/* LEFT: Image Gallery Layout */}
           <div className="lg:col-span-7 flex flex-col-reverse md:flex-row gap-4">
-            {/* Vertically Aligned Thumbnail Column */}
+            {/* Vertically Aligned Thumbnail Column (Scrollable on desktop, horizontal on mobile) */}
             {imagesList.length > 1 && (
-              <div className="flex md:flex-col gap-2 shrink-0 overflow-x-auto md:overflow-x-visible">
+              <div className="flex md:flex-col gap-2 shrink-0 overflow-x-auto md:overflow-y-auto md:max-h-[460px] pr-1.5 scrollbar-thin scrollbar-thumb-neutral-200">
                 {imagesList.map((img, idx) => (
                   <button
                     key={idx}
@@ -137,13 +269,35 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            {/* Main Product Image */}
-            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded flex items-center justify-center p-6 aspect-square overflow-hidden max-h-[460px]">
+            {/* Main Product Image with Next/Prev Arrow Controls */}
+            <div className="relative flex-1 bg-neutral-50 border border-neutral-200 rounded flex items-center justify-center p-6 aspect-square overflow-hidden max-h-[460px] group">
+              {imagesList.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handlePrevImage}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black shadow-md border border-neutral-250 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 font-bold text-lg select-none hover:scale-105 active:scale-95"
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+              )}
+
               <img
                 src={selectedImage || product.image || '/placeholder-product.png'}
                 alt={product.name}
                 className="max-h-full max-w-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-500"
               />
+
+              {imagesList.length > 1 && (
+                <button
+                  type="button"
+                  onClick={handleNextImage}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-black shadow-md border border-neutral-250 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 font-bold text-lg select-none hover:scale-105 active:scale-95"
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+              )}
             </div>
           </div>
 
@@ -256,19 +410,30 @@ const ProductDetailPage = () => {
             <div className="flex flex-col sm:flex-row gap-3 pt-3">
               <button
                 type="button"
-                disabled={activeStock === 0}
+                disabled={activeStock === 0 || adding}
+                onClick={handleBuyNow}
                 className="flex-1 bg-black text-white text-xs font-bold py-3 rounded uppercase tracking-wider hover:bg-neutral-850 transition-colors disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed"
               >
-                Mua ngay sản phẩm
+                {adding ? 'Đang xử lý...' : 'Mua ngay sản phẩm'}
               </button>
               <button
                 type="button"
-                disabled={activeStock === 0}
+                disabled={activeStock === 0 || adding}
+                onClick={handleAddToCart}
                 className="flex-1 border border-neutral-300 bg-white text-neutral-900 text-xs font-bold py-3 rounded uppercase tracking-wider hover:border-black transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Thêm vào giỏ hàng
+                {adding ? 'Đang thêm...' : 'Thêm vào giỏ hàng'}
               </button>
             </div>
+
+            {successMessage && (
+              <div className="bg-neutral-900 text-white text-[11px] font-semibold py-2.5 px-4 rounded flex items-center justify-between shadow-md transition-all duration-300">
+                <span>{successMessage}</span>
+                <Link to="/cart" className="underline font-bold hover:text-neutral-300 ml-3 shrink-0 uppercase tracking-wider text-[10px]">
+                  Xem giỏ hàng →
+                </Link>
+              </div>
+            )}
             
             <div className="text-[11px] text-neutral-450 leading-relaxed pt-2 border-t border-neutral-150 space-y-1">
               <div className="flex items-center gap-1.5">
@@ -315,19 +480,46 @@ const ProductDetailPage = () => {
                 </div>
               )}
 
-              {/* Specifications */}
-              {product.specifications && product.specifications.length > 0 && (
+              {/* Specifications Grouped Accordion */}
+              {Object.keys(groupedSpecs).length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-neutral-150">
                   <h3 className="font-extrabold text-sm text-neutral-900 uppercase tracking-wide">Thông số kỹ thuật</h3>
-                  <div className="max-w-xl border border-neutral-200 rounded overflow-hidden">
-                    <dl className="divide-y divide-neutral-200 text-xs">
-                      {product.specifications.map((spec, idx) => (
-                        <div key={idx} className="grid grid-cols-3 p-3 bg-white odd:bg-neutral-50/50">
-                          <dt className="font-bold text-neutral-500 uppercase tracking-wider text-[9px]">{spec.key}</dt>
-                          <dd className="col-span-2 text-neutral-800 font-semibold pl-4">{spec.value}</dd>
+                  <div className="max-w-xl space-y-2">
+                    {Object.entries(groupedSpecs).map(([groupName, specs]) => {
+                      const isExpanded = !!expandedGroups[groupName]
+                      return (
+                        <div key={groupName} className="border border-neutral-200 rounded overflow-hidden">
+                          {/* Accordion Header */}
+                          <button
+                            type="button"
+                            onClick={() => toggleGroup(groupName)}
+                            className="w-full flex items-center justify-between p-3 bg-neutral-50 hover:bg-neutral-100 transition-colors text-left"
+                          >
+                            <span className="text-xs font-bold text-neutral-800 uppercase tracking-wider">
+                              {groupName}
+                            </span>
+                            <span 
+                              className="text-xs text-neutral-450 transition-transform duration-200 inline-block"
+                              style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                            >
+                              ▼
+                            </span>
+                          </button>
+                          
+                          {/* Accordion Content */}
+                          {isExpanded && (
+                            <dl className="divide-y divide-neutral-200 text-xs">
+                              {specs.map((spec, idx) => (
+                                <div key={idx} className="grid grid-cols-3 p-3 bg-white odd:bg-neutral-50/50">
+                                  <dt className="font-bold text-neutral-500 uppercase tracking-wider text-[9px]">{spec.key}</dt>
+                                  <dd className="col-span-2 text-neutral-800 font-semibold pl-4">{spec.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
                         </div>
-                      ))}
-                    </dl>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -368,18 +560,12 @@ const ProductDetailPage = () => {
                       <span key={i}>{i < Math.floor(product.rating || 0) ? '★' : '☆'}</span>
                     ))}
                   </div>
-                  <p className="text-[10px] text-neutral-400 mt-1">98% khách hàng hài lòng với sản phẩm này</p>
+                  <p className="text-[10px] text-neutral-400 mt-1">{ratingStats.satisfiedPct}% khách hàng hài lòng với sản phẩm này</p>
                 </div>
 
                 {/* Star level distribution columns */}
                 <div className="space-y-2 pt-2">
-                  {[
-                    { stars: 5, pct: 85 },
-                    { stars: 4, pct: 10 },
-                    { stars: 3, pct: 3 },
-                    { stars: 2, pct: 1 },
-                    { stars: 1, pct: 1 },
-                  ].map((row) => (
+                  {ratingStats.distribution.map((row) => (
                     <div key={row.stars} className="flex items-center gap-3 text-[11px] text-neutral-500">
                       <span className="w-3 text-right">{row.stars}★</span>
                       <div className="flex-1 bg-neutral-100 h-1.5 rounded-full overflow-hidden">
@@ -395,51 +581,36 @@ const ProductDetailPage = () => {
               <div className="lg:col-span-8 space-y-5">
                 <h4 className="text-xs font-bold text-neutral-800 uppercase tracking-wider">Đánh giá chi tiết</h4>
                 
-                {product.review_count && product.review_count > 0 ? (
+                {product.reviews && product.reviews.length > 0 ? (
                   <div className="divide-y divide-neutral-200 space-y-4">
-                    {/* Mock review item 1 */}
-                    <div className="pt-4 first:pt-0 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-neutral-150 flex items-center justify-center font-bold text-xs text-neutral-600">
-                            A
+                    {product.reviews.map((review) => {
+                      const initial = review.user_full_name ? review.user_full_name.charAt(0).toUpperCase() : 'U'
+                      const dateStr = new Date(review.created_at).toLocaleDateString('vi-VN')
+                      return (
+                        <div key={review.id} className="pt-4 first:pt-0 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-neutral-150 flex items-center justify-center font-bold text-xs text-neutral-600">
+                                {initial}
+                              </div>
+                              <div>
+                                <span className="text-xs font-bold text-neutral-800">{review.user_full_name}</span>
+                                <span className="ml-2 bg-neutral-100 text-neutral-600 text-[8px] font-bold px-1 py-0.5 rounded">Đã mua hàng</span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] text-neutral-400">{dateStr}</span>
                           </div>
-                          <div>
-                            <span className="text-xs font-bold text-neutral-800">Anh Nguyễn</span>
-                            <span className="ml-2 bg-neutral-100 text-neutral-600 text-[8px] font-bold px-1 py-0.5 rounded">Đã mua hàng</span>
+                          <div className="flex text-amber-500 text-xs">
+                            <span>{'★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)}</span>
                           </div>
+                          {review.comment && (
+                            <p className="text-xs text-neutral-650 leading-relaxed">
+                              {review.comment}
+                            </p>
+                          )}
                         </div>
-                        <span className="text-[10px] text-neutral-400">25/05/2026</span>
-                      </div>
-                      <div className="flex text-amber-500 text-xs">
-                        <span>★★★★★</span>
-                      </div>
-                      <p className="text-xs text-neutral-650 leading-relaxed">
-                        Sản phẩm dùng cực kỳ ưng ý. Giao hàng nhanh, gói cẩn thận. Shop nhiệt tình hỗ trợ hướng dẫn. Xứng đáng 5 sao!
-                      </p>
-                    </div>
-
-                    {/* Mock review item 2 */}
-                    <div className="pt-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-neutral-150 flex items-center justify-center font-bold text-xs text-neutral-600">
-                            H
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-neutral-800">Hoàng Lê</span>
-                            <span className="ml-2 bg-neutral-100 text-neutral-600 text-[8px] font-bold px-1 py-0.5 rounded">Đã mua hàng</span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] text-neutral-400">18/05/2026</span>
-                      </div>
-                      <div className="flex text-amber-500 text-xs">
-                        <span>★★★★☆</span>
-                      </div>
-                      <p className="text-xs text-neutral-650 leading-relaxed">
-                        Chất lượng tốt so với giá thành, dùng ổn định, không có lỗi gì phát sinh. Sẽ tiếp tục mua hàng ủng hộ shop lần sau.
-                      </p>
-                    </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-6 text-neutral-450 text-xs border border-dashed border-neutral-250 rounded">
