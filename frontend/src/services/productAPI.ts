@@ -145,7 +145,7 @@ export const productAPI = {
         stock: p.stock, // Fallback variant stock to total product stock
         options: v.options || [],
       })),
-      images: images.length > 0 ? images.map((img: any) => img.url) : [p.img_thumb || p.image || '/placeholder-product.png'],
+      images: images.length > 0 ? images.filter((img: any) => !img.is_thumbnail && !img.variant_id).map((img: any) => img.url) : [],
       reviews: reviews.map((r: any) => ({
         id: r.id,
         user_id: r.user_id,
@@ -160,5 +160,92 @@ export const productAPI = {
         updated_at: r.updated_at,
       })),
     }
+  },
+
+  // Admin Catalog CRUD
+  adminCreateCategory: async (payload: { name: string; parent_id?: number | null; icon?: string | null; sort_order?: number }): Promise<Category> => {
+    const res = await api.post<Category>('/admin/categories', payload)
+    return res.data
+  },
+
+  adminCreateBrand: async (payload: { name: string; logo_url?: string | null; is_active?: boolean }): Promise<Brand> => {
+    const res = await api.post<Brand>('/admin/brands', payload)
+    return res.data
+  },
+
+  adminCreateProduct: async (payload: {
+    id: string
+    category_id: number
+    brand_id: number
+    name: string
+    meta_title?: string | null
+    meta_description?: string | null
+    img_thumb?: string | null
+    images?: string[]
+    weight?: number | null
+    low_stock_threshold: number
+    specs?: { group: string; key: string; value: string; unit?: string; sort_order?: number }[]
+  }): Promise<Product> => {
+    const res = await api.post<Product>('/admin/products', payload)
+    return res.data
+  },
+
+  adminGenerateVariant: async (productId: string, payload: {
+    name: string
+    sku: string
+    price: number
+    price_base?: number
+    weight?: number
+    option_value_ids: number[]
+  }): Promise<any> => {
+    const res = await api.post<any>(`/admin/products/${productId}/variants`, payload)
+    return res.data
+  },
+
+  adminAddOptionValues: async (payload: {
+    product_id: string
+    option_name: string
+    values: { value: string; color_code?: string | null; sort_order: number }[]
+  }): Promise<{ id: number; option_type_id: number; value: string; color_code: string | null; sort_order: number }[]> => {
+    const res = await api.post<any>('/admin/option-values', payload)
+    return res.data
+  },
+
+  adminUpdateCategory: async (id: number, payload: { name: string; parent_id?: number | null; sort_order?: number }): Promise<Category> => {
+    const res = await api.put<Category>(`/admin/categories/${id}`, payload)
+    return res.data
+  },
+
+  adminDeleteCategory: async (id: number): Promise<void> => {
+    await api.delete(`/admin/categories/${id}`)
+  },
+
+  adminUpdateBrand: async (id: number, payload: { name: string; logo_url?: string | null; is_active?: boolean }): Promise<Brand> => {
+    const res = await api.put<Brand>(`/admin/brands/${id}`, payload)
+    return res.data
+  },
+
+  adminDeleteBrand: async (id: number): Promise<void> => {
+    await api.delete(`/admin/brands/${id}`)
+  },
+
+  adminUpdateProduct: async (id: string, payload: {
+    category_id: number
+    brand_id: number
+    name: string
+    meta_title?: string | null
+    meta_description?: string | null
+    img_thumb?: string | null
+    images?: string[]
+    weight?: number | null
+    low_stock_threshold: number
+    specs?: { group: string; key: string; value: string; unit?: string; sort_order?: number }[]
+  }): Promise<Product> => {
+    const res = await api.put<Product>(`/admin/products/${id}`, payload)
+    return res.data
+  },
+
+  adminDeleteProduct: async (id: string): Promise<void> => {
+    await api.delete(`/admin/products/${id}`)
   },
 }
