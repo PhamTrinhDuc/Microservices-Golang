@@ -620,10 +620,13 @@ func (r *InventoryRepository) AdjustInventory(ctx context.Context, storeID int, 
 
 func (r *InventoryRepository) ListStoreInventory(ctx context.Context, storeID int) ([]*domain.ProductInventory, error) {
 	query := `
-		SELECT variant_id, store_id, quantity, reserved, last_updated
-		FROM product_inventory
-		WHERE store_id = $1
-		ORDER BY variant_id ASC`
+		SELECT pi.variant_id, pi.store_id, pi.quantity, pi.reserved, pi.last_updated,
+		       COALESCE(pv.name, '') as variant_name, COALESCE(p.name, '') as product_name, COALESCE(pv.sku, '') as sku
+		FROM product_inventory pi
+		LEFT JOIN product_variant pv ON pi.variant_id = pv.id
+		LEFT JOIN product p ON pv.product_id = p.id
+		WHERE pi.store_id = $1
+		ORDER BY pi.variant_id ASC`
 
 	rows, err := r.db.Query(ctx, query, storeID)
 	if err != nil {
@@ -634,7 +637,16 @@ func (r *InventoryRepository) ListStoreInventory(ctx context.Context, storeID in
 	inventoryList := make([]*domain.ProductInventory, 0)
 	for rows.Next() {
 		pi := &domain.ProductInventory{}
-		err := rows.Scan(&pi.VariantID, &pi.StoreID, &pi.Quantity, &pi.Reserved, &pi.LastUpdated)
+		err := rows.Scan(
+			&pi.VariantID,
+			&pi.StoreID,
+			&pi.Quantity,
+			&pi.Reserved,
+			&pi.LastUpdated,
+			&pi.VariantName,
+			&pi.ProductName,
+			&pi.SKU,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan product inventory row: %w", err)
 		}
