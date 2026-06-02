@@ -46,6 +46,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id int) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	UpdateLockStatus(ctx context.Context, id int, isLock bool) error
+	List(ctx context.Context, page, limit int, query string) ([]*User, int, error)
 }
 
 type UserUsecase interface {
@@ -54,4 +55,5 @@ type UserUsecase interface {
 	LoginOrRegisterWithGoogle(ctx context.Context, idToken string) (*User, string, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	LockUser(ctx context.Context, id int, isLock bool) error
+	List(ctx context.Context, page, limit int, query string) ([]*User, int, error)
 }

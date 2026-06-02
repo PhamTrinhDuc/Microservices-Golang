@@ -28,6 +28,7 @@ func SetupUserRoutes(router *gin.RouterGroup, uc *controller.UserController, aut
 	admin := router.Group("/admin")
 	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
 	{
+		admin.GET("/users", uc.ListUsers)
 		admin.PUT("/users/:id/lock", uc.LockUser)
 	}
 }
@@ -57,8 +58,17 @@ func SetupCatalogRoutes(router *gin.RouterGroup, cc *controller.CatalogControlle
 	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
 	{
 		admin.POST("/categories", cc.CreateCategory)
+		admin.PUT("/categories/:id", cc.UpdateCategory)
+		admin.DELETE("/categories/:id", cc.DeleteCategory)
+
 		admin.POST("/brands", cc.CreateBrand)
+		admin.PUT("/brands/:id", cc.UpdateBrand)
+		admin.DELETE("/brands/:id", cc.DeleteBrand)
+
 		admin.POST("/products", cc.CreateProduct)
+		admin.PUT("/products/:id", cc.UpdateProduct)
+		admin.DELETE("/products/:id", cc.DeleteProduct)
+
 		admin.POST("/option-values", cc.AddOptionValues)
 		admin.POST("/products/:id/variants", cc.GenerateVariant)
 	}
@@ -170,6 +180,31 @@ func SetupOrderRoutes(router *gin.RouterGroup, oc *controller.OrderController, a
 	{
 		admin.GET("/orders", oc.AdminListOrders)
 		admin.PUT("/orders/:id/status", oc.AdminUpdateStatus)
+	}
+}
+
+// SetupBannerRoutes sets up routes for banner management
+func SetupBannerRoutes(router *gin.RouterGroup, bc *controller.BannerController, authMiddleware *middleware.AuthMiddleware) {
+	// Public routes
+	router.GET("/banners", bc.ListPublic)
+
+	// Admin routes
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		admin.POST("/banners", bc.Create)
+		admin.GET("/banners", bc.ListAdmin)
+		admin.PUT("/banners/:id", bc.Update)
+		admin.DELETE("/banners/:id", bc.Delete)
+	}
+}
+
+// SetupUploadRoutes sets up file upload routing endpoints
+func SetupUploadRoutes(router *gin.RouterGroup, uc *controller.UploadController, authMiddleware *middleware.AuthMiddleware) {
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		admin.POST("/upload", uc.UploadImage)
 	}
 }
 

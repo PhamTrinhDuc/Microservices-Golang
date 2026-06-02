@@ -196,6 +196,7 @@ type CreateProductRequest struct {
 	Specs             []ProductSpecDTO `json:"specs"`
 	Options           []OptionDTO      `json:"options"`
 	Variants          []VariantDTO     `json:"variants"`
+	Images            []string         `json:"images"`
 }
 
 type UpdateProductRequest struct {
@@ -210,6 +211,7 @@ type UpdateProductRequest struct {
 	LowStockThreshold int              `json:"low_stock_threshold"`
 	SpecsJSONB        interface{}      `json:"specs_jsonb"`
 	Specs             []ProductSpecDTO `json:"specs"`
+	Images            []string         `json:"images"`
 }
 
 type OptionValueRequest struct {
@@ -266,6 +268,7 @@ type CreateProductInput struct {
 	Specs       []*ProductSpec
 	OptionTypes []*ProductOptionType
 	Variants    []*ProductVariant
+	Images      []*ProductImage
 }
 
 // --- interfaces ---
@@ -290,7 +293,7 @@ type CatalogRepository interface {
 	GetProductByID(ctx context.Context, id string) (*Product, error)
 	SearchProducts(ctx context.Context, query *ProductSearchQuery) (*ProductSearchResult, error)
 	GetProductDetails(ctx context.Context, id string) (*ProductDetailsResponse, error)
-	UpdateProduct(ctx context.Context, prod *Product, specs []*ProductSpec) (*Product, error)
+	UpdateProduct(ctx context.Context, prod *Product, specs []*ProductSpec, images []*ProductImage) (*Product, error)
 	DeleteProduct(ctx context.Context, id string) error
 
 	// Options

@@ -63,6 +63,9 @@ func main() {
 	// Đăng ký CORS middleware
 	r.Use(middleware.CORSMiddleware())
 
+	// Phục vụ static files cho local storage uploads
+	r.Static("/static", "./static")
+
 	// Request logging middleware
 	r.Use(func(c *gin.Context) {
 		start := time.Now()
@@ -84,6 +87,8 @@ func main() {
 	route.SetupCartRoutes(v1, container.CartCtl, authMiddleware)
 	route.SetupPromotionVoucherRoutes(v1, container.PromotionVoucherCtl, authMiddleware)
 	route.SetupOrderRoutes(v1, container.OrderCtl, authMiddleware)
+	route.SetupBannerRoutes(v1, container.BannerCtl, authMiddleware)
+	route.SetupUploadRoutes(v1, container.UploadCtl, authMiddleware)
 
 	// 5. Start Server
 	serverPort := utils.GetEnvString("BACKEND_PORT", defaultPort)

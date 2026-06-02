@@ -176,3 +176,23 @@ func (uc *UserController) LockUser(ctx *gin.Context) {
 	}
 	utils.RespondOK(ctx, gin.H{"message": "User successfully " + action})
 }
+
+// ListUsers handles GET /admin/users.
+func (uc *UserController) ListUsers(ctx *gin.Context) {
+	page := utils.GetQueryInt(ctx, "page", 1)
+	limit := utils.GetQueryInt(ctx, "limit", 10)
+	query := ctx.Query("q")
+
+	users, total, err := uc.useCase.List(ctx.Request.Context(), page, limit, query)
+	if err != nil {
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, gin.H{
+		"users":       users,
+		"total_count": total,
+		"page":        page,
+		"limit":       limit,
+	})
+}

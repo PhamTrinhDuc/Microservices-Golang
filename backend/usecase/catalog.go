@@ -303,6 +303,15 @@ func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateP
 		})
 	}
 
+	images := make([]*domain.ProductImage, 0, len(req.Images))
+	for idx, imgURL := range req.Images {
+		images = append(images, &domain.ProductImage{
+			ProductID: req.ID,
+			URL:       imgURL,
+			SortOrder: idx,
+		})
+	}
+
 	input := &domain.CreateProductInput{
 		Product: &domain.Product{
 			ID:                req.ID,
@@ -320,6 +329,7 @@ func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateP
 		Specs:       specs,
 		OptionTypes: optionTypes,
 		Variants:    variants,
+		Images:      images,
 	}
 
 	return uc.repo.CreateProduct(ctx, input)
@@ -413,7 +423,16 @@ func (uc *CatalogUsecase) UpdateProduct(ctx context.Context, id string, req *dom
 		})
 	}
 
-	return uc.repo.UpdateProduct(ctx, existing, specs)
+	images := make([]*domain.ProductImage, 0, len(req.Images))
+	for idx, imgURL := range req.Images {
+		images = append(images, &domain.ProductImage{
+			ProductID: id,
+			URL:       imgURL,
+			SortOrder: idx,
+		})
+	}
+
+	return uc.repo.UpdateProduct(ctx, existing, specs, images)
 }
 
 func (uc *CatalogUsecase) DeleteProduct(ctx context.Context, id string) error {

@@ -11,6 +11,7 @@ import (
 
 	"backend/controller"
 	"backend/domain"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -499,4 +500,3 @@ func TestUserController_GoogleAuth(t *testing.T) {
 		})
 	}
 }
-

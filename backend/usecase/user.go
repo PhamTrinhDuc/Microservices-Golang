@@ -154,3 +154,7 @@ func (uc *UserUsecase) GetByID(ctx context.Context, id int) (*domain.User, error
 func (uc *UserUsecase) LockUser(ctx context.Context, id int, isLock bool) error {
 	return uc.repo.UpdateLockStatus(ctx, id, isLock)
 }
+
+func (uc *UserUsecase) List(ctx context.Context, page, limit int, query string) ([]*domain.User, int, error) {
+	return uc.repo.List(ctx, page, limit, query)
+}
