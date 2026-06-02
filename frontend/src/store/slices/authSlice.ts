@@ -27,6 +27,7 @@ export const login = createAsyncThunk<LoginResponse, LoginRequest, { rejectValue
   async (payload, { dispatch, rejectWithValue }) => {
     try {
       const res = await authAPI.login(payload)
+      tokenManager.setToken(res.token)
       const guestSession = localStorage.getItem('guest_session_id')
       if (guestSession) {
         void dispatch(mergeCart(guestSession))
@@ -45,6 +46,7 @@ export const register = createAsyncThunk<LoginResponse, RegisterRequest, { rejec
   async (payload, { dispatch, rejectWithValue }) => {
     try {
       const res = await authAPI.register(payload)
+      tokenManager.setToken(res.token)
       const guestSession = localStorage.getItem('guest_session_id')
       if (guestSession) {
         void dispatch(mergeCart(guestSession))
@@ -63,6 +65,7 @@ export const googleAuth = createAsyncThunk<LoginResponse, GoogleLoginRequest, { 
   async (payload, { dispatch, rejectWithValue }) => {
     try {
       const res = await authAPI.googleAuth(payload)
+      tokenManager.setToken(res.token)
       const guestSession = localStorage.getItem('guest_session_id')
       if (guestSession) {
         void dispatch(mergeCart(guestSession))

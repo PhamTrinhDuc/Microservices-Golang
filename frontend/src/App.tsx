@@ -11,14 +11,18 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import RegisterPage from './pages/RegisterPage'
 import SearchPage from './pages/SearchPage'
 import CartPage from './pages/CartPage'
+import CheckoutPage from './pages/CheckoutPage'
+import OrderSuccessPage from './pages/OrderSuccessPage'
+import AdminDashboardPage from './pages/AdminDashboardPage'
 import { useCart } from './hooks/useCart'
 import { useAuth } from './hooks/useAuth'
+import { tokenManager } from './utils/tokenManager'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 const App = () => {
   const { fetchCart } = useCart()
-  const { isAuthenticated, user, fetchProfile } = useAuth()
+  const { isAuthenticated, user, fetchProfile, logout } = useAuth()
 
   useEffect(() => {
     void fetchCart()
@@ -29,6 +33,12 @@ const App = () => {
       void fetchProfile()
     }
   }, [isAuthenticated, user, fetchProfile])
+
+  useEffect(() => {
+    if (isAuthenticated && !tokenManager.getToken()) {
+      void logout()
+    }
+  }, [isAuthenticated, logout])
 
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
@@ -73,6 +83,30 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <ProductDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <ProtectedRoute>
+                  <CheckoutPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/order-success"
+              element={
+                <ProtectedRoute>
+                  <OrderSuccessPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute adminOnly={true}>
+                  <AdminDashboardPage />
                 </ProtectedRoute>
               }
             />

@@ -51,6 +51,17 @@ const Header = () => {
             <span className="h-3 w-px bg-neutral-350"></span>
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
+                {user?.role === 'admin' && (
+                  <>
+                    <Link
+                      to="/admin"
+                      className="text-neutral-900 hover:text-red-600 font-bold transition-colors uppercase tracking-wider text-[10px]"
+                    >
+                      Quản trị viên
+                    </Link>
+                    <span className="h-3 w-px bg-neutral-350"></span>
+                  </>
+                )}
                 <span className="font-semibold text-neutral-800">
                   Hi, {user?.full_name || user?.email}
                 </span>
