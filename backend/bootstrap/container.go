@@ -1,9 +1,13 @@
 package bootstrap
 
 import (
+	"log"
+
 	"backend/controller"
 	"backend/internal/payment"
 	"backend/internal/shipping"
+	"backend/internal/storage"
+	"backend/internal/utils"
 	"backend/repository"
 	"backend/usecase"
 
@@ -19,6 +23,7 @@ type Container struct {
 	CartRepo             *repository.CartRepository
 	PromotionVoucherRepo *repository.PromotionVoucherRepository
 	OrderRepo            *repository.OrderRepository
+	BannerRepo           *repository.BannerRepository
 
 	// Usecases
 	UserUC             *usecase.UserUsecase
@@ -28,6 +33,7 @@ type Container struct {
 	CartUC             *usecase.CartUsecase
 	PromotionVoucherUC *usecase.PromotionVoucherUsecase
 	OrderUC            *usecase.OrderUsecase
+	BannerUC           *usecase.BannerUsecase
 
 	// Controllers
 	UserCtl             *controller.UserController
@@ -37,6 +43,8 @@ type Container struct {
 	CartCtl             *controller.CartController
 	PromotionVoucherCtl *controller.PromotionVoucherController
 	OrderCtl            *controller.OrderController
+	BannerCtl           *controller.BannerController
+	UploadCtl           *controller.UploadController
 }
 
 func NewContainer(pool *pgxpool.Pool) *Container {
@@ -52,6 +60,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	cartRepo := repository.NewCartRepository(pool)
 	promotionVoucherRepo := repository.NewPromotionVoucherRepository(pool)
 	orderRepo := repository.NewOrderRepository(pool)
+	bannerRepo := repository.NewBannerRepository(pool)
 
 	// Usecases
 	userUC := usecase.NewUserUsecase(userRepo)
@@ -61,6 +70,29 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	cartUC := usecase.NewCartUsecase(cartRepo)
 	promotionVoucherUC := usecase.NewPromotionVoucherUsecase(promotionVoucherRepo)
 	orderUC := usecase.NewOrderUsecase(orderRepo, cartRepo, addressRepo, payosClient, ghnClient)
+	bannerUC := usecase.NewBannerUsecase(bannerRepo)
+
+	// Initialize Storage Provider
+	storageType := utils.GetEnvString("STORAGE_PROVIDER", "local")
+	baseURL := utils.GetEnvString("APP_BASE_URL", "http://localhost:8082")
+
+	var storageProvider storage.StorageProvider
+	if storageType == "s3" {
+		bucket := utils.GetEnvString("S3_BUCKET", "")
+		region := utils.GetEnvString("S3_REGION", "us-east-1")
+		accessKey := utils.GetEnvString("S3_ACCESS_KEY", "")
+		secretKey := utils.GetEnvString("S3_SECRET_KEY", "")
+		endpoint := utils.GetEnvString("S3_ENDPOINT", "")
+
+		sp, err := storage.NewS3StorageProvider(bucket, region, accessKey, secretKey, endpoint)
+		if err != nil {
+			log.Fatalf("failed to initialize S3 storage provider: %v", err)
+		}
+		storageProvider = sp
+	} else {
+		staticDir := utils.GetEnvString("LOCAL_STATIC_DIR", "./static/uploads")
+		storageProvider = storage.NewLocalStorageProvider(staticDir, baseURL)
+	}
 
 	// Controllers
 	userCtl := controller.NewUserController(userUC)
@@ -70,6 +102,8 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	cartCtl := controller.NewCartController(cartUC)
 	promotionVoucherCtl := controller.NewPromotionVoucherController(promotionVoucherUC)
 	orderCtl := controller.NewOrderController(orderUC, payosClient)
+	bannerCtl := controller.NewBannerController(bannerUC)
+	uploadCtl := controller.NewUploadController(storageProvider)
 
 	return &Container{
 		UserRepo:             userRepo,
@@ -79,6 +113,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		CartRepo:             cartRepo,
 		PromotionVoucherRepo: promotionVoucherRepo,
 		OrderRepo:            orderRepo,
+		BannerRepo:           bannerRepo,
 
 		UserUC:             userUC,
 		AddressUC:          addressUC,
@@ -87,6 +122,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		CartUC:             cartUC,
 		PromotionVoucherUC: promotionVoucherUC,
 		OrderUC:            orderUC,
+		BannerUC:           bannerUC,
 
 		UserCtl:             userCtl,
 		AddressCtl:          addressCtl,
@@ -95,5 +131,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		CartCtl:             cartCtl,
 		PromotionVoucherCtl: promotionVoucherCtl,
 		OrderCtl:            orderCtl,
+		BannerCtl:           bannerCtl,
+		UploadCtl:           uploadCtl,
 	}
 }
