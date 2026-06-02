@@ -147,4 +147,277 @@ export interface AddToCartRequest {
   session_id?: string
 }
 
+// ============================================================
+// ADMIN & ORDER TYPES
+// ============================================================
+
+export interface Address {
+  id: number
+  user_id: number
+  full_name: string
+  phone: string
+  district: string
+  province: string
+  ward: string
+  detail_address: string
+  is_default: boolean
+  is_deleted?: boolean
+}
+
+export interface CreateAddressRequest {
+  full_name: string
+  phone: string
+  district: string
+  province: string
+  ward: string
+  detail_address: string
+  is_default?: boolean
+}
+
+export interface CheckoutOrderRequest {
+  store_id: number
+  address_id?: number | null
+  manual_receiver?: {
+    name: string
+    phone: string
+    address: string
+  } | null
+  shipping_provider: 'ghn' | 'ghtk'
+  payment_method: 'payos' | 'cod' | 'bank_transfer'
+  voucher_code?: string | null
+  note?: string | null
+}
+
+export interface Order {
+  id: number
+  order_code: string
+  user_id: number
+  store_id: number
+  voucher_id?: number | null
+  order_status_id: number
+  payment_status_id: number
+  shipping_status_id: number
+  total_amount: number
+  voucher_discount: number
+  shipping_price: number
+  payment_method: string
+  payment_code?: string | null
+  payos_order_code?: string | null
+  note?: string | null
+  receiver_name: string
+  receiver_address: string
+  receiver_phone: string
+  shipping_provider?: string | null
+  shipping_code?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OrderItem {
+  id: number
+  order_id: number
+  variant_id: number
+  variant_name: string
+  quantity: number
+  unit_price: number
+  total_cost: number
+}
+
+export interface OrderResponse {
+  order: Order
+  items: OrderItem[]
+  order_status_label: string
+  payment_status_label: string
+  shipping_status_label: string
+  checkout_url?: string | null
+}
+
+export interface UpdateOrderStatusRequest {
+  order_status_code?: string
+  payment_status_code?: string
+  shipping_status_code?: string
+  shipping_provider?: string
+  shipping_code?: string
+  note?: string
+}
+
+export interface Voucher {
+  id: number
+  code: string
+  name: string
+  start_date: string
+  end_date: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  discount_target: 'order' | 'shipping'
+  min_order_value: number
+  max_discount_amount: number | null
+  max_usage_total: number | null
+  max_usage_per_user: number
+  used_count: number
+  is_deleted: boolean
+}
+
+export interface ApplyVoucherRequest {
+  code: string
+  order_amount: number
+}
+
+export interface ApplyVoucherResponse {
+  valid: boolean
+  voucher_id: number
+  discount_amount: number
+}
+
+export interface CreateVoucherRequest {
+  code: string
+  name: string
+  start_date: string
+  end_date: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  discount_target?: 'order' | 'shipping'
+  min_order_value: number
+  max_discount_amount?: number | null
+  max_usage_total?: number | null
+  max_usage_per_user?: number
+}
+
+export interface UpdateVoucherRequest extends Partial<CreateVoucherRequest> {}
+
+export interface Promotion {
+  id: number
+  product_id: string
+  variant_id?: number | null
+  name: string
+  description?: string | null
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  start_date: string
+  end_date: string
+  is_active: boolean
+  is_deleted: boolean
+  
+  product_name?: string
+  variant_name?: string
+}
+
+export interface CreatePromotionRequest {
+  product_id: string
+  variant_id?: number | null
+  name: string
+  description?: string | null
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  start_date: string
+  end_date: string
+}
+
+export interface Store {
+  id: number
+  name: string
+  hotline?: string | null
+  district: string
+  province: string
+  ward: string
+  road?: string | null
+  email?: string | null
+  lat?: number | null
+  lng?: number | null
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Supplier {
+  id: number
+  name: string
+  address?: string | null
+  phone?: string | null
+  is_deleted?: boolean
+}
+
+export interface ProductInventory {
+  variant_id: number
+  store_id: number
+  quantity: number
+  reserved: number
+  last_updated: string
+  
+  // joined properties
+  product_name?: string
+  variant_name?: string
+  sku?: string
+  price?: number
+}
+
+export interface ImportInvoiceResponse {
+  id: number
+  supplier_id: number
+  supplier_name: string
+  store_id: number
+  store_name: string
+  created_by: number
+  creator_name: string
+  total_items: number
+  note?: string | null
+  created_at: string
+}
+
+export interface ImportInvoiceDetail {
+  id: number
+  invoice_id: number
+  variant_id: number
+  variant_name: string
+  sku: string
+  quantity: number
+  stock_before: number
+  price_import: number
+}
+
+export interface ImportInvoiceDetailsResponse {
+  invoice: ImportInvoiceResponse
+  details: ImportInvoiceDetail[]
+}
+
+export interface LowStockAlertResponse {
+  variant_id: number
+  product_id: string
+  product_name: string
+  variant_name: string
+  sku: string
+  quantity: number
+  low_stock_threshold: number
+}
+
+export interface InventoryLogResponse {
+  id: number
+  variant_id: number
+  variant_name: string
+  sku: string
+  store_id: number
+  store_name: string
+  change_qty: number
+  qty_after: number
+  reason: string
+  ref_id?: string | null
+  created_by?: number | null
+  creator_name?: string | null
+  created_at: string
+}
+
+export interface Banner {
+  id: number
+  title: string
+  subtitle?: string | null
+  description?: string | null
+  image_url: string
+  tag?: string | null
+  link_url?: string | null
+  sort_order: number
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
 
