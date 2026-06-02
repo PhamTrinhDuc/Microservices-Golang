@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import ProductCard from '../components/ProductCard'
 import { useCatalog } from '../hooks/useCatalog'
 import { useFeaturedProducts } from '../hooks/useProducts'
+import { bannerAPI } from '../services/bannerAPI'
+import type { Banner } from '../types'
 
 const HomePage = () => {
   const { categories, brands, loading: catalogLoading } = useCatalog()
@@ -13,6 +15,58 @@ const HomePage = () => {
 
   // Flash Sale Countdown timer state
   const [timeLeft, setTimeLeft] = useState({ hours: 9, minutes: 17, seconds: 56 })
+
+  // Dynamic slides state
+  const [slides, setSlides] = useState<Banner[]>([
+    {
+      id: 1,
+      title: 'LIMIT TIME OFFER',
+      subtitle: 'Sản phẩm công nghệ giảm giá tới 50%',
+      description: 'Cơ hội sở hữu laptop, điện thoại cao cấp chính hãng với giá rẻ nhất thị trường.',
+      image_url: 'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=600&q=80',
+      tag: 'Điện tử & Công nghệ',
+      link_url: '/browse',
+      sort_order: 1,
+      is_active: true
+    },
+    {
+      id: 2,
+      title: 'NEW FASHION ERA',
+      subtitle: 'Bộ sưu tập thời trang mùa hè cực hot',
+      description: 'Phong cách tối giản thời thượng. Hoàn tiền 100% nếu không hài lòng.',
+      image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80',
+      tag: 'Fashion & LifeStyle',
+      link_url: '/browse',
+      sort_order: 2,
+      is_active: true
+    },
+    {
+      id: 3,
+      title: 'PREMIUM LIVING',
+      subtitle: 'Trang trí nhà cửa cùng BeliBeli Home',
+      description: 'Giảm giá cực sâu cho các dòng máy xay, nồi chiên không dầu và robot hút bụi.',
+      image_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
+      tag: 'Gia dụng & Đời sống',
+      link_url: '/browse',
+      sort_order: 3,
+      is_active: true
+    },
+  ])
+
+  const loadBanners = async () => {
+    try {
+      const data = await bannerAPI.listBanners()
+      if (data.length > 0) {
+        setSlides(data)
+      }
+    } catch (err) {
+      console.error('Failed to load homepage banners, using fallback:', err)
+    }
+  }
+
+  useEffect(() => {
+    void loadBanners()
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -29,34 +83,12 @@ const HomePage = () => {
   // Auto rotate slides
   useEffect(() => {
     const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % 3)
+      if (slides.length > 0) {
+        setCurrentSlide(prev => (prev + 1) % slides.length)
+      }
     }, 6000)
     return () => clearInterval(slideInterval)
-  }, [])
-
-  const slides = [
-    {
-      title: 'LIMIT TIME OFFER',
-      subtitle: 'Sản phẩm công nghệ giảm giá tới 50%',
-      description: 'Cơ hội sở hữu laptop, điện thoại cao cấp chính hãng với giá rẻ nhất thị trường.',
-      image: 'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=600&q=80',
-      tag: 'Điện tử & Công nghệ',
-    },
-    {
-      title: 'NEW FASHION ERA',
-      subtitle: 'Bộ sưu tập thời trang mùa hè cực hot',
-      description: 'Phong cách tối giản thời thượng. Hoàn tiền 100% nếu không hài lòng.',
-      image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80',
-      tag: 'Fashion & LifeStyle',
-    },
-    {
-      title: 'PREMIUM LIVING',
-      subtitle: 'Trang trí nhà cửa cùng BeliBeli Home',
-      description: 'Giảm giá cực sâu cho các dòng máy xay, nồi chiên không dầu và robot hút bụi.',
-      image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
-      tag: 'Gia dụng & Đời sống',
-    },
-  ]
+  }, [slides])
 
   // Filter products for tabs
   const getFilteredProducts = () => {
@@ -89,27 +121,33 @@ const HomePage = () => {
             
             {/* Slide Info */}
             <div className="flex-1 p-8 md:p-12 space-y-6">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white">
-                {slides[currentSlide].tag}
-              </span>
-              <h1 className="text-3xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none">
-                {slides[currentSlide].title} <br />
-                <span className="text-neutral-500 text-2xl md:text-3xl font-semibold">
-                  {slides[currentSlide].subtitle}
+              {slides[currentSlide]?.tag && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white">
+                  {slides[currentSlide].tag}
                 </span>
+              )}
+              <h1 className="text-3xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none">
+                {slides[currentSlide]?.title} <br />
+                {slides[currentSlide]?.subtitle && (
+                  <span className="text-neutral-500 text-2xl md:text-3xl font-semibold">
+                    {slides[currentSlide].subtitle}
+                  </span>
+                )}
               </h1>
-              <p className="text-xs text-neutral-500 leading-relaxed max-w-md">
-                {slides[currentSlide].description}
-              </p>
+              {slides[currentSlide]?.description && (
+                <p className="text-xs text-neutral-550 leading-relaxed max-w-md">
+                  {slides[currentSlide].description}
+                </p>
+              )}
               <div className="flex gap-3 pt-2">
                 <Link
-                  to="/browse"
+                  to={slides[currentSlide]?.link_url || '/browse'}
                   className="bg-black text-white text-xs font-bold px-6 py-3 rounded hover:bg-neutral-800 transition-colors"
                 >
                   Mua ngay
                 </Link>
                 <Link
-                  to="/browse"
+                  to={slides[currentSlide]?.link_url || '/browse'}
                   className="border border-neutral-250 text-neutral-800 text-xs font-bold px-6 py-3 rounded hover:bg-neutral-50 transition-colors"
                 >
                   Xem thêm
@@ -121,8 +159,8 @@ const HomePage = () => {
             <div className="flex-1 w-full md:w-auto h-[260px] md:h-[380px] p-6 flex justify-center items-center bg-neutral-50 md:bg-white border-t md:border-t-0 md:border-l border-neutral-200">
               <div className="w-full h-full relative overflow-hidden rounded">
                 <img
-                  src={slides[currentSlide].image}
-                  alt={slides[currentSlide].title}
+                  src={slides[currentSlide]?.image_url}
+                  alt={slides[currentSlide]?.title}
                   className="w-full h-full object-cover transition-opacity duration-500"
                 />
               </div>
