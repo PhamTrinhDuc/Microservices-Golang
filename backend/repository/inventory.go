@@ -192,14 +192,16 @@ func (r *InventoryRepository) DeactivateStore(ctx context.Context, id int) error
 
 func (r *InventoryRepository) CreateSupplier(ctx context.Context, supplier *domain.Supplier) (*domain.Supplier, error) {
 	query := `
-		INSERT INTO suppliers (name, address, phone, is_deleted)
-		VALUES ($1, $2, $3, false)
+		INSERT INTO suppliers (name, address, phone, email, contact_name, contact_phone, is_deleted)
+		VALUES ($1, $2, $3, $4, $5, $6, false)
 		RETURNING id`
 
 	err := r.db.QueryRow(ctx, query,
 		supplier.Name,
 		supplier.Address,
-		supplier.Phone,
+		supplier.ContactName,
+		supplier.ContactPhone,
+		supplier.ContactEmail,
 	).Scan(&supplier.ID)
 
 	if err != nil {
@@ -211,7 +213,16 @@ func (r *InventoryRepository) CreateSupplier(ctx context.Context, supplier *doma
 }
 
 func (r *InventoryRepository) ListSuppliers(ctx context.Context) ([]*domain.Supplier, error) {
-	query := `SELECT id, name, address, phone, is_deleted FROM suppliers WHERE is_deleted = false ORDER BY id ASC`
+	query := `
+		SELECT s.id, s.name, s.address, s.phone, s.email, s.contact_name, s.contact_phone, s.is_deleted,
+		       COALESCE(COUNT(DISTINCT ii.id), 0) as total_imports,
+		       MAX(ii.created_at) as last_imported_at,
+		       COALESCE(SUM(iid.quantity * iid.price_import), 0) as total_import_value
+		FROM suppliers s
+		LEFT JOIN import_invoices ii ON s.id = ii.supplier_id
+		LEFT JOIN import_invoice_details iid ON ii.id = iid.invoice_id
+		GROUP BY s.id
+		ORDER BY s.id ASC`
 
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
@@ -222,7 +233,10 @@ func (r *InventoryRepository) ListSuppliers(ctx context.Context) ([]*domain.Supp
 	suppliers := make([]*domain.Supplier, 0)
 	for rows.Next() {
 		s := &domain.Supplier{}
-		err := rows.Scan(&s.ID, &s.Name, &s.Address, &s.Phone, &s.IsDeleted)
+		err := rows.Scan(
+			&s.ID, &s.Name, &s.Address, &s.ContactName, &s.ContactPhone, &s.ContactEmail, &s.IsDeleted,
+			&s.TotalImports, &s.LastImportedAt, &s.TotalImportValue,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan supplier: %w", err)
 		}
@@ -238,9 +252,21 @@ func (r *InventoryRepository) ListSuppliers(ctx context.Context) ([]*domain.Supp
 
 func (r *InventoryRepository) GetSupplierByID(ctx context.Context, id int) (*domain.Supplier, error) {
 	s := &domain.Supplier{}
-	query := `SELECT id, name, address, phone, is_deleted FROM suppliers WHERE id = $1 AND is_deleted = false`
+	query := `
+		SELECT s.id, s.name, s.address, s.phone, s.email, s.contact_name, s.contact_phone, s.is_deleted,
+		       COALESCE(COUNT(DISTINCT ii.id), 0) as total_imports,
+		       MAX(ii.created_at) as last_imported_at,
+		       COALESCE(SUM(iid.quantity * iid.price_import), 0) as total_import_value
+		FROM suppliers s
+		LEFT JOIN import_invoices ii ON s.id = ii.supplier_id
+		LEFT JOIN import_invoice_details iid ON ii.id = iid.invoice_id
+		WHERE s.id = $1
+		GROUP BY s.id`
 
-	err := r.db.QueryRow(ctx, query, id).Scan(&s.ID, &s.Name, &s.Address, &s.Phone, &s.IsDeleted)
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&s.ID, &s.Name, &s.Address, &s.ContactName, &s.ContactPhone, &s.ContactEmail, &s.IsDeleted,
+		&s.TotalImports, &s.LastImportedAt, &s.TotalImportValue,
+	)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return nil, domain.ErrSupplierNotFound
@@ -254,10 +280,18 @@ func (r *InventoryRepository) GetSupplierByID(ctx context.Context, id int) (*dom
 func (r *InventoryRepository) UpdateSupplier(ctx context.Context, supplier *domain.Supplier) (*domain.Supplier, error) {
 	query := `
 		UPDATE suppliers
-		SET name = $1, address = $2, phone = $3
-		WHERE id = $4 AND is_deleted = false`
+		SET name = $1, address = $2, phone = $3, email = $4, contact_name = $5, contact_phone = $6, is_deleted = $7
+		WHERE id = $8`
 
-	tag, err := r.db.Exec(ctx, query, supplier.Name, supplier.Address, supplier.Phone, supplier.ID)
+	tag, err := r.db.Exec(ctx, query,
+		supplier.Name,
+		supplier.Address,
+		supplier.ContactName,
+		supplier.ContactPhone,
+		supplier.ContactEmail,
+		supplier.IsDeleted,
+		supplier.ID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update supplier: %w", err)
 	}
@@ -270,7 +304,7 @@ func (r *InventoryRepository) UpdateSupplier(ctx context.Context, supplier *doma
 }
 
 func (r *InventoryRepository) DeleteSupplier(ctx context.Context, id int) error {
-	query := `UPDATE suppliers SET is_deleted = true WHERE id = $1 AND is_deleted = false`
+	query := `UPDATE suppliers SET is_deleted = true WHERE id = $1`
 
 	tag, err := r.db.Exec(ctx, query, id)
 	if err != nil {
@@ -720,16 +754,16 @@ func (r *InventoryRepository) GetInventoryLogs(ctx context.Context, q *domain.In
 		FROM inventory_log il
 		JOIN product_variant pv ON il.variant_id = pv.id
 		JOIN store s ON il.store_id = s.id
-		JOIN users u ON il.created_by = u.id`
+		LEFT JOIN users u ON il.created_by = u.id`
 
 	selectQuery := `
 		SELECT il.id, il.variant_id, pv.sku, pv.name as variant_name,
 		       il.store_id, s.name as store_name, il.change_qty, il.qty_after,
-		       il.reason, il.ref_id, il.created_by, u.full_name as creator_name, il.created_at
+		       il.reason, il.ref_id, il.created_by, COALESCE(u.full_name, 'Hệ thống') as creator_name, il.created_at
 		FROM inventory_log il
 		JOIN product_variant pv ON il.variant_id = pv.id
 		JOIN store s ON il.store_id = s.id
-		JOIN users u ON il.created_by = u.id`
+		LEFT JOIN users u ON il.created_by = u.id`
 
 	var conditions []string
 	var args []interface{}

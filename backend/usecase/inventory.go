@@ -82,9 +82,11 @@ func (uc *InventoryUsecase) CreateSupplier(ctx context.Context, req *domain.Crea
 	}
 
 	supplier := &domain.Supplier{
-		Name:    req.Name,
-		Address: req.Address,
-		Phone:   req.Phone,
+		Name:         req.Name,
+		Address:      req.Address,
+		ContactName:  req.ContactName,
+		ContactPhone: req.ContactPhone,
+		ContactEmail: req.ContactEmail,
 	}
 
 	return uc.repo.CreateSupplier(ctx, supplier)
@@ -107,7 +109,12 @@ func (uc *InventoryUsecase) UpdateSupplier(ctx context.Context, id int, req *dom
 
 	supplier.Name = req.Name
 	supplier.Address = req.Address
-	supplier.Phone = req.Phone
+	supplier.ContactName = req.ContactName
+	supplier.ContactPhone = req.ContactPhone
+	supplier.ContactEmail = req.ContactEmail
+	if req.IsDeleted != nil {
+		supplier.IsDeleted = *req.IsDeleted
+	}
 
 	return uc.repo.UpdateSupplier(ctx, supplier)
 }

@@ -24,11 +24,16 @@ type Store struct {
 }
 
 type Supplier struct {
-	ID        int     `json:"id" db:"id"`
-	Name      string  `json:"name" db:"name"`
-	Address   *string `json:"address" db:"address"`
-	Phone     *string `json:"phone" db:"phone"`
-	IsDeleted bool    `json:"is_deleted" db:"is_deleted"`
+	ID               int        `json:"id" db:"id"`
+	Name             string     `json:"name" db:"name"`
+	Address          *string    `json:"address" db:"address"`
+	ContactName      *string    `json:"contact_name" db:"contact_name"`
+	ContactPhone     *string    `json:"contact_phone" db:"contact_phone"`
+	ContactEmail     *string    `json:"contact_email" db:"contact_email"`
+	IsDeleted        bool       `json:"is_deleted" db:"is_deleted"`
+	TotalImports     int        `json:"total_imports" db:"total_imports"`
+	LastImportedAt   *time.Time `json:"last_imported_at" db:"last_imported_at"`
+	TotalImportValue float64    `json:"total_import_value" db:"total_import_value"`
 }
 
 type ProductInventory struct {
@@ -39,9 +44,9 @@ type ProductInventory struct {
 	LastUpdated time.Time `json:"last_updated" db:"last_updated"`
 
 	// Joined properties
-	VariantName string    `json:"variant_name,omitempty" db:"variant_name"`
-	ProductName string    `json:"product_name,omitempty" db:"product_name"`
-	SKU         string    `json:"sku,omitempty" db:"sku"`
+	VariantName string `json:"variant_name,omitempty" db:"variant_name"`
+	ProductName string `json:"product_name,omitempty" db:"product_name"`
+	SKU         string `json:"sku,omitempty" db:"sku"`
 }
 
 type ImportInvoice struct {
@@ -66,7 +71,7 @@ type ImportInvoiceDetail struct {
 type InventoryLog struct {
 	ID        int       `json:"id" db:"id"`
 	VariantID int       `json:"variant_id" db:"variant_id"`
-	StoreID    int       `json:"store_id" db:"store_id"`
+	StoreID   int       `json:"store_id" db:"store_id"`
 	ChangeQty int       `json:"change_qty" db:"change_qty"`
 	QtyAfter  int       `json:"qty_after" db:"qty_after"`
 	Reason    string    `json:"reason" db:"reason"`
@@ -103,15 +108,20 @@ type UpdateStoreRequest struct {
 }
 
 type CreateSupplierRequest struct {
-	Name    string  `json:"name" validate:"required"`
-	Address *string `json:"address"`
-	Phone   *string `json:"phone"`
+	Name         string  `json:"name" validate:"required"`
+	Address      *string `json:"address"`
+	ContactName  *string `json:"contact_name"`
+	ContactPhone *string `json:"contact_phone"`
+	ContactEmail *string `json:"contact_email" validate:"omitempty,email"`
 }
 
 type UpdateSupplierRequest struct {
-	Name    string  `json:"name" validate:"required"`
-	Address *string `json:"address"`
-	Phone   *string `json:"phone"`
+	Name         string  `json:"name" validate:"required"`
+	Address      *string `json:"address"`
+	ContactName  *string `json:"contact_name"`
+	ContactPhone *string `json:"contact_phone"`
+	ContactEmail *string `json:"contact_email" validate:"omitempty,email"`
+	IsDeleted    *bool   `json:"is_deleted"`
 }
 
 type ImportItemDTO struct {
@@ -147,15 +157,15 @@ type InventoryLogsQuery struct {
 // Response DTOs
 
 type LowStockAlertResponse struct {
-	VariantID         int     `json:"variant_id"`
-	SKU               string  `json:"sku"`
-	VariantName       string  `json:"variant_name"`
-	ProductID         string  `json:"product_id"`
-	ProductName       string  `json:"product_name"`
-	StoreID           int     `json:"store_id"`
-	StoreName         string  `json:"store_name"`
-	Quantity          int     `json:"quantity"`
-	LowStockThreshold int     `json:"low_stock_threshold"`
+	VariantID         int    `json:"variant_id"`
+	SKU               string `json:"sku"`
+	VariantName       string `json:"variant_name"`
+	ProductID         string `json:"product_id"`
+	ProductName       string `json:"product_name"`
+	StoreID           int    `json:"store_id"`
+	StoreName         string `json:"store_name"`
+	Quantity          int    `json:"quantity"`
+	LowStockThreshold int    `json:"low_stock_threshold"`
 }
 
 type InventoryLogResponse struct {

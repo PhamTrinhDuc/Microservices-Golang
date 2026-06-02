@@ -223,6 +223,18 @@ export interface OrderItem {
   total_cost: number
 }
 
+export interface OrderStatusHistory {
+  id: number
+  order_id: number
+  status_type: string // "order", "payment", "shipping"
+  from_status?: string
+  to_status: string
+  changed_by?: number
+  changed_by_name?: string
+  note?: string
+  changed_at: string
+}
+
 export interface OrderResponse {
   order: Order
   items: OrderItem[]
@@ -230,6 +242,7 @@ export interface OrderResponse {
   payment_status_label: string
   shipping_status_label: string
   checkout_url?: string | null
+  history?: OrderStatusHistory[]
 }
 
 export interface UpdateOrderStatusRequest {
@@ -334,7 +347,13 @@ export interface Supplier {
   name: string
   address?: string | null
   phone?: string | null
-  is_deleted?: boolean
+  email?: string | null
+  contact_name?: string | null
+  contact_phone?: string | null
+  is_deleted: boolean
+  total_imports?: number
+  last_imported_at?: string | null
+  total_import_value?: number
 }
 
 export interface ProductInventory {

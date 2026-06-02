@@ -60,6 +60,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
   const [hasVariants, setHasVariants] = useState(false)
   const [options, setOptions] = useState<{ name: string; values: string[] }[]>([])
   const [variantRows, setVariantRows] = useState<any[]>([])
+  const [deletedVariantIds, setDeletedVariantIds] = useState<number[]>([])
 
   // Temporary state for adding a new attribute type
   const [newAttributeName, setNewAttributeName] = useState('')
@@ -423,6 +424,28 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
             option_value_ids: ids
           })
         }
+
+        // Loop and update existing variants
+        const existingVariants = variantRows.filter(row => row.isExisting)
+        for (let i = 0; i < existingVariants.length; i++) {
+          const row = existingVariants[i]
+          setSaveProgress(`Đang cập nhật biến thể (${i + 1}/${existingVariants.length}): ${row.name}`)
+          await productAPI.adminUpdateVariant(row.id, {
+            name: row.name,
+            sku: row.sku,
+            price: Number(row.price),
+            price_base: row.priceBase ? Number(row.priceBase) : undefined,
+            weight: row.weight ? Number(row.weight) : undefined
+          })
+        }
+
+        // Delete variants that were removed
+        if (deletedVariantIds.length > 0) {
+          setSaveProgress('Đang xóa các biến thể bị loại bỏ...')
+          for (const id of deletedVariantIds) {
+            await productAPI.adminDeleteVariant(id)
+          }
+        }
       }
 
       alert('Đã lưu thông tin sản phẩm và các biến thể thành công!')
@@ -542,6 +565,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
     setBulkPrice('')
     setBulkPriceBase('')
     setBulkWeight('')
+    setDeletedVariantIds([])
   }
 
   const handleDeleteProduct = async (id: string, name: string) => {
@@ -1406,6 +1430,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                                 <th className="p-3 text-right">Giá bán *</th>
                                 <th className="p-3 text-right">Giá gốc</th>
                                 <th className="p-3 text-right">Cân nặng (g)</th>
+                                <th className="p-3 text-center w-12">Xóa</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-neutral-150 font-medium">
@@ -1506,6 +1531,24 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                                         }}
                                         placeholder="g"
                                       />
+                                    </td>
+                                    <td className="p-3 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (row.isExisting && row.id) {
+                                            if (confirm(`Bạn chắc chắn muốn xóa biến thể "${row.name}" này? (Sẽ xóa vĩnh viễn khi bấm Lưu)`)) {
+                                              setDeletedVariantIds(prev => [...prev, row.id])
+                                              setVariantRows(prev => prev.filter((_, i) => i !== index))
+                                            }
+                                          } else {
+                                            setVariantRows(prev => prev.filter((_, i) => i !== index))
+                                          }
+                                        }}
+                                        className="text-red-500 hover:text-red-700 font-bold"
+                                      >
+                                        ✕
+                                      </button>
                                     </td>
                                   </tr>
                                 )

@@ -412,10 +412,10 @@ func TestInventoryController_SupplierCRUD(t *testing.T) {
 		mockUC := &mockInventoryUsecase{
 			UpdateSupplierFunc: func(ctx context.Context, id int, req *domain.UpdateSupplierRequest) (*domain.Supplier, error) {
 				return &domain.Supplier{
-					ID:      id,
-					Name:    req.Name,
-					Address: req.Address,
-					Phone:   req.Phone,
+					ID:           id,
+					Name:         req.Name,
+					Address:      req.Address,
+					ContactPhone: req.ContactPhone,
 				}, nil
 			},
 		}
@@ -427,9 +427,9 @@ func TestInventoryController_SupplierCRUD(t *testing.T) {
 		addr := "Hà Nội"
 		phone := "0987654321"
 		reqBody := domain.UpdateSupplierRequest{
-			Name:    "Nhà cung cấp mới",
-			Address: &addr,
-			Phone:   &phone,
+			Name:         "Nhà cung cấp mới",
+			Address:      &addr,
+			ContactPhone: &phone,
 		}
 		jsonBytes, _ := json.Marshal(reqBody)
 

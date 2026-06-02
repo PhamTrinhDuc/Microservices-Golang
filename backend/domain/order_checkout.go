@@ -45,14 +45,15 @@ type OrderDetail struct {
 }
 
 type OrderStatusHistory struct {
-	ID         int       `json:"id" db:"id"`
-	OrderID    int       `json:"order_id" db:"order_id"`
-	StatusType string    `json:"status_type" db:"status_type"` // "order", "payment", "shipping"
-	FromStatus *string   `json:"from_status,omitempty" db:"from_status"`
-	ToStatus   string    `json:"to_status" db:"to_status"`
-	ChangedBy  *int      `json:"changed_by,omitempty" db:"changed_by"`
-	Note       *string   `json:"note,omitempty" db:"note"`
-	ChangedAt  time.Time `json:"changed_at" db:"changed_at"`
+	ID            int       `json:"id" db:"id"`
+	OrderID       int       `json:"order_id" db:"order_id"`
+	StatusType    string    `json:"status_type" db:"status_type"` // "order", "payment", "shipping"
+	FromStatus    *string   `json:"from_status,omitempty" db:"from_status"`
+	ToStatus      string    `json:"to_status" db:"to_status"`
+	ChangedBy     *int      `json:"changed_by,omitempty" db:"changed_by"`
+	ChangedByName *string   `json:"changed_by_name,omitempty" db:"changed_by_name"`
+	Note          *string   `json:"note,omitempty" db:"note"`
+	ChangedAt     time.Time `json:"changed_at" db:"changed_at"`
 }
 
 type InventoryReservationItem struct {
@@ -106,12 +107,13 @@ type OrderDetailResponse struct {
 }
 
 type OrderResponse struct {
-	Order              Order                 `json:"order"`
-	Items              []OrderDetailResponse `json:"items"`
-	OrderStatusLabel   string                `json:"order_status_label"`
-	PaymentStatusLabel string                `json:"payment_status_label"`
+	Order               Order                 `json:"order"`
+	Items               []OrderDetailResponse `json:"items"`
+	OrderStatusLabel    string                `json:"order_status_label"`
+	PaymentStatusLabel  string                `json:"payment_status_label"`
 	ShippingStatusLabel string               `json:"shipping_status_label"`
-	CheckoutURL        *string               `json:"checkout_url,omitempty"`
+	CheckoutURL         *string               `json:"checkout_url,omitempty"`
+	History             []OrderStatusHistory  `json:"history,omitempty"`
 }
 
 // Interfaces
@@ -123,11 +125,12 @@ type OrderRepository interface {
 	GetOrderByIDForUpdate(ctx context.Context, id int) (*Order, error)
 	GetOrderByPaymentRefForUpdate(ctx context.Context, payosOrderCode string) (*Order, error)
 	GetOrderDetails(ctx context.Context, orderID int) ([]OrderDetailResponse, error)
-	ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*Order, int, error)
+	ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*Order, int, error)
 	UpdateOrderStatuses(ctx context.Context, id int, orderStatusID int, paymentStatusID int, shippingStatusID int) error
 	UpdateOrderShippingInfo(ctx context.Context, id int, provider string, code string) error
 	
 	CreateOrderStatusHistory(ctx context.Context, history *OrderStatusHistory) error
+	GetOrderStatusHistory(ctx context.Context, orderID int) ([]OrderStatusHistory, error)
 	GetStatusIDByCode(ctx context.Context, statusType string, code string) (int, error)
 	GetStatusLabelByID(ctx context.Context, statusType string, id int) (string, error)
 
@@ -156,7 +159,7 @@ type OrderUsecase interface {
 	CheckoutOrder(ctx context.Context, userID int, req *CheckoutOrderRequest) (*OrderResponse, error)
 	ConfirmPayment(ctx context.Context, payosOrderCode string, paymentCode string) error
 	CancelExpiredReservations(ctx context.Context) error
-	ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*OrderResponse, int, error)
+	ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*OrderResponse, int, error)
 	GetOrderDetails(ctx context.Context, orderID int, userID *int) (*OrderResponse, error)
 	CancelOrder(ctx context.Context, orderID int, actorUserID int, isAdmin bool, note string) error
 	UpdateOrderStatus(ctx context.Context, orderID int, actorUserID int, req *UpdateOrderStatusRequest) error

@@ -71,6 +71,8 @@ func SetupCatalogRoutes(router *gin.RouterGroup, cc *controller.CatalogControlle
 
 		admin.POST("/option-values", cc.AddOptionValues)
 		admin.POST("/products/:id/variants", cc.GenerateVariant)
+		admin.PUT("/variants/:id", cc.UpdateVariant)
+		admin.DELETE("/variants/:id", cc.DeleteVariant)
 	}
 }
 
@@ -179,6 +181,7 @@ func SetupOrderRoutes(router *gin.RouterGroup, oc *controller.OrderController, a
 	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
 	{
 		admin.GET("/orders", oc.AdminListOrders)
+		admin.GET("/orders/:id", oc.AdminGetOrderDetails)
 		admin.PUT("/orders/:id/status", oc.AdminUpdateStatus)
 	}
 }

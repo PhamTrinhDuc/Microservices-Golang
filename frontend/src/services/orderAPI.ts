@@ -25,10 +25,27 @@ export const orderAPI = {
   },
 
   // Admin Orders
-  adminListOrders: async (page = 1, limit = 10, storeId?: number): Promise<{ data: OrderResponse[]; total: number; page: number; limit: number }> => {
+  adminListOrders: async (
+    page = 1,
+    limit = 10,
+    filters: { storeId?: number; q?: string; orderStatus?: string; paymentStatus?: string; shippingStatus?: string } = {}
+  ): Promise<{ data: OrderResponse[]; total: number; page: number; limit: number }> => {
     const res = await api.get<{ data: OrderResponse[]; total: number; page: number; limit: number }>('/admin/orders', {
-      params: { page, limit, store_id: storeId },
+      params: {
+        page,
+        limit,
+        store_id: filters.storeId,
+        q: filters.q,
+        order_status: filters.orderStatus,
+        payment_status: filters.paymentStatus,
+        shipping_status: filters.shippingStatus,
+      },
     })
+    return res.data
+  },
+
+  adminGetOrderDetails: async (orderId: number): Promise<OrderResponse> => {
+    const res = await api.get<OrderResponse>(`/admin/orders/${orderId}`)
     return res.data
   },
 

@@ -22,6 +22,7 @@ type mockUserUsecase struct {
 	LoginOrRegisterWithGoogleFunc func(ctx context.Context, idToken string) (*domain.User, string, error)
 	GetByIDFunc                   func(ctx context.Context, id int) (*domain.User, error)
 	LockUserFunc                  func(ctx context.Context, id int, isLock bool) error
+	ListFunc                      func(ctx context.Context, page, limit int, query string) ([]*domain.User, int, error)
 }
 
 func (m *mockUserUsecase) Register(ctx context.Context, req *domain.RegisterRequest) (*domain.User, error) {
@@ -42,6 +43,10 @@ func (m *mockUserUsecase) GetByID(ctx context.Context, id int) (*domain.User, er
 
 func (m *mockUserUsecase) LockUser(ctx context.Context, id int, isLock bool) error {
 	return m.LockUserFunc(ctx, id, isLock)
+}
+
+func (m *mockUserUsecase) List(ctx context.Context, page, limit int, query string) ([]*domain.User, int, error) {
+	return m.ListFunc(ctx, page, limit, query)
 }
 
 func TestUserController_Register(t *testing.T) {

@@ -1117,3 +1117,48 @@ func (r *CatalogRepository) CreateVariant(ctx context.Context, variant *domain.P
 
 	return variant, nil
 }
+
+func (r *CatalogRepository) UpdateVariant(ctx context.Context, id int, name, sku string, price float64, priceBase, weight *float64) (*domain.ProductVariant, error) {
+	query := `
+		UPDATE product_variant
+		SET name = $1, sku = $2, price = $3, price_base = $4, weight = $5
+		WHERE id = $6 AND is_deleted = false
+		RETURNING id, product_id, name, sku, price, price_base, weight, is_active, is_deleted`
+
+	v := &domain.ProductVariant{}
+	err := r.db.QueryRow(ctx, query, name, sku, price, priceBase, weight, id).Scan(
+		&v.ID,
+		&v.ProductID,
+		&v.Name,
+		&v.SKU,
+		&v.Price,
+		&v.PriceBase,
+		&v.Weight,
+		&v.IsActive,
+		&v.IsDeleted,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrVariantNotFound
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, errors.New("sku already in use")
+		}
+		return nil, fmt.Errorf("failed to update variant: %w", err)
+	}
+	return v, nil
+}
+
+func (r *CatalogRepository) DeleteVariant(ctx context.Context, id int) error {
+	query := `UPDATE product_variant SET is_deleted = true WHERE id = $1 AND is_deleted = false`
+	tag, err := r.db.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("failed to soft delete variant: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.ErrVariantNotFound
+	}
+	return nil
+}
+

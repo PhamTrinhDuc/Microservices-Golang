@@ -235,6 +235,14 @@ type GenerateVariantRequest struct {
 	OptionValueIDs []int    `json:"option_value_ids" validate:"required,min=1"`
 }
 
+type UpdateVariantRequest struct {
+	Name      string   `json:"name" validate:"required"`
+	SKU       string   `json:"sku" validate:"required"`
+	Price     float64  `json:"price" validate:"required,gt=0"`
+	PriceBase *float64 `json:"price_base"`
+	Weight    *float64 `json:"weight"`
+}
+
 type ProductSearchQuery struct {
 	CategoryID *int   `form:"category_id"`
 	BrandID    *int   `form:"brand_id"`
@@ -301,6 +309,8 @@ type CatalogRepository interface {
 	
 	// Variant
 	CreateVariant(ctx context.Context, variant *ProductVariant, optionValueIDs []int) (*ProductVariant, error)
+	UpdateVariant(ctx context.Context, id int, name, sku string, price float64, priceBase, weight *float64) (*ProductVariant, error)
+	DeleteVariant(ctx context.Context, id int) error
 }
 
 type CatalogUsecase interface {
@@ -326,4 +336,6 @@ type CatalogUsecase interface {
 	// Options & Variants
 	AddOptionValues(ctx context.Context, req *AddOptionValuesRequest) ([]*ProductOptionValue, error)
 	GenerateVariant(ctx context.Context, productID string, req *GenerateVariantRequest) (*ProductVariant, error)
+	UpdateVariant(ctx context.Context, id int, req *UpdateVariantRequest) (*ProductVariant, error)
+	DeleteVariant(ctx context.Context, id int) error
 }

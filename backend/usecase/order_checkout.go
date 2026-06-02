@@ -560,8 +560,8 @@ func (u *OrderUsecase) CancelExpiredReservations(ctx context.Context) error {
 	return nil
 }
 
-func (u *OrderUsecase) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*domain.OrderResponse, int, error) {
-	orders, total, err := u.orderRepo.ListOrders(ctx, userID, storeID, page, limit)
+func (u *OrderUsecase) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.OrderResponse, int, error) {
+	orders, total, err := u.orderRepo.ListOrders(ctx, userID, storeID, page, limit, query, orderStatus, paymentStatus, shippingStatus)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -603,6 +603,7 @@ func (u *OrderUsecase) GetOrderDetails(ctx context.Context, orderID int, userID 
 	orderLabel, _ := u.orderRepo.GetStatusLabelByID(ctx, "order", order.OrderStatusID)
 	payLabel, _ := u.orderRepo.GetStatusLabelByID(ctx, "payment", order.PaymentStatusID)
 	shipLabel, _ := u.orderRepo.GetStatusLabelByID(ctx, "shipping", order.ShippingStatusID)
+	history, _ := u.orderRepo.GetOrderStatusHistory(ctx, order.ID)
 
 	return &domain.OrderResponse{
 		Order:               *order,
@@ -610,6 +611,7 @@ func (u *OrderUsecase) GetOrderDetails(ctx context.Context, orderID int, userID 
 		OrderStatusLabel:    orderLabel,
 		PaymentStatusLabel:  payLabel,
 		ShippingStatusLabel: shipLabel,
+		History:             history,
 	}, nil
 }
 

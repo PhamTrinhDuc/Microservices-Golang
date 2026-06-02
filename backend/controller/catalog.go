@@ -387,3 +387,51 @@ func (cc *CatalogController) GenerateVariant(ctx *gin.Context) {
 
 	utils.RespondCreated(ctx, result)
 }
+
+// UpdateVariant handles PUT /admin/variants/:id
+func (cc *CatalogController) UpdateVariant(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		utils.RespondBadRequest(ctx, "invalid variant id param")
+		return
+	}
+
+	var req domain.UpdateVariantRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	if err := cc.validate.Struct(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	result, err := cc.useCase.UpdateVariant(ctx.Request.Context(), id, &req)
+	if err != nil {
+		cc.handleError(ctx, err)
+		return
+	}
+
+	utils.RespondOK(ctx, result)
+}
+
+// DeleteVariant handles DELETE /admin/variants/:id
+func (cc *CatalogController) DeleteVariant(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		utils.RespondBadRequest(ctx, "invalid variant id param")
+		return
+	}
+
+	err = cc.useCase.DeleteVariant(ctx.Request.Context(), id)
+	if err != nil {
+		cc.handleError(ctx, err)
+		return
+	}
+
+	utils.RespondNoContent(ctx)
+}
+

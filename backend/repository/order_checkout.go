@@ -242,7 +242,7 @@ func (r *OrderRepository) GetOrderDetails(ctx context.Context, orderID int) ([]d
 	return details, nil
 }
 
-func (r *OrderRepository) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*domain.Order, int, error) {
+func (r *OrderRepository) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.Order, int, error) {
 	executor := r.getExecutor(ctx)
 	offset := (page - 1) * limit
 
@@ -251,18 +251,44 @@ func (r *OrderRepository) ListOrders(ctx context.Context, userID *int, storeID *
 	argCount := 1
 
 	if userID != nil {
-		whereClause += fmt.Sprintf(" AND user_id = $%d", argCount)
+		whereClause += fmt.Sprintf(" AND o.user_id = $%d", argCount)
 		args = append(args, *userID)
 		argCount++
 	}
 	if storeID != nil {
-		whereClause += fmt.Sprintf(" AND store_id = $%d", argCount)
+		whereClause += fmt.Sprintf(" AND o.store_id = $%d", argCount)
 		args = append(args, *storeID)
 		argCount++
 	}
+	if query != "" {
+		whereClause += fmt.Sprintf(" AND (o.order_code ILIKE $%d OR o.receiver_name ILIKE $%d OR o.receiver_phone ILIKE $%d)", argCount, argCount, argCount)
+		args = append(args, "%"+query+"%")
+		argCount++
+	}
+	if orderStatus != nil && *orderStatus != "" {
+		whereClause += fmt.Sprintf(" AND os.code = $%d", argCount)
+		args = append(args, *orderStatus)
+		argCount++
+	}
+	if paymentStatus != nil && *paymentStatus != "" {
+		whereClause += fmt.Sprintf(" AND ps.code = $%d", argCount)
+		args = append(args, *paymentStatus)
+		argCount++
+	}
+	if shippingStatus != nil && *shippingStatus != "" {
+		whereClause += fmt.Sprintf(" AND ss.code = $%d", argCount)
+		args = append(args, *shippingStatus)
+		argCount++
+	}
+
+	joinClause := `
+		LEFT JOIN order_status os ON o.order_status_id = os.id
+		LEFT JOIN payment_status ps ON o.payment_status_id = ps.id
+		LEFT JOIN shipping_status ss ON o.shipping_status_id = ss.id
+	`
 
 	// Get total count
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM orders %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM orders o %s %s", joinClause, whereClause)
 	var totalCount int
 	err := executor.QueryRow(ctx, countQuery, args...).Scan(&totalCount)
 	if err != nil {
@@ -272,14 +298,15 @@ func (r *OrderRepository) ListOrders(ctx context.Context, userID *int, storeID *
 	// Get paginated orders
 	selectQuery := fmt.Sprintf(`
 		SELECT 
-			id, order_code, user_id, store_id, voucher_id, order_status_id, payment_status_id, shipping_status_id,
-			total_amount, voucher_discount, shipping_price, payment_method, payment_code, payos_order_code, note,
-			receiver_name, receiver_address, receiver_phone, sender_name, sender_address, sender_phone,
-			shipping_provider, shipping_code, created_at, updated_at
-		FROM orders
+			o.id, o.order_code, o.user_id, o.store_id, o.voucher_id, o.order_status_id, o.payment_status_id, o.shipping_status_id,
+			o.total_amount, o.voucher_discount, o.shipping_price, o.payment_method, o.payment_code, o.payos_order_code, o.note,
+			o.receiver_name, o.receiver_address, o.receiver_phone, o.sender_name, o.sender_address, o.sender_phone,
+			o.shipping_provider, o.shipping_code, o.created_at, o.updated_at
+		FROM orders o
 		%s
-		ORDER BY id DESC
-		LIMIT $%d OFFSET $%d`, whereClause, argCount, argCount+1)
+		%s
+		ORDER BY o.id DESC
+		LIMIT $%d OFFSET $%d`, joinClause, whereClause, argCount, argCount+1)
 
 	args = append(args, limit, offset)
 	rows, err := executor.Query(ctx, selectQuery, args...)
@@ -355,6 +382,40 @@ func (r *OrderRepository) CreateOrderStatusHistory(ctx context.Context, history 
 		return fmt.Errorf("failed to create order status history: %w", err)
 	}
 	return nil
+}
+
+func (r *OrderRepository) GetOrderStatusHistory(ctx context.Context, orderID int) ([]domain.OrderStatusHistory, error) {
+	executor := r.getExecutor(ctx)
+	query := `
+		SELECT 
+			osh.id, osh.order_id, osh.status_type, osh.from_status, osh.to_status, osh.changed_by, u.full_name as changed_by_name, osh.note, osh.changed_at
+		FROM order_status_history osh
+		LEFT JOIN users u ON osh.changed_by = u.id
+		WHERE osh.order_id = $1
+		ORDER BY osh.changed_at DESC`
+
+	rows, err := executor.Query(ctx, query, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order status history: %w", err)
+	}
+	defer rows.Close()
+
+	var history []domain.OrderStatusHistory
+	for rows.Next() {
+		var h domain.OrderStatusHistory
+		err := rows.Scan(
+			&h.ID, &h.OrderID, &h.StatusType, &h.FromStatus, &h.ToStatus, &h.ChangedBy, &h.ChangedByName, &h.Note, &h.ChangedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan order status history: %w", err)
+		}
+		history = append(history, h)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return history, nil
 }
 
 func (r *OrderRepository) GetStatusIDByCode(ctx context.Context, statusType string, code string) (int, error) {

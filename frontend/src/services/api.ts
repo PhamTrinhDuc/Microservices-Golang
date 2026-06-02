@@ -41,6 +41,13 @@ api.interceptors.response.use(
     if (response.data && typeof response.data === 'object') {
       const responseData = response.data as Record<string, any>
       if ('data' in responseData) {
+        // If 'total' or 'total_count' are present at the root level, this is a root-level paginated response.
+        // We normalize the logo URLs inside 'data' but do not unwrap it, keeping the page, limit, total metadata intact.
+        if ('total' in responseData || 'total_count' in responseData) {
+          responseData.data = normalizeLogoUrl(responseData.data)
+          return response
+        }
+
         const innerData = normalizeLogoUrl(responseData.data)
 
         // Check for paginated response structure from backend

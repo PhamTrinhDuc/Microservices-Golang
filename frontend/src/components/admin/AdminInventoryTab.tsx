@@ -32,10 +32,22 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
   })
 
   // CRUD Suppliers form
-  const [supplierForm, setSupplierForm] = useState({ id: 0, name: '', address: '', phone: '' })
+  const [supplierForm, setSupplierForm] = useState({
+    id: 0,
+    name: '',
+    address: '',
+    phone: '',
+    email: '',
+    contactName: '',
+    contactPhone: '',
+    isDeleted: false,
+  })
+  const [showSupplierModal, setShowSupplierModal] = useState(false)
+  const [showStoreModal, setShowStoreModal] = useState(false)
 
   // Adjust Stock State
   const [adjustQtyInput, setAdjustQtyInput] = useState<{ [variantId: number]: number }>({})
+  const [searchTerm, setSearchTerm] = useState('')
 
   // Import Goods State
   const [importForm, setImportForm] = useState({
@@ -136,6 +148,10 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         name: supplierForm.name,
         address: supplierForm.address ? supplierForm.address : null,
         phone: supplierForm.phone ? supplierForm.phone : null,
+        email: supplierForm.email ? supplierForm.email : null,
+        contact_name: supplierForm.contactName ? supplierForm.contactName : null,
+        contact_phone: supplierForm.contactPhone ? supplierForm.contactPhone : null,
+        is_deleted: supplierForm.isDeleted,
       }
 
       if (supplierForm.id > 0) {
@@ -145,7 +161,17 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         await inventoryAPI.adminCreateSupplier(payload)
         alert('Thêm nhà cung cấp thành công!')
       }
-      setSupplierForm({ id: 0, name: '', address: '', phone: '' })
+      setSupplierForm({
+        id: 0,
+        name: '',
+        address: '',
+        phone: '',
+        email: '',
+        contactName: '',
+        contactPhone: '',
+        isDeleted: false,
+      })
+      setShowSupplierModal(false)
       void loadSuppliers()
     } catch (err: any) {
       alert(err.message || 'Không thể lưu nhà cung cấp')
@@ -160,7 +186,12 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
       name: sup.name,
       address: sup.address || '',
       phone: sup.phone || '',
+      email: sup.email || '',
+      contactName: sup.contact_name || '',
+      contactPhone: sup.contact_phone || '',
+      isDeleted: sup.is_deleted,
     })
+    setShowSupplierModal(true)
   }
 
   const handleDeleteSupplier = async (id: number) => {
@@ -272,6 +303,7 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         lng: '',
         is_active: true
       })
+      setShowStoreModal(false)
       if (reloadLookups) {
         await reloadLookups()
       }
@@ -296,6 +328,7 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
       lng: store.lng ? String(store.lng) : '',
       is_active: store.is_active
     })
+    setShowStoreModal(true)
   }
 
   const handleDeactivateStore = async (id: number) => {
@@ -369,166 +402,189 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         <div className="space-y-4">
           
           {/* 1. ADJUST INVENTORY SUBVIEW */}
-          {invSubTab === 'adjust' && (
-            <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
-                    <th className="p-4">Sản phẩm / Biến thể</th>
-                    <th className="p-4">SKU</th>
-                    <th className="p-4 text-center">Đang giữ (Reserved)</th>
-                    <th className="p-4 text-center">Tồn khả dụng</th>
-                    <th className="p-4 text-center">Tổng tồn kho vật lý</th>
-                    <th className="p-4 text-center">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-150">
-                  {storeInventory.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-neutral-400">
-                        Chưa có hàng trong kho của cửa hàng này. Hãy lập phiếu nhập hàng!
-                      </td>
-                    </tr>
-                  ) : (
-                    storeInventory.map((item) => {
-                      const available = Math.max(0, item.quantity - item.reserved)
-                      return (
-                        <tr key={item.variant_id} className="hover:bg-neutral-50 transition-colors">
-                          <td className="p-4">
-                            <p className="font-bold text-neutral-900">{item.variant_name || `Biến thể #${item.variant_id}`}</p>
-                            {item.product_name && (
-                              <p className="text-[10px] text-neutral-450 mt-0.5">Sản phẩm: {item.product_name}</p>
-                            )}
-                          </td>
-                          <td className="p-4 font-mono font-bold text-neutral-600 text-xs">
-                            {item.sku || 'N/A'}
-                          </td>
-                          <td className="p-4 text-center text-neutral-555 font-semibold">
-                            {item.reserved}
-                          </td>
-                          <td className="p-4 text-center">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${available > 0 ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
-                              {available} khả dụng
-                            </span>
-                          </td>
-                          <td className="p-4 text-center">
-                            <input
-                              type="number"
-                              min={0}
-                              className="border border-neutral-350 rounded px-2.5 py-1 w-20 text-center font-bold text-xs"
-                              value={adjustQtyInput[item.variant_id] ?? 0}
-                              onChange={(e) =>
-                                setAdjustQtyInput((p) => ({ ...p, [item.variant_id]: Math.max(0, Number(e.target.value)) }))
-                              }
-                            />
-                          </td>
-                          <td className="p-4 text-center">
-                            <button
-                              type="button"
-                              onClick={() => handleSaveAdjust(item.variant_id)}
-                              className="bg-black hover:bg-neutral-800 text-white text-[9px] uppercase font-black tracking-wider px-3.5 py-1.5 rounded transition-colors"
-                            >
-                              Cập nhật
-                            </button>
+          {invSubTab === 'adjust' && (() => {
+            const filteredInventory = storeInventory.filter((item) => {
+              const term = searchTerm.toLowerCase().trim()
+              if (!term) return true
+              return (
+                (item.variant_name && item.variant_name.toLowerCase().includes(term)) ||
+                (item.product_name && item.product_name.toLowerCase().includes(term)) ||
+                (item.sku && item.sku.toLowerCase().includes(term))
+              )
+            })
+
+            return (
+              <div className="space-y-4">
+                <div className="max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên sản phẩm, biến thể hoặc SKU..."
+                    className="w-full border border-neutral-350 rounded px-3 py-1.5 text-xs bg-white focus:outline-none"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
+                        <th className="p-4">Sản phẩm / Biến thể</th>
+                        <th className="p-4">SKU</th>
+                        <th className="p-4 text-center">Đang giữ (Reserved)</th>
+                        <th className="p-4 text-center">Tồn khả dụng</th>
+                        <th className="p-4 text-center">Tổng tồn kho vật lý</th>
+                        <th className="p-4 text-center">Hành động</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-150">
+                      {filteredInventory.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-neutral-400">
+                            {storeInventory.length === 0 
+                              ? "Chưa có hàng trong kho của cửa hàng này. Hãy lập phiếu nhập hàng!"
+                              : "Không tìm thấy sản phẩm nào khớp với từ khoá."}
                           </td>
                         </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                      ) : (
+                        filteredInventory.map((item) => {
+                          const available = Math.max(0, item.quantity - item.reserved)
+                          return (
+                            <tr key={item.variant_id} className="hover:bg-neutral-50 transition-colors">
+                              <td className="p-4">
+                                <p className="font-bold text-neutral-900">{item.variant_name || `Biến thể #${item.variant_id}`}</p>
+                                {item.product_name && (
+                                  <p className="text-[10px] text-neutral-450 mt-0.5">Sản phẩm: {item.product_name}</p>
+                                )}
+                              </td>
+                              <td className="p-4 font-mono font-bold text-neutral-600 text-xs">
+                                {item.sku || 'N/A'}
+                              </td>
+                              <td className="p-4 text-center text-neutral-555 font-semibold">
+                                {item.reserved}
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${available > 0 ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                                  {available} khả dụng
+                                </span>
+                              </td>
+                              <td className="p-4 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  className="border border-neutral-350 rounded px-2.5 py-1 w-20 text-center font-bold text-xs"
+                                  value={adjustQtyInput[item.variant_id] ?? 0}
+                                  onChange={(e) =>
+                                    setAdjustQtyInput((p) => ({ ...p, [item.variant_id]: Math.max(0, Number(e.target.value)) }))
+                                  }
+                                />
+                              </td>
+                              <td className="p-4 text-center">
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveAdjust(item.variant_id)}
+                                  className="bg-black hover:bg-neutral-800 text-white text-[9px] uppercase font-black tracking-wider px-3.5 py-1.5 rounded transition-colors"
+                                >
+                                  Cập nhật
+                                </button>
+                              </td>
+                            </tr>
+                          )
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* 2. SUPPLIERS SUBVIEW */}
           {invSubTab === 'suppliers' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-              {/* Creator Form */}
-              <form onSubmit={handleSupplierSubmit} className="bg-white border border-neutral-250 rounded-lg p-5 space-y-4 text-xs">
-                <h3 className="text-xs font-black uppercase tracking-wide">
-                  {supplierForm.id > 0 ? 'Cập Nhật Nhà Cung Cấp' : 'Thêm Nhà Cung Cấp'}
-                </h3>
-                
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-white p-4 border border-neutral-200 rounded-lg shadow-sm">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tên nhà cung cấp *</label>
-                  <input
-                    type="text"
-                    placeholder="Tên nhà cc..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                    value={supplierForm.name}
-                    onChange={(e) => setSupplierForm(p => ({ ...p, name: e.target.value }))}
-                    required
-                  />
+                  <h3 className="text-xs font-black uppercase tracking-wide text-neutral-850">
+                    Danh Sách Nhà Cung Cấp
+                  </h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Quản lý đối tác và theo dõi thống kê giá trị nhập hàng</p>
                 </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Số điện thoại</label>
-                  <input
-                    type="tel"
-                    placeholder="Hotline..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                    value={supplierForm.phone}
-                    onChange={(e) => setSupplierForm(p => ({ ...p, phone: e.target.value }))}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Địa chỉ văn phòng</label>
-                  <input
-                    type="text"
-                    placeholder="Địa chỉ..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                    value={supplierForm.address}
-                    onChange={(e) => setSupplierForm(p => ({ ...p, address: e.target.value }))}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider py-2.5 rounded transition-colors"
-                  >
-                    {supplierForm.id > 0 ? 'Cập Nhật' : 'Thêm'}
-                  </button>
-                  {supplierForm.id > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSupplierForm({ id: 0, name: '', address: '', phone: '' })}
-                      className="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-[10px] font-bold uppercase py-2.5 px-4 rounded transition-colors"
-                    >
-                      Hủy
-                    </button>
-                  )}
-                </div>
-              </form>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSupplierForm({
+                      id: 0,
+                      name: '',
+                      address: '',
+                      phone: '',
+                      email: '',
+                      contactName: '',
+                      contactPhone: '',
+                      isDeleted: false,
+                    })
+                    setShowSupplierModal(true)
+                  }}
+                  className="bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded transition-colors"
+                >
+                  + Thêm Nhà Cung Cấp
+                </button>
+              </div>
 
               {/* Table */}
-              <div className="md:col-span-2 bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="bg-white border border-neutral-200 rounded-lg overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
                       <th className="p-4">Nhà cung cấp</th>
-                      <th className="p-4">SĐT</th>
-                      <th className="p-4">Địa chỉ</th>
+                      <th className="p-4">Thông tin liên hệ</th>
+                      <th className="p-4">Người đại diện</th>
+                      <th className="p-4">Thống kê nhập hàng</th>
+                      <th className="p-4 text-center">Trạng thái</th>
                       <th className="p-4 text-center">Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-neutral-150">
                     {suppliers.map((s) => (
-                      <tr key={s.id} className="hover:bg-neutral-50 transition-colors">
-                        <td className="p-4 font-bold text-neutral-855">
-                          {s.name}
+                      <tr key={s.id} className={`hover:bg-neutral-50 transition-colors ${s.is_deleted ? 'bg-red-50/30' : ''}`}>
+                        <td className="p-4">
+                          <p className="font-bold text-neutral-855">{s.name}</p>
                           <p className="text-[9px] text-neutral-450 font-mono mt-0.5">ID: {s.id}</p>
+                          {s.address && <p className="text-[10px] text-neutral-500 mt-1">Đ/c: {s.address}</p>}
                         </td>
-                        <td className="p-4 font-mono text-neutral-600">
-                          {s.phone || 'N/A'}
+                        <td className="p-4 space-y-0.5">
+                          <p className="font-mono text-neutral-600">{s.phone || 'N/A'}</p>
+                          {s.email && <p className="text-neutral-500 font-mono">{s.email}</p>}
                         </td>
-                        <td className="p-4 text-neutral-600">
-                          {s.address || 'N/A'}
+                        <td className="p-4 space-y-0.5">
+                          <p className="font-semibold text-neutral-700">{s.contact_name || 'N/A'}</p>
+                          {s.contact_phone && <p className="font-mono text-neutral-500">{s.contact_phone}</p>}
+                        </td>
+                        <td className="p-4 space-y-1">
+                          <div className="text-[10px] text-neutral-600 flex justify-between gap-4">
+                            <span>Đơn nhập:</span>
+                            <span className="font-bold text-neutral-800">{s.total_imports || 0}</span>
+                          </div>
+                          <div className="text-[10px] text-neutral-600 flex justify-between gap-4">
+                            <span>Tổng giá trị:</span>
+                            <span className="font-bold text-neutral-800 font-mono">{(s.total_import_value || 0).toLocaleString('vi-VN')} đ</span>
+                          </div>
+                          {s.last_imported_at && (
+                            <div className="text-[9px] text-neutral-450">
+                              Lần cuối: {new Date(s.last_imported_at).toLocaleDateString('vi-VN')}
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 text-center">
-                          <div className="flex gap-2 justify-center">
+                          <span className={`px-2 py-0.5 rounded-[4px] text-[9px] font-black uppercase tracking-wider ${
+                            s.is_deleted 
+                              ? 'bg-red-100 text-red-700' 
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            {s.is_deleted ? 'Ngừng hoạt động' : 'Hoạt động'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex gap-2.5 justify-center">
                             <button
                               type="button"
                               onClick={() => handleEditSupplier(s)}
@@ -536,13 +592,15 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                             >
                               Sửa
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteSupplier(s.id)}
-                              className="text-red-500 hover:text-red-700 font-bold uppercase text-[9px] tracking-wider"
-                            >
-                              Xóa
-                            </button>
+                            {!s.is_deleted && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSupplier(s.id)}
+                                className="text-red-500 hover:text-red-700 font-bold uppercase text-[9px] tracking-wider"
+                              >
+                                Xóa
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -550,6 +608,125 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                   </tbody>
                 </table>
               </div>
+
+              {/* Form Modal */}
+              {showSupplierModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                  <div className="bg-white border border-neutral-200 rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-5 flex flex-col">
+                    <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900">
+                        {supplierForm.id > 0 ? 'Cập Nhật Nhà Cung Cấp' : 'Thêm Nhà Cung Cấp'}
+                      </h3>
+                      <button
+                        onClick={() => setShowSupplierModal(false)}
+                        className="text-neutral-400 hover:text-black"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleSupplierSubmit} className="space-y-4 text-xs flex-1">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tên nhà cung cấp *</label>
+                        <input
+                          type="text"
+                          placeholder="Tên nhà cc..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={supplierForm.name}
+                          onChange={(e) => setSupplierForm(p => ({ ...p, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Số điện thoại</label>
+                        <input
+                          type="tel"
+                          placeholder="Hotline..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={supplierForm.phone}
+                          onChange={(e) => setSupplierForm(p => ({ ...p, phone: e.target.value }))}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Email</label>
+                        <input
+                          type="email"
+                          placeholder="Email..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={supplierForm.email}
+                          onChange={(e) => setSupplierForm(p => ({ ...p, email: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Người đại diện</label>
+                          <input
+                            type="text"
+                            placeholder="Tên..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                            value={supplierForm.contactName}
+                            onChange={(e) => setSupplierForm(p => ({ ...p, contactName: e.target.value }))}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">SĐT người đại diện</label>
+                          <input
+                            type="tel"
+                            placeholder="SĐT..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                            value={supplierForm.contactPhone}
+                            onChange={(e) => setSupplierForm(p => ({ ...p, contactPhone: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Địa chỉ văn phòng</label>
+                        <input
+                          type="text"
+                          placeholder="Địa chỉ..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={supplierForm.address}
+                          onChange={(e) => setSupplierForm(p => ({ ...p, address: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-1">
+                        <input
+                          type="checkbox"
+                          id="isActiveCheckbox"
+                          checked={!supplierForm.isDeleted}
+                          onChange={(e) => setSupplierForm(p => ({ ...p, isDeleted: !e.target.checked }))}
+                        />
+                        <label htmlFor="isActiveCheckbox" className="text-[10px] font-bold text-neutral-600 uppercase cursor-pointer select-none">
+                          Đang hoạt động (Active)
+                        </label>
+                      </div>
+
+                      <div className="flex gap-2 justify-end pt-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowSupplierModal(false)}
+                          className="text-[10px] border border-neutral-350 px-5 py-2.5 font-bold uppercase rounded text-neutral-600 hover:text-black"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="text-[10px] bg-black text-white px-6 py-2.5 font-black uppercase rounded hover:bg-neutral-800"
+                        >
+                          Lưu
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -745,9 +922,9 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                       <td className={`p-4 text-right font-mono font-bold ${l.change_qty > 0 ? 'text-green-600' : 'text-red-500'}`}>
                         {l.change_qty > 0 ? `+${l.change_qty}` : l.change_qty}
                       </td>
-                      <td className="p-4 text-right font-mono font-semibold text-neutral-700">{l.qty_after}</td>
-                      <td className="p-4 text-neutral-600 font-medium">{l.reason}</td>
-                      <td className="p-4 text-neutral-600">{l.creator_name}</td>
+                      <td className="p-4 text-right font-mono font-medium text-neutral-700">{l.qty_after}</td>
+                      <td className="p-4 text-neutral-600">{l.reason}</td>
+                      <td className="p-4 text-neutral-550 font-medium">{l.creator_name || 'Hệ thống'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -757,167 +934,41 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
 
           {/* 6. STORES SUBVIEW */}
           {invSubTab === 'stores' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-              {/* Creator Form */}
-              <form onSubmit={handleStoreSubmit} className="bg-white border border-neutral-250 rounded-lg p-5 space-y-4 text-xs">
-                <h3 className="text-xs font-black uppercase tracking-wide">
-                  {storeForm.id > 0 ? 'Cập Nhật Cửa Hàng' : 'Thêm Cửa Hàng Mới'}
-                </h3>
-                
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-white p-4 border border-neutral-200 rounded-lg shadow-sm">
                 <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tên cửa hàng *</label>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: Jiyuu Flagship Store..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                    value={storeForm.name}
-                    onChange={(e) => setStoreForm(p => ({ ...p, name: e.target.value }))}
-                    required
-                  />
+                  <h3 className="text-xs font-black uppercase tracking-wide text-neutral-850">
+                    Danh Sách Cửa Hàng
+                  </h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">Quản lý chi nhánh cửa hàng và thông tin liên hệ, tọa độ</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Hotline</label>
-                    <input
-                      type="text"
-                      placeholder="Số điện thoại..."
-                      className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                      value={storeForm.hotline}
-                      onChange={(e) => setStoreForm(p => ({ ...p, hotline: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Email</label>
-                    <input
-                      type="email"
-                      placeholder="Email cửa hàng..."
-                      className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                      value={storeForm.email}
-                      onChange={(e) => setStoreForm(p => ({ ...p, email: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tỉnh/Thành *</label>
-                    <input
-                      type="text"
-                      placeholder="Tỉnh..."
-                      className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
-                      value={storeForm.province}
-                      onChange={(e) => setStoreForm(p => ({ ...p, province: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Quận/Huyện *</label>
-                    <input
-                      type="text"
-                      placeholder="Quận..."
-                      className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
-                      value={storeForm.district}
-                      onChange={(e) => setStoreForm(p => ({ ...p, district: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Phường/Xã *</label>
-                    <input
-                      type="text"
-                      placeholder="Phường..."
-                      className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
-                      value={storeForm.ward}
-                      onChange={(e) => setStoreForm(p => ({ ...p, ward: e.target.value }))}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Số nhà / Đường phố</label>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: 123 Nguyễn Trãi..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
-                    value={storeForm.road}
-                    onChange={(e) => setStoreForm(p => ({ ...p, road: e.target.value }))}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Vĩ độ (Latitude)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder="10.7626..."
-                      className="w-full border border-neutral-300 rounded px-3 py-2 bg-white font-mono"
-                      value={storeForm.lat}
-                      onChange={(e) => setStoreForm(p => ({ ...p, lat: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Kinh độ (Longitude)</label>
-                    <input
-                      type="number"
-                      step="any"
-                      placeholder="106.6602..."
-                      className="w-full border border-neutral-300 rounded px-3 py-2 bg-white font-mono"
-                      value={storeForm.lng}
-                      onChange={(e) => setStoreForm(p => ({ ...p, lng: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                {storeForm.id > 0 && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="store_is_active"
-                      checked={storeForm.is_active}
-                      onChange={(e) => setStoreForm(p => ({ ...p, is_active: e.target.checked }))}
-                    />
-                    <label htmlFor="store_is_active" className="text-[10px] uppercase font-bold text-neutral-700">Hoạt động (Active)</label>
-                  </div>
-                )}
-
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider py-2.5 rounded transition-colors"
-                  >
-                    {storeForm.id > 0 ? 'Cập Nhật' : 'Tạo mới'}
-                  </button>
-                  {storeForm.id > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setStoreForm({
-                        id: 0,
-                        name: '',
-                        hotline: '',
-                        province: '',
-                        district: '',
-                        ward: '',
-                        road: '',
-                        email: '',
-                        lat: '',
-                        lng: '',
-                        is_active: true
-                      })}
-                      className="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-[10px] font-bold uppercase py-2.5 px-4 rounded transition-colors"
-                    >
-                      Hủy
-                    </button>
-                  )}
-                </div>
-              </form>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStoreForm({
+                      id: 0,
+                      name: '',
+                      hotline: '',
+                      province: '',
+                      district: '',
+                      ward: '',
+                      road: '',
+                      email: '',
+                      lat: '',
+                      lng: '',
+                      is_active: true
+                    })
+                    setShowStoreModal(true)
+                  }}
+                  className="bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded transition-colors"
+                >
+                  + Thêm Cửa Hàng Mới
+                </button>
+              </div>
 
               {/* Table */}
-              <div className="lg:col-span-2 bg-white border border-neutral-200 rounded-lg overflow-hidden shadow-sm">
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="bg-white border border-neutral-200 rounded-lg overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
                   <thead>
                     <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
                       <th className="p-4">Cửa hàng</th>
@@ -930,8 +981,8 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                   <tbody className="divide-y divide-neutral-150">
                     {stores.map((s) => (
                       <tr key={s.id} className="hover:bg-neutral-50 transition-colors">
-                        <td className="p-4">
-                          <p className="font-bold text-neutral-855">{s.name}</p>
+                        <td className="p-4 font-bold text-neutral-855">
+                          {s.name}
                           <p className="text-[9px] text-neutral-450 font-mono mt-0.5">ID: {s.id}</p>
                         </td>
                         <td className="p-4">
@@ -977,6 +1028,165 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                   </tbody>
                 </table>
               </div>
+
+              {/* Form Modal */}
+              {showStoreModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                  <div className="bg-white border border-neutral-200 rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 space-y-5 flex flex-col">
+                    <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900">
+                        {storeForm.id > 0 ? 'Cập Nhật Cửa Hàng' : 'Thêm Cửa Hàng Mới'}
+                      </h3>
+                      <button
+                        onClick={() => setShowStoreModal(false)}
+                        className="text-neutral-400 hover:text-black"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleStoreSubmit} className="space-y-4 text-xs flex-1">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tên cửa hàng *</label>
+                        <input
+                          type="text"
+                          placeholder="Ví dụ: Jiyuu Flagship Store..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={storeForm.name}
+                          onChange={(e) => setStoreForm(p => ({ ...p, name: e.target.value }))}
+                          required
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Hotline</label>
+                          <input
+                            type="text"
+                            placeholder="Số điện thoại..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                            value={storeForm.hotline}
+                            onChange={(e) => setStoreForm(p => ({ ...p, hotline: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Email</label>
+                          <input
+                            type="email"
+                            placeholder="Email cửa hàng..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                            value={storeForm.email}
+                            onChange={(e) => setStoreForm(p => ({ ...p, email: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tỉnh/Thành *</label>
+                          <input
+                            type="text"
+                            placeholder="Tỉnh..."
+                            className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
+                            value={storeForm.province}
+                            onChange={(e) => setStoreForm(p => ({ ...p, province: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Quận/Huyện *</label>
+                          <input
+                            type="text"
+                            placeholder="Quận..."
+                            className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
+                            value={storeForm.district}
+                            onChange={(e) => setStoreForm(p => ({ ...p, district: e.target.value }))}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Phường/Xã *</label>
+                          <input
+                            type="text"
+                            placeholder="Phường..."
+                            className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
+                            value={storeForm.ward}
+                            onChange={(e) => setStoreForm(p => ({ ...p, ward: e.target.value }))}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Số nhà / Đường phố</label>
+                        <input
+                          type="text"
+                          placeholder="Ví dụ: 123 Nguyễn Trãi..."
+                          className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                          value={storeForm.road}
+                          onChange={(e) => setStoreForm(p => ({ ...p, road: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Vĩ độ (Latitude)</label>
+                          <input
+                            type="number"
+                            step="any"
+                            placeholder="10.7626..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white font-mono"
+                            value={storeForm.lat}
+                            onChange={(e) => setStoreForm(p => ({ ...p, lat: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Kinh độ (Longitude)</label>
+                          <input
+                            type="number"
+                            step="any"
+                            placeholder="106.6602..."
+                            className="w-full border border-neutral-300 rounded px-3 py-2 bg-white font-mono"
+                            value={storeForm.lng}
+                            onChange={(e) => setStoreForm(p => ({ ...p, lng: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      {storeForm.id > 0 && (
+                        <div className="flex items-center gap-2 pt-1">
+                          <input
+                            type="checkbox"
+                            id="store_is_active"
+                            checked={storeForm.is_active}
+                            onChange={(e) => setStoreForm(p => ({ ...p, is_active: e.target.checked }))}
+                          />
+                          <label htmlFor="store_is_active" className="text-[10px] uppercase font-bold text-neutral-700 cursor-pointer select-none">
+                            Hoạt động (Active)
+                          </label>
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 justify-end pt-3">
+                        <button
+                          type="button"
+                          onClick={() => setShowStoreModal(false)}
+                          className="text-[10px] border border-neutral-350 px-5 py-2.5 font-bold uppercase rounded text-neutral-600 hover:text-black"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="text-[10px] bg-black text-white px-6 py-2.5 font-black uppercase rounded hover:bg-neutral-800"
+                        >
+                          Lưu
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

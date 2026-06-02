@@ -49,12 +49,30 @@ export const inventoryAPI = {
     return res.data || []
   },
 
-  adminCreateSupplier: async (payload: { name: string; address?: string | null; phone?: string | null }): Promise<Supplier> => {
+  adminCreateSupplier: async (payload: {
+    name: string
+    address?: string | null
+    phone?: string | null
+    email?: string | null
+    contact_name?: string | null
+    contact_phone?: string | null
+  }): Promise<Supplier> => {
     const res = await api.post<Supplier>('/admin/suppliers', payload)
     return res.data
   },
 
-  adminUpdateSupplier: async (id: number, payload: { name: string; address?: string | null; phone?: string | null }): Promise<Supplier> => {
+  adminUpdateSupplier: async (
+    id: number,
+    payload: {
+      name: string
+      address?: string | null
+      phone?: string | null
+      email?: string | null
+      contact_name?: string | null
+      contact_phone?: string | null
+      is_deleted?: boolean
+    }
+  ): Promise<Supplier> => {
     const res = await api.put<Supplier>(`/admin/suppliers/${id}`, payload)
     return res.data
   },

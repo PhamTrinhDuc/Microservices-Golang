@@ -21,7 +21,7 @@ type mockOrderUsecase struct {
 	CheckoutOrderFunc             func(ctx context.Context, userID int, req *domain.CheckoutOrderRequest) (*domain.OrderResponse, error)
 	ConfirmPaymentFunc            func(ctx context.Context, payosOrderCode string, paymentCode string) error
 	CancelExpiredReservationsFunc func(ctx context.Context) error
-	ListOrdersFunc                func(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*domain.OrderResponse, int, error)
+	ListOrdersFunc                func(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.OrderResponse, int, error)
 	GetOrderDetailsFunc           func(ctx context.Context, orderID int, userID *int) (*domain.OrderResponse, error)
 	CancelOrderFunc               func(ctx context.Context, orderID int, actorUserID int, isAdmin bool, note string) error
 	UpdateOrderStatusFunc         func(ctx context.Context, orderID int, actorUserID int, req *domain.UpdateOrderStatusRequest) error
@@ -39,8 +39,8 @@ func (m *mockOrderUsecase) CancelExpiredReservations(ctx context.Context) error 
 	return m.CancelExpiredReservationsFunc(ctx)
 }
 
-func (m *mockOrderUsecase) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int) ([]*domain.OrderResponse, int, error) {
-	return m.ListOrdersFunc(ctx, userID, storeID, page, limit)
+func (m *mockOrderUsecase) ListOrders(ctx context.Context, userID *int, storeID *int, page int, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.OrderResponse, int, error) {
+	return m.ListOrdersFunc(ctx, userID, storeID, page, limit, query, orderStatus, paymentStatus, shippingStatus)
 }
 
 func (m *mockOrderUsecase) GetOrderDetails(ctx context.Context, orderID int, userID *int) (*domain.OrderResponse, error) {
@@ -212,7 +212,7 @@ func TestOrderController_ListMyOrders(t *testing.T) {
 	t.Run("success list my orders", func(t *testing.T) {
 		is := assert.New(t)
 		mockUC := &mockOrderUsecase{
-			ListOrdersFunc: func(ctx context.Context, userID *int, storeID *int, page, limit int) ([]*domain.OrderResponse, int, error) {
+			ListOrdersFunc: func(ctx context.Context, userID *int, storeID *int, page, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.OrderResponse, int, error) {
 				return []*domain.OrderResponse{
 					{
 						Order: domain.Order{ID: 1, OrderCode: "ORD-1", UserID: *userID},
@@ -433,7 +433,7 @@ func TestOrderController_AdminListOrders(t *testing.T) {
 	t.Run("success admin list", func(t *testing.T) {
 		is := assert.New(t)
 		mockUC := &mockOrderUsecase{
-			ListOrdersFunc: func(ctx context.Context, userID *int, storeID *int, page, limit int) ([]*domain.OrderResponse, int, error) {
+			ListOrdersFunc: func(ctx context.Context, userID *int, storeID *int, page, limit int, query string, orderStatus, paymentStatus, shippingStatus *string) ([]*domain.OrderResponse, int, error) {
 				is.Nil(userID)
 				is.Equal(5, *storeID)
 				return []*domain.OrderResponse{

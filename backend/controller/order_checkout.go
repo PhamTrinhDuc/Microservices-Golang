@@ -90,7 +90,7 @@ func (oc *OrderController) ListMyOrders(c *gin.Context) {
 		limit = 10
 	}
 
-	res, total, err := oc.useCase.ListOrders(c.Request.Context(), &userID, nil, page, limit)
+	res, total, err := oc.useCase.ListOrders(c.Request.Context(), &userID, nil, page, limit, "", nil, nil, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -244,12 +244,29 @@ func (oc *OrderController) AdminListOrders(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	storeIDStr := c.Query("store_id")
+	query := c.Query("q")
+	orderStatusStr := c.Query("order_status")
+	paymentStatusStr := c.Query("payment_status")
+	shippingStatusStr := c.Query("shipping_status")
 
 	var storeID *int
 	if storeIDStr != "" {
 		if id, err := strconv.Atoi(storeIDStr); err == nil {
 			storeID = &id
 		}
+	}
+
+	var orderStatus *string
+	if orderStatusStr != "" {
+		orderStatus = &orderStatusStr
+	}
+	var paymentStatus *string
+	if paymentStatusStr != "" {
+		paymentStatus = &paymentStatusStr
+	}
+	var shippingStatus *string
+	if shippingStatusStr != "" {
+		shippingStatus = &shippingStatusStr
 	}
 
 	if page < 1 {
@@ -259,7 +276,7 @@ func (oc *OrderController) AdminListOrders(c *gin.Context) {
 		limit = 10
 	}
 
-	res, total, err := oc.useCase.ListOrders(c.Request.Context(), nil, storeID, page, limit)
+	res, total, err := oc.useCase.ListOrders(c.Request.Context(), nil, storeID, page, limit, query, orderStatus, paymentStatus, shippingStatus)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -310,4 +327,32 @@ func (oc *OrderController) AdminUpdateStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "order status updated successfully"})
+}
+
+// AdminGetOrderDetails retrieves specific order details for admin (without userID restriction)
+// @Summary Admin view order details
+// @Tags Admin Orders
+// @Produce json
+// @Security ApiKeyAuth
+// @Param id path int true "Order ID"
+// @Success 200 {object} domain.OrderResponse
+// @Router /api/v1/admin/orders/{id} [get]
+func (oc *OrderController) AdminGetOrderDetails(c *gin.Context) {
+	orderID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order id"})
+		return
+	}
+
+	res, err := oc.useCase.GetOrderDetails(c.Request.Context(), orderID, nil)
+	if err != nil {
+		if err == domain.ErrOrderNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, res)
 }

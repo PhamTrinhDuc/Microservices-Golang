@@ -34,6 +34,8 @@ type mockCatalogUsecase struct {
 
 	AddOptionValuesFunc func(ctx context.Context, req *domain.AddOptionValuesRequest) ([]*domain.ProductOptionValue, error)
 	GenerateVariantFunc func(ctx context.Context, productID string, req *domain.GenerateVariantRequest) (*domain.ProductVariant, error)
+	UpdateVariantFunc   func(ctx context.Context, id int, req *domain.UpdateVariantRequest) (*domain.ProductVariant, error)
+	DeleteVariantFunc   func(ctx context.Context, id int) error
 }
 
 func (m *mockCatalogUsecase) CreateCategory(ctx context.Context, req *domain.CreateCategoryRequest) (*domain.Category, error) {
@@ -94,6 +96,14 @@ func (m *mockCatalogUsecase) AddOptionValues(ctx context.Context, req *domain.Ad
 
 func (m *mockCatalogUsecase) GenerateVariant(ctx context.Context, productID string, req *domain.GenerateVariantRequest) (*domain.ProductVariant, error) {
 	return m.GenerateVariantFunc(ctx, productID, req)
+}
+
+func (m *mockCatalogUsecase) UpdateVariant(ctx context.Context, id int, req *domain.UpdateVariantRequest) (*domain.ProductVariant, error) {
+	return m.UpdateVariantFunc(ctx, id, req)
+}
+
+func (m *mockCatalogUsecase) DeleteVariant(ctx context.Context, id int) error {
+	return m.DeleteVariantFunc(ctx, id)
 }
 
 func TestCatalogController_CreateCategory(t *testing.T) {

@@ -490,3 +490,15 @@ func (uc *CatalogUsecase) GenerateVariant(ctx context.Context, productID string,
 
 	return uc.repo.CreateVariant(ctx, variant, req.OptionValueIDs)
 }
+
+func (uc *CatalogUsecase) UpdateVariant(ctx context.Context, id int, req *domain.UpdateVariantRequest) (*domain.ProductVariant, error) {
+	if req == nil {
+		return nil, errors.New("request payload cannot be nil")
+	}
+	return uc.repo.UpdateVariant(ctx, id, req.Name, req.SKU, req.Price, req.PriceBase, req.Weight)
+}
+
+func (uc *CatalogUsecase) DeleteVariant(ctx context.Context, id int) error {
+	return uc.repo.DeleteVariant(ctx, id)
+}
+

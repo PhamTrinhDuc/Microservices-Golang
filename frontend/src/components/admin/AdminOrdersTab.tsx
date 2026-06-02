@@ -11,6 +11,10 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [storeFilter, setStoreFilter] = useState<number | undefined>(undefined)
+  const [search, setSearch] = useState('')
+  const [orderStatusFilter, setOrderStatusFilter] = useState('')
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState('')
+  const [shippingStatusFilter, setShippingStatusFilter] = useState('')
   const [loading, setLoading] = useState(false)
 
   // Selected Order for Detail Modal
@@ -30,7 +34,13 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
   const loadOrders = async () => {
     try {
       setLoading(true)
-      const res = await orderAPI.adminListOrders(page, 10, storeFilter)
+      const res = await orderAPI.adminListOrders(page, 10, {
+        storeId: storeFilter,
+        q: search,
+        orderStatus: orderStatusFilter,
+        paymentStatus: paymentStatusFilter,
+        shippingStatus: shippingStatusFilter,
+      })
       setOrders(res.data || [])
       setTotal(res.total || 0)
     } catch (err) {
@@ -42,19 +52,31 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
 
   useEffect(() => {
     void loadOrders()
-  }, [page, storeFilter])
+  }, [page, storeFilter, search, orderStatusFilter, paymentStatusFilter, shippingStatusFilter])
 
-  const handleOpenStatusModal = (order: OrderResponse) => {
-    setSelectedOrder(order)
-    setStatusForm({
-      orderStatus: '',
-      paymentStatus: '',
-      shippingStatus: '',
-      shippingProvider: order.order.shipping_provider || '',
-      shippingCode: order.order.shipping_code || '',
-      note: '',
-    })
-    setShowStatusModal(true)
+  const handleCopyCode = (code: string) => {
+    void navigator.clipboard.writeText(code)
+  }
+
+  const handleOpenStatusModal = async (order: OrderResponse) => {
+    try {
+      setLoading(true)
+      const details = await orderAPI.adminGetOrderDetails(order.order.id)
+      setSelectedOrder(details)
+      setStatusForm({
+        orderStatus: '',
+        paymentStatus: '',
+        shippingStatus: '',
+        shippingProvider: details.order.shipping_provider || '',
+        shippingCode: details.order.shipping_code || '',
+        note: '',
+      })
+      setShowStatusModal(true)
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi tải chi tiết đơn hàng')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUpdateStatus = async (e: React.FormEvent) => {
@@ -89,20 +111,96 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
           <h1 className="text-xl font-black text-neutral-900 uppercase tracking-tight">Quản lý Đơn hàng</h1>
           <p className="text-xs text-neutral-500 mt-1">Duyệt đơn, trừ tồn kho và cập nhật vận chuyển</p>
         </div>
+      </div>
 
-        {/* Store Filter dropdown */}
-        <select
-          className="border border-neutral-350 rounded px-3 py-1.5 text-xs bg-white focus:outline-none"
-          value={storeFilter || ''}
-          onChange={(e) => setStoreFilter(e.target.value ? Number(e.target.value) : undefined)}
-        >
-          <option value="">Tất cả cửa hàng</option>
-          {stores.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+      {/* Search and Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+        <div className="sm:col-span-1">
+          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Tìm kiếm</label>
+          <input
+            type="text"
+            placeholder="Mã đơn, tên khách, SĐT..."
+            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setPage(1)
+            }}
+          />
+        </div>
+
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Cửa hàng</label>
+          <select
+            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none"
+            value={storeFilter || ''}
+            onChange={(e) => {
+              setStoreFilter(e.target.value ? Number(e.target.value) : undefined)
+              setPage(1)
+            }}
+          >
+            <option value="">Tất cả cửa hàng</option>
+            {stores.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Trạng thái đơn</label>
+          <select
+            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none"
+            value={orderStatusFilter}
+            onChange={(e) => {
+              setOrderStatusFilter(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Tất cả</option>
+            <option value="pending">Chờ xử lý (Pending)</option>
+            <option value="confirmed">Xác nhận (Confirmed)</option>
+            <option value="processing">Đang đóng gói (Processing)</option>
+            <option value="shipping">Đang vận chuyển (Shipping)</option>
+            <option value="delivered">Đã giao hàng (Delivered)</option>
+            <option value="cancelled">Hủy bỏ (Cancelled)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Thanh toán</label>
+          <select
+            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none"
+            value={paymentStatusFilter}
+            onChange={(e) => {
+              setPaymentStatusFilter(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Tất cả</option>
+            <option value="unpaid">Chưa thanh toán (Unpaid)</option>
+            <option value="paid">Đã thanh toán (Paid)</option>
+            <option value="refunded">Hoàn tiền (Refunded)</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Giao hàng</label>
+          <select
+            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 text-xs bg-white focus:outline-none"
+            value={shippingStatusFilter}
+            onChange={(e) => {
+              setShippingStatusFilter(e.target.value)
+              setPage(1)
+            }}
+          >
+            <option value="">Tất cả</option>
+            <option value="not_shipped">Chưa giao (Not Shipped)</option>
+            <option value="shipped">Đang vận chuyển (Shipped)</option>
+            <option value="delivered">Đã hoàn tất giao (Delivered)</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (
@@ -128,7 +226,13 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
               {orders.map((o) => (
                 <tr key={o.order.id} className="hover:bg-neutral-50 transition-colors">
                   <td className="p-4">
-                    <p className="font-bold text-neutral-900">{o.order.order_code}</p>
+                    <span
+                      onClick={() => handleCopyCode(o.order.order_code)}
+                      className="font-bold text-neutral-900 cursor-pointer hover:text-blue-650 select-none"
+                      title="Click để sao chép"
+                    >
+                      {o.order.order_code}
+                    </span>
                     <p className="text-[10px] text-neutral-400 mt-0.5">
                       {new Date(o.order.created_at).toLocaleDateString('vi-VN')}
                     </p>
@@ -173,7 +277,7 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
                       onClick={() => handleOpenStatusModal(o)}
                       className="bg-black hover:bg-neutral-800 text-white text-[10px] uppercase font-black tracking-wider px-3.5 py-1.5 rounded transition-colors"
                     >
-                      Cập nhật
+                      👁 Chi tiết
                     </button>
                   </td>
                 </tr>
@@ -210,7 +314,7 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
           <div className="bg-white border border-neutral-200 rounded-lg shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 space-y-5 flex flex-col">
             <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900">
-                Cập Nhật Đơn Hàng: {selectedOrder.order.order_code}
+                Chi Tiết Đơn Hàng: {selectedOrder.order.order_code}
               </h3>
               <button
                 onClick={() => setShowStatusModal(false)}
@@ -313,16 +417,53 @@ export default function AdminOrdersTab({ stores }: AdminOrdersTabProps) {
               <div className="border border-neutral-200 rounded p-4 space-y-2 bg-neutral-50">
                 <p className="text-[10px] font-bold text-neutral-700 uppercase tracking-wide">Chi tiết sản phẩm</p>
                 {selectedOrder.items.map((i) => (
-                  <div key={i.id} className="flex justify-between">
+                  <div key={i.id} className="flex justify-between text-neutral-800">
                     <span>{i.variant_name} x {i.quantity}</span>
-                    <span className="font-mono">{i.total_cost.toLocaleString('vi-VN')} đ</span>
+                    <span className="font-mono font-semibold">{i.total_cost.toLocaleString('vi-VN')} đ</span>
                   </div>
                 ))}
-                <div className="flex justify-between border-t border-neutral-200 pt-1.5 font-bold">
+                <div className="flex justify-between border-t border-neutral-200 pt-1.5 font-bold text-neutral-900">
                   <span>Tổng tiền</span>
                   <span>{selectedOrder.order.total_amount.toLocaleString('vi-VN')} đ</span>
                 </div>
               </div>
+
+              {/* Lịch sử cập nhật trạng thái (Timeline) */}
+              {selectedOrder.history && selectedOrder.history.length > 0 && (
+                <div className="border border-neutral-200 rounded p-4 space-y-3 bg-white">
+                  <p className="text-[10px] font-bold text-neutral-700 uppercase tracking-wide">
+                    Timeline lịch sử trạng thái
+                  </p>
+                  <div className="relative border-l border-neutral-200 pl-4 ml-2 space-y-4">
+                    {selectedOrder.history.map((h) => (
+                      <div key={h.id} className="relative">
+                        <span className="absolute -left-[21px] top-1 bg-black rounded-full w-2 h-2 border-2 border-white ring-2 ring-neutral-200"></span>
+                        <div className="text-[11px] text-neutral-800 space-y-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-bold uppercase tracking-wider text-[8px] px-1 py-0.2 bg-neutral-100 rounded text-neutral-500">
+                              {h.status_type === 'order' ? 'Đơn hàng' : h.status_type === 'payment' ? 'Thanh toán' : 'Giao hàng'}
+                            </span>
+                            {h.from_status && (
+                              <>
+                                <span className="text-neutral-400 font-mono text-[10px]">{h.from_status}</span>
+                                <span className="text-neutral-400">→</span>
+                              </>
+                            )}
+                            <span className="font-bold font-mono text-[10px] text-neutral-900">{h.to_status}</span>
+                          </div>
+                          {h.note && <p className="italic text-neutral-600 bg-neutral-50 px-2 py-1 rounded mt-0.5">{h.note}</p>}
+                          <div className="text-[9px] text-neutral-400 flex justify-between">
+                            <span>
+                              Bởi: <span className="font-semibold text-neutral-600">{h.changed_by_name || 'Hệ thống'}</span>
+                            </span>
+                            <span>{new Date(h.changed_at).toLocaleString('vi-VN')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2 justify-end pt-3">
                 <button

@@ -248,4 +248,19 @@ export const productAPI = {
   adminDeleteProduct: async (id: string): Promise<void> => {
     await api.delete(`/admin/products/${id}`)
   },
+
+  adminUpdateVariant: async (id: number, payload: {
+    name: string
+    sku: string
+    price: number
+    price_base?: number
+    weight?: number
+  }): Promise<any> => {
+    const res = await api.put<any>(`/admin/variants/${id}`, payload)
+    return res.data
+  },
+
+  adminDeleteVariant: async (id: number): Promise<void> => {
+    await api.delete(`/admin/variants/${id}`)
+  },
 }
