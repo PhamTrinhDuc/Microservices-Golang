@@ -415,6 +415,18 @@ func (r *CatalogRepository) CreateProduct(ctx context.Context, input *domain.Cre
 		}
 	}
 
+	// 5. Insert secondary product images
+	imgQuery := `
+		INSERT INTO product_image (product_id, url, is_thumbnail, sort_order)
+		VALUES ($1, $2, false, $3)`
+
+	for _, img := range input.Images {
+		_, err = tx.Exec(ctx, imgQuery, input.Product.ID, img.URL, img.SortOrder)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert product secondary image: %w", err)
+		}
+	}
+
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -892,7 +904,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 	}, nil
 }
 
-func (r *CatalogRepository) UpdateProduct(ctx context.Context, prod *domain.Product, specs []*domain.ProductSpec) (*domain.Product, error) {
+func (r *CatalogRepository) UpdateProduct(ctx context.Context, prod *domain.Product, specs []*domain.ProductSpec, images []*domain.ProductImage) (*domain.Product, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin transaction: %w", err)
@@ -952,6 +964,24 @@ func (r *CatalogRepository) UpdateProduct(ctx context.Context, prod *domain.Prod
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to insert product spec during update: %w", err)
+		}
+	}
+
+	// 4. Delete old secondary product images
+	_, err = tx.Exec(ctx, `DELETE FROM product_image WHERE product_id = $1 AND is_thumbnail = false AND variant_id IS NULL`, prod.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to clear old product secondary images: %w", err)
+	}
+
+	// 5. Insert new secondary product images
+	imgQuery := `
+		INSERT INTO product_image (product_id, url, is_thumbnail, sort_order)
+		VALUES ($1, $2, false, $3)`
+
+	for _, img := range images {
+		_, err = tx.Exec(ctx, imgQuery, prod.ID, img.URL, img.SortOrder)
+		if err != nil {
+			return nil, fmt.Errorf("failed to insert product secondary image during update: %w", err)
 		}
 	}
 
