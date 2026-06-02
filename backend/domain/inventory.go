@@ -37,6 +37,11 @@ type ProductInventory struct {
 	Quantity    int       `json:"quantity" db:"quantity"`
 	Reserved    int       `json:"reserved" db:"reserved"`
 	LastUpdated time.Time `json:"last_updated" db:"last_updated"`
+
+	// Joined properties
+	VariantName string    `json:"variant_name,omitempty" db:"variant_name"`
+	ProductName string    `json:"product_name,omitempty" db:"product_name"`
+	SKU         string    `json:"sku,omitempty" db:"sku"`
 }
 
 type ImportInvoice struct {
