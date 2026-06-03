@@ -670,6 +670,88 @@ def seed_marketing_vouchers(cursor):
                 VALUES (%s, %s, %s, %s, NOW() - INTERVAL '1 day', NOW() + INTERVAL '30 days', 'order', 100000, FALSE);
             """, (code, name, dtype, dval))
 
+def ingest_banners(cursor):
+    """Ingest homepage banners into the database."""
+    print("Ingesting homepage banners...")
+    banners = [
+        (
+            'LIMIT TIME OFFER', 
+            'Sản phẩm công nghệ giảm giá tới 50%', 
+            'Cơ hội sở hữu laptop, điện thoại cao cấp chính hãng với giá rẻ nhất thị trường.',
+            'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=600&q=80', 
+            'Điện tử & Công nghệ', 
+            '/browse', 
+            1, 
+            True
+        ),
+        (
+            'NEW FASHION ERA', 
+            'Bộ sưu tập thời trang mùa hè cực hot', 
+            'Phong cách tối giản thời thượng. Hoàn tiền 100% nếu không hài lòng.',
+            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80', 
+            'Fashion & LifeStyle', 
+            '/browse', 
+            2, 
+            True
+        ),
+        (
+            'PREMIUM LIVING', 
+            'Trang trí nhà cửa cùng BeliBeli Home', 
+            'Giảm giá cực sâu cho các dòng máy xay, nồi chiên không dầu và robot hút bụi.',
+            'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80', 
+            'Gia dụng & Đời sống', 
+            '/browse', 
+            3, 
+            True
+        )
+    ]
+    
+    for title, subtitle, description, image_url, tag, link_url, sort_order, is_active in banners:
+        cursor.execute("SELECT id FROM banners WHERE title = %s;", (title,))
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO banners (title, subtitle, description, image_url, tag, link_url, sort_order, is_active, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW());
+            """, (title, subtitle, description, image_url, tag, link_url, sort_order, is_active))
+    print("Successfully processed banners table.")
+
+def seed_promotions(cursor):
+    """Seed sample promotions for some products to drive the Flash Sale section."""
+    print("Seeding flash sale promotions...")
+    
+    # Get some product IDs
+    cursor.execute("SELECT id, name FROM product LIMIT 5;")
+    products = cursor.fetchall()
+    
+    if not products:
+        print("No products found in the database. Cannot seed promotions.")
+        return
+        
+    print(f"Found {len(products)} products to seed promotions for.")
+    
+    # We will create active promotions that end 3-7 days in the future, and start 1 day in the past.
+    for i, (p_id, p_name) in enumerate(products):
+        if i % 2 == 0:
+            discount_type = "percentage"
+            discount_value = 10.0 + (i * 5) # 10%, 15%, 20%...
+            name = f"Flash Sale {p_name[:20]} - Giảm {int(discount_value)}%"
+        else:
+            discount_type = "fixed"
+            discount_value = 50000.0 * (i + 1) # 50k, 100k...
+            name = f"Flash Sale {p_name[:20]} - Giảm {int(discount_value):,}đ"
+            
+        description = f"Chương trình Flash Sale đặc biệt cho sản phẩm {p_name}."
+        
+        # Check if a promotion already exists for this product
+        cursor.execute("SELECT id FROM promotions WHERE product_id = %s AND is_deleted = false;", (p_id,))
+        if not cursor.fetchone():
+            cursor.execute("""
+                INSERT INTO promotions (product_id, name, description, discount_type, discount_value, start_date, end_date, is_active, is_deleted)
+                VALUES (%s, %s, %s, %s, %s, NOW() - INTERVAL '1 day', NOW() + INTERVAL '5 days', TRUE, FALSE);
+            """, (p_id, name, description, discount_type, discount_value))
+            
+    print("Successfully processed promotions table.")
+
 def main():
     print("====================================================")
     print("           TGDD CORE BUSINESS ETL PIPELINE          ")
@@ -705,6 +787,12 @@ def main():
             
             # Step 4: Seed Vouchers
             seed_marketing_vouchers(cursor)
+            
+            # Step 4b: Seed Banners
+            ingest_banners(cursor)
+            
+            # Step 4c: Seed Promotions (Flash Sale)
+            seed_promotions(cursor)
             
             # Step 5: Ingest Users, Mock Orders and Reviews
             ingest_reviews_and_users(cursor, reviews_data, store_ids)
