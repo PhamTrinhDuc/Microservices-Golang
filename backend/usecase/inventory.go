@@ -84,9 +84,10 @@ func (uc *InventoryUsecase) CreateSupplier(ctx context.Context, req *domain.Crea
 	supplier := &domain.Supplier{
 		Name:         req.Name,
 		Address:      req.Address,
+		Phone:        req.Phone,
+		Email:        req.Email,
 		ContactName:  req.ContactName,
 		ContactPhone: req.ContactPhone,
-		ContactEmail: req.ContactEmail,
 	}
 
 	return uc.repo.CreateSupplier(ctx, supplier)
@@ -109,9 +110,10 @@ func (uc *InventoryUsecase) UpdateSupplier(ctx context.Context, id int, req *dom
 
 	supplier.Name = req.Name
 	supplier.Address = req.Address
+	supplier.Phone = req.Phone
+	supplier.Email = req.Email
 	supplier.ContactName = req.ContactName
 	supplier.ContactPhone = req.ContactPhone
-	supplier.ContactEmail = req.ContactEmail
 	if req.IsDeleted != nil {
 		supplier.IsDeleted = *req.IsDeleted
 	}
@@ -150,12 +152,18 @@ func (uc *InventoryUsecase) ImportGoods(ctx context.Context, creatorID int, req 
 		}
 	}
 
+	status := req.Status
+	if status == "" {
+		status = "published"
+	}
+
 	invoice := &domain.ImportInvoice{
 		SupplierID: req.SupplierID,
 		StoreID:    req.StoreID,
 		CreatedBy:  creatorID,
 		TotalItems: totalItems,
 		Note:       req.Note,
+		Status:     status,
 	}
 
 	return uc.repo.CreateImportInvoice(ctx, creatorID, invoice, details)
@@ -232,4 +240,12 @@ func (uc *InventoryUsecase) GetInventoryLogs(ctx context.Context, query *domain.
 	}
 
 	return uc.repo.GetInventoryLogs(ctx, query)
+}
+
+func (uc *InventoryUsecase) ConfirmImportInvoice(ctx context.Context, invoiceID int) error {
+	return uc.repo.ConfirmImportInvoice(ctx, invoiceID)
+}
+
+func (uc *InventoryUsecase) GetLastImportPrice(ctx context.Context, variantID int) (float64, error) {
+	return uc.repo.GetLastImportPrice(ctx, variantID)
 }

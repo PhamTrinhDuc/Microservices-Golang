@@ -228,7 +228,7 @@ func (r *CartRepository) GetCartDetails(ctx context.Context, userID *int, sessio
 
 	if userID != nil {
 		query = `
-			SELECT ci.id, ci.variant_id, pv.name as variant_name, pv.sku, pv.price, pv.price_base,
+			SELECT ci.id, ci.variant_id, pv.name as variant_name, pv.sku, pv.sell_price, pv.compare_price,
 			       p.id as product_id, p.name as product_name, img.url as image_url, ci.quantity
 			FROM cart_items ci
 			JOIN product_variant pv ON ci.variant_id = pv.id
@@ -244,7 +244,7 @@ func (r *CartRepository) GetCartDetails(ctx context.Context, userID *int, sessio
 		arg = *userID
 	} else if sessionID != nil {
 		query = `
-			SELECT ci.id, ci.variant_id, pv.name as variant_name, pv.sku, pv.price, pv.price_base,
+			SELECT ci.id, ci.variant_id, pv.name as variant_name, pv.sku, pv.sell_price, pv.compare_price,
 			       p.id as product_id, p.name as product_name, img.url as image_url, ci.quantity
 			FROM cart_items ci
 			JOIN product_variant pv ON ci.variant_id = pv.id
@@ -276,8 +276,8 @@ func (r *CartRepository) GetCartDetails(ctx context.Context, userID *int, sessio
 			&d.VariantID,
 			&d.VariantName,
 			&d.SKU,
-			&d.Price,
-			&d.PriceBase,
+			&d.SellPrice,
+			&d.ComparePrice,
 			&d.ProductID,
 			&d.ProductName,
 			&d.ImageURL,

@@ -427,12 +427,12 @@ def ingest_products_catalog(cursor, products_data, store_ids):
                 
                 # Ingest variant
                 cursor.execute("""
-                    INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active)
+                    INSERT INTO product_variant (product_id, name, sku, sell_price, compare_price, weight, is_active)
                     VALUES (%s, %s, %s, %s, %s, %s, TRUE)
                     ON CONFLICT (sku) DO UPDATE SET
                         name = EXCLUDED.name,
-                        price = EXCLUDED.price,
-                        price_base = EXCLUDED.price_base,
+                        sell_price = EXCLUDED.sell_price,
+                        compare_price = EXCLUDED.compare_price,
                         weight = EXCLUDED.weight
                     RETURNING id;
                 """, (p_id, var_name, v_sku, var_price, var_price_base, weight))
@@ -504,6 +504,13 @@ def ingest_products_catalog(cursor, products_data, store_ids):
                         VALUES (%s, %s, %s, 0, %s);
                     """, (invoice_id, var_id, qty, import_price))
                     total_qty += qty
+                else:
+                    import_price = float(price) * 0.8
+
+                # Sync latest_cost_price for variant to keep it consistent with the invoice detail
+                cursor.execute("""
+                    UPDATE product_variant SET latest_cost_price = %s WHERE id = %s;
+                """, (import_price, var_id))
             
             # Update total items sum on invoice
             cursor.execute("UPDATE import_invoices SET total_items = total_items + %s WHERE id = %s;", (total_qty, invoice_id))
@@ -559,7 +566,7 @@ def ingest_reviews_and_users(cursor, reviews_data, store_ids):
             continue
         
         # Grab a variant for orders
-        cursor.execute("SELECT id, price FROM product_variant WHERE product_id = %s LIMIT 1;", (p_id,))
+        cursor.execute("SELECT id, sell_price FROM product_variant WHERE product_id = %s LIMIT 1;", (p_id,))
         v_row = cursor.fetchone()
         if not v_row:
             print(f"Skipping reviews: No product variant found for product ID {p_id}.")

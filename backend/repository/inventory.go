@@ -199,9 +199,10 @@ func (r *InventoryRepository) CreateSupplier(ctx context.Context, supplier *doma
 	err := r.db.QueryRow(ctx, query,
 		supplier.Name,
 		supplier.Address,
+		supplier.Phone,
+		supplier.Email,
 		supplier.ContactName,
 		supplier.ContactPhone,
-		supplier.ContactEmail,
 	).Scan(&supplier.ID)
 
 	if err != nil {
@@ -234,7 +235,7 @@ func (r *InventoryRepository) ListSuppliers(ctx context.Context) ([]*domain.Supp
 	for rows.Next() {
 		s := &domain.Supplier{}
 		err := rows.Scan(
-			&s.ID, &s.Name, &s.Address, &s.ContactName, &s.ContactPhone, &s.ContactEmail, &s.IsDeleted,
+			&s.ID, &s.Name, &s.Address, &s.Phone, &s.Email, &s.ContactName, &s.ContactPhone, &s.IsDeleted,
 			&s.TotalImports, &s.LastImportedAt, &s.TotalImportValue,
 		)
 		if err != nil {
@@ -264,7 +265,7 @@ func (r *InventoryRepository) GetSupplierByID(ctx context.Context, id int) (*dom
 		GROUP BY s.id`
 
 	err := r.db.QueryRow(ctx, query, id).Scan(
-		&s.ID, &s.Name, &s.Address, &s.ContactName, &s.ContactPhone, &s.ContactEmail, &s.IsDeleted,
+		&s.ID, &s.Name, &s.Address, &s.Phone, &s.Email, &s.ContactName, &s.ContactPhone, &s.IsDeleted,
 		&s.TotalImports, &s.LastImportedAt, &s.TotalImportValue,
 	)
 	if err != nil {
@@ -286,9 +287,10 @@ func (r *InventoryRepository) UpdateSupplier(ctx context.Context, supplier *doma
 	tag, err := r.db.Exec(ctx, query,
 		supplier.Name,
 		supplier.Address,
+		supplier.Phone,
+		supplier.Email,
 		supplier.ContactName,
 		supplier.ContactPhone,
-		supplier.ContactEmail,
 		supplier.IsDeleted,
 		supplier.ID,
 	)
@@ -327,10 +329,15 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 	}
 	defer tx.Rollback(ctx)
 
+	// Ensure status is valid, default to published
+	if invoice.Status == "" {
+		invoice.Status = "published"
+	}
+
 	// 1. Insert import invoice
 	invoiceQuery := `
-		INSERT INTO import_invoices (supplier_id, store_id, created_by, total_items, note, created_at)
-		VALUES ($1, $2, $3, $4, $5, NOW())
+		INSERT INTO import_invoices (supplier_id, store_id, created_by, total_items, note, status, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		RETURNING id, created_at`
 
 	err = tx.QueryRow(ctx, invoiceQuery,
@@ -339,6 +346,7 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 		creatorID,
 		invoice.TotalItems,
 		invoice.Note,
+		invoice.Status,
 	).Scan(&invoice.ID, &invoice.CreatedAt)
 
 	if err != nil {
@@ -347,7 +355,7 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 
 	invoice.CreatedBy = creatorID
 
-	// 2. Loop details to upsert quantity & insert logs
+	// 2. Loop details to insert details (and optionally update inventory/logs)
 	detailQuery := `
 		INSERT INTO import_invoice_details (invoice_id, variant_id, quantity, stock_before, price_import)
 		VALUES ($1, $2, $3, $4, $5)
@@ -366,28 +374,40 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 	refIDStr := strconv.Itoa(invoice.ID)
 
 	for _, d := range details {
-		// Fetch stock before (FOR UPDATE to prevent concurrent adjustments)
 		var stockBefore int
-		selectForUpdate := `SELECT quantity FROM product_inventory WHERE variant_id = $1 AND store_id = $2 FOR UPDATE`
-		err = tx.QueryRow(ctx, selectForUpdate, d.VariantID, invoice.StoreID).Scan(&stockBefore)
-		if err != nil {
-			if err == pgx.ErrNoRows {
-				stockBefore = 0
-			} else {
-				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) && pgErr.Code == "23503" {
-					return nil, domain.ErrVariantNotFound
+		if invoice.Status == "published" {
+			// Fetch stock before (FOR UPDATE to prevent concurrent adjustments)
+			selectForUpdate := `SELECT quantity FROM product_inventory WHERE variant_id = $1 AND store_id = $2 FOR UPDATE`
+			err = tx.QueryRow(ctx, selectForUpdate, d.VariantID, invoice.StoreID).Scan(&stockBefore)
+			if err != nil {
+				if err == pgx.ErrNoRows {
+					stockBefore = 0
+				} else {
+					var pgErr *pgconn.PgError
+					if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+						return nil, domain.ErrVariantNotFound
+					}
+					return nil, fmt.Errorf("failed to select current quantity FOR UPDATE: %w", err)
 				}
-				return nil, fmt.Errorf("failed to select current quantity FOR UPDATE: %w", err)
 			}
+		} else {
+			// For drafts, we can just check if variant exists first
+			var exists bool
+			err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM product_variant WHERE id = $1 AND is_deleted = false)`, d.VariantID).Scan(&exists)
+			if err != nil {
+				return nil, fmt.Errorf("failed to verify variant existence: %w", err)
+			}
+			if !exists {
+				return nil, domain.ErrVariantNotFound
+			}
+			stockBefore = 0
 		}
 
 		qtyAfter := stockBefore + d.Quantity
 		d.InvoiceID = invoice.ID
 		d.StockBefore = stockBefore
 
-		// Check variant existence if select failed but constraint could error later
-		// Just execute insert detail, if variant_id does not exist, it will trigger foreign key constraint error.
+		// Insert detail row
 		err = tx.QueryRow(ctx, detailQuery,
 			invoice.ID,
 			d.VariantID,
@@ -404,23 +424,26 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 			return nil, fmt.Errorf("failed to insert import invoice detail: %w", err)
 		}
 
-		// Upsert inventory quantity
-		_, err = tx.Exec(ctx, upsertInvQuery, d.VariantID, invoice.StoreID, qtyAfter)
-		if err != nil {
-			return nil, fmt.Errorf("failed to upsert inventory: %w", err)
-		}
+		// Only modify inventory & log if NOT draft
+		if invoice.Status == "published" {
+			// Upsert inventory quantity
+			_, err = tx.Exec(ctx, upsertInvQuery, d.VariantID, invoice.StoreID, qtyAfter)
+			if err != nil {
+				return nil, fmt.Errorf("failed to upsert inventory: %w", err)
+			}
 
-		// Insert inventory log
-		_, err = tx.Exec(ctx, logQuery,
-			d.VariantID,
-			invoice.StoreID,
-			d.Quantity, // positive change
-			qtyAfter,
-			refIDStr,
-			creatorID,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to insert inventory log: %w", err)
+			// Insert inventory log
+			_, err = tx.Exec(ctx, logQuery,
+				d.VariantID,
+				invoice.StoreID,
+				d.Quantity,
+				qtyAfter,
+				refIDStr,
+				creatorID,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to insert inventory log: %w", err)
+			}
 		}
 	}
 
@@ -432,10 +455,10 @@ func (r *InventoryRepository) CreateImportInvoice(ctx context.Context, creatorID
 }
 
 func (r *InventoryRepository) ListImportInvoices(ctx context.Context, storeID *int, page, limit int) ([]*domain.ImportInvoiceResponse, int, error) {
-	countQuery := `SELECT COUNT(*) FROM import_invoices`
+	countQuery := `SELECT COUNT(*) FROM import_invoices ii`
 	selectQuery := `
 		SELECT ii.id, ii.supplier_id, sup.name as supplier_name, ii.store_id, s.name as store_name,
-		       ii.created_by, u.full_name as creator_name, ii.total_items, ii.note, ii.created_at
+		       ii.created_by, u.full_name as creator_name, ii.total_items, ii.note, ii.status, ii.created_at
 		FROM import_invoices ii
 		JOIN suppliers sup ON ii.supplier_id = sup.id
 		JOIN store s ON ii.store_id = s.id
@@ -489,6 +512,7 @@ func (r *InventoryRepository) ListImportInvoices(ctx context.Context, storeID *i
 			&ii.CreatorName,
 			&ii.TotalItems,
 			&ii.Note,
+			&ii.Status,
 			&ii.CreatedAt,
 		)
 		if err != nil {
@@ -509,7 +533,7 @@ func (r *InventoryRepository) GetImportInvoiceDetails(ctx context.Context, invoi
 	ii := &domain.ImportInvoiceResponse{}
 	invoiceQuery := `
 		SELECT ii.id, ii.supplier_id, sup.name as supplier_name, ii.store_id, s.name as store_name,
-		       ii.created_by, u.full_name as creator_name, ii.total_items, ii.note, ii.created_at
+		       ii.created_by, u.full_name as creator_name, ii.total_items, ii.note, ii.status, ii.created_at
 		FROM import_invoices ii
 		JOIN suppliers sup ON ii.supplier_id = sup.id
 		JOIN store s ON ii.store_id = s.id
@@ -526,6 +550,7 @@ func (r *InventoryRepository) GetImportInvoiceDetails(ctx context.Context, invoi
 		&ii.CreatorName,
 		&ii.TotalItems,
 		&ii.Note,
+		&ii.Status,
 		&ii.CreatedAt,
 	)
 
@@ -846,4 +871,140 @@ func (r *InventoryRepository) GetInventoryLogs(ctx context.Context, q *domain.In
 		Page:       q.Page,
 		Limit:      q.Limit,
 	}, nil
+}
+
+func (r *InventoryRepository) ConfirmImportInvoice(ctx context.Context, invoiceID int) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// 1. Get invoice and check status
+	var status string
+	var storeID, creatorID int
+	err = tx.QueryRow(ctx, "SELECT store_id, created_by, status FROM import_invoices WHERE id = $1 FOR UPDATE", invoiceID).Scan(&storeID, &creatorID, &status)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return domain.ErrImportInvoiceNotFound
+		}
+		return fmt.Errorf("failed to query invoice: %w", err)
+	}
+
+	if status != "draft" {
+		return fmt.Errorf("invoice is already confirmed or processed")
+	}
+
+	// 2. Fetch all details for this invoice
+	rows, err := tx.Query(ctx, "SELECT variant_id, quantity, price_import FROM import_invoice_details WHERE invoice_id = $1", invoiceID)
+	if err != nil {
+		return fmt.Errorf("failed to query invoice details: %w", err)
+	}
+	defer rows.Close()
+
+	type itemDetail struct {
+		VariantID   int
+		Quantity    int
+		PriceImport float64
+	}
+	var items []itemDetail
+
+	for rows.Next() {
+		var it itemDetail
+		if err := rows.Scan(&it.VariantID, &it.Quantity, &it.PriceImport); err != nil {
+			return fmt.Errorf("failed to scan invoice detail: %w", err)
+		}
+		items = append(items, it)
+	}
+
+	if err = rows.Err(); err != nil {
+		return fmt.Errorf("error reading invoice details: %w", err)
+	}
+
+	// 3. Loop details to upsert quantity, insert logs and update stock_before
+	upsertInvQuery := `
+		INSERT INTO product_inventory (variant_id, store_id, quantity, reserved, last_updated)
+		VALUES ($1, $2, $3, 0, NOW())
+		ON CONFLICT (variant_id, store_id)
+		DO UPDATE SET quantity = EXCLUDED.quantity, last_updated = NOW()`
+
+	logQuery := `
+		INSERT INTO inventory_log (variant_id, store_id, change_qty, qty_after, reason, ref_id, created_by, created_at)
+		VALUES ($1, $2, $3, $4, 'import', $5, $6, NOW())`
+
+	refIDStr := strconv.Itoa(invoiceID)
+
+	for _, item := range items {
+		// Fetch stock before (FOR UPDATE to prevent concurrent adjustments)
+		var stockBefore int
+		selectForUpdate := `SELECT quantity FROM product_inventory WHERE variant_id = $1 AND store_id = $2 FOR UPDATE`
+		err = tx.QueryRow(ctx, selectForUpdate, item.VariantID, storeID).Scan(&stockBefore)
+		if err != nil {
+			if err == pgx.ErrNoRows {
+				stockBefore = 0
+			} else {
+				return fmt.Errorf("failed to select current quantity FOR UPDATE: %w", err)
+			}
+		}
+
+		qtyAfter := stockBefore + item.Quantity
+
+		// Update stock_before in details table
+		_, err = tx.Exec(ctx, "UPDATE import_invoice_details SET stock_before = $1 WHERE invoice_id = $2 AND variant_id = $3", stockBefore, invoiceID, item.VariantID)
+		if err != nil {
+			return fmt.Errorf("failed to update detail stock_before: %w", err)
+		}
+
+		// Upsert product inventory
+		_, err = tx.Exec(ctx, upsertInvQuery, item.VariantID, storeID, qtyAfter)
+		if err != nil {
+			return fmt.Errorf("failed to adjust product inventory: %w", err)
+		}
+
+		// Insert inventory log
+		_, err = tx.Exec(ctx, logQuery,
+			item.VariantID,
+			storeID,
+			item.Quantity,
+			qtyAfter,
+			refIDStr,
+			creatorID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert inventory log: %w", err)
+		}
+
+		// Update latest_cost_price in product_variant table
+		_, err = tx.Exec(ctx, "UPDATE product_variant SET latest_cost_price = $1 WHERE id = $2", item.PriceImport, item.VariantID)
+		if err != nil {
+			return fmt.Errorf("failed to update variant latest_cost_price: %w", err)
+		}
+	}
+
+	// 4. Update status to published
+	_, err = tx.Exec(ctx, "UPDATE import_invoices SET status = 'published' WHERE id = $1", invoiceID)
+	if err != nil {
+		return fmt.Errorf("failed to update invoice status: %w", err)
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (r *InventoryRepository) GetLastImportPrice(ctx context.Context, variantID int) (float64, error) {
+	query := `SELECT latest_cost_price FROM product_variant WHERE id = $1`
+
+	var price float64
+	err := r.db.QueryRow(ctx, query, variantID).Scan(&price)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return 0, nil
+		}
+		return 0, fmt.Errorf("failed to get last import price: %w", err)
+	}
+
+	return price, nil
 }

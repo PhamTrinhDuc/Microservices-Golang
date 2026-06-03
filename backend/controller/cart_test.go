@@ -184,7 +184,7 @@ func TestCartController_GetCart(t *testing.T) {
 						VariantID:   12,
 						VariantName: "Blue",
 						SKU:         "V-BLUE",
-						Price:       200000,
+						SellPrice:   200000,
 						ProductID:   "prod-1",
 						ProductName: "Product 1",
 						ImageURL:    &url,

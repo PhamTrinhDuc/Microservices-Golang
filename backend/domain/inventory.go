@@ -27,9 +27,10 @@ type Supplier struct {
 	ID               int        `json:"id" db:"id"`
 	Name             string     `json:"name" db:"name"`
 	Address          *string    `json:"address" db:"address"`
+	Phone            *string    `json:"phone" db:"phone"`
+	Email            *string    `json:"email" db:"email"`
 	ContactName      *string    `json:"contact_name" db:"contact_name"`
 	ContactPhone     *string    `json:"contact_phone" db:"contact_phone"`
-	ContactEmail     *string    `json:"contact_email" db:"contact_email"`
 	IsDeleted        bool       `json:"is_deleted" db:"is_deleted"`
 	TotalImports     int        `json:"total_imports" db:"total_imports"`
 	LastImportedAt   *time.Time `json:"last_imported_at" db:"last_imported_at"`
@@ -56,6 +57,7 @@ type ImportInvoice struct {
 	CreatedBy  int       `json:"created_by" db:"created_by"`
 	TotalItems int       `json:"total_items" db:"total_items"`
 	Note       *string   `json:"note" db:"note"`
+	Status     string    `json:"status" db:"status"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
 
@@ -110,17 +112,19 @@ type UpdateStoreRequest struct {
 type CreateSupplierRequest struct {
 	Name         string  `json:"name" validate:"required"`
 	Address      *string `json:"address"`
+	Phone        *string `json:"phone"`
+	Email        *string `json:"email" validate:"omitempty,email"`
 	ContactName  *string `json:"contact_name"`
 	ContactPhone *string `json:"contact_phone"`
-	ContactEmail *string `json:"contact_email" validate:"omitempty,email"`
 }
 
 type UpdateSupplierRequest struct {
 	Name         string  `json:"name" validate:"required"`
 	Address      *string `json:"address"`
+	Phone        *string `json:"phone"`
+	Email        *string `json:"email" validate:"omitempty,email"`
 	ContactName  *string `json:"contact_name"`
 	ContactPhone *string `json:"contact_phone"`
-	ContactEmail *string `json:"contact_email" validate:"omitempty,email"`
 	IsDeleted    *bool   `json:"is_deleted"`
 }
 
@@ -134,6 +138,7 @@ type ImportGoodsRequest struct {
 	SupplierID int             `json:"supplier_id" validate:"required"`
 	StoreID    int             `json:"store_id" validate:"required"`
 	Note       *string         `json:"note"`
+	Status     string          `json:"status" validate:"omitempty,oneof=draft published"`
 	Items      []ImportItemDTO `json:"items" validate:"required,min=1,dive"`
 }
 
@@ -201,6 +206,7 @@ type ImportInvoiceResponse struct {
 	CreatorName  string    `json:"creator_name"`
 	TotalItems   int       `json:"total_items"`
 	Note         *string   `json:"note"`
+	Status       string    `json:"status"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -237,6 +243,8 @@ type InventoryRepository interface {
 	CreateImportInvoice(ctx context.Context, creatorID int, invoice *ImportInvoice, details []*ImportInvoiceDetail) (*ImportInvoice, error)
 	ListImportInvoices(ctx context.Context, storeID *int, page, limit int) ([]*ImportInvoiceResponse, int, error)
 	GetImportInvoiceDetails(ctx context.Context, invoiceID int) (*ImportInvoiceDetailsResponse, error)
+	ConfirmImportInvoice(ctx context.Context, invoiceID int) error
+	GetLastImportPrice(ctx context.Context, variantID int) (float64, error)
 
 	AdjustInventory(ctx context.Context, storeID int, creatorID int, adjustments []*AdjustItemDTO) error
 	ListStoreInventory(ctx context.Context, storeID int) ([]*ProductInventory, error)
@@ -259,6 +267,8 @@ type InventoryUsecase interface {
 	ImportGoods(ctx context.Context, creatorID int, req *ImportGoodsRequest) (*ImportInvoice, error)
 	ListImportInvoices(ctx context.Context, storeID *int, page, limit int) ([]*ImportInvoiceResponse, int, error)
 	GetImportInvoiceDetails(ctx context.Context, invoiceID int) (*ImportInvoiceDetailsResponse, error)
+	ConfirmImportInvoice(ctx context.Context, invoiceID int) error
+	GetLastImportPrice(ctx context.Context, variantID int) (float64, error)
 
 	AdjustInventory(ctx context.Context, storeID int, creatorID int, req *AdjustInventoryRequest) error
 	ListStoreInventory(ctx context.Context, storeID int) ([]*ProductInventory, error)

@@ -91,7 +91,7 @@ func (u *OrderUsecase) CheckoutOrder(ctx context.Context, userID int, req *domai
 		// 4. Calculate subtotal & check stock
 		var subtotal float64
 		for _, item := range cartItems {
-			subtotal += item.Price * float64(item.Quantity)
+			subtotal += item.SellPrice * float64(item.Quantity)
 
 			// Lock stock and check availability
 			quantity, reserved, err := u.orderRepo.LockStock(txCtx, item.VariantID, req.StoreID)
@@ -300,8 +300,8 @@ func (u *OrderUsecase) CheckoutOrder(ctx context.Context, userID int, req *domai
 				OrderID:   order.ID,
 				VariantID: item.VariantID,
 				Quantity:  item.Quantity,
-				UnitPrice: item.Price,
-				TotalCost: item.Price * float64(item.Quantity),
+				UnitPrice: item.SellPrice,
+				TotalCost: item.SellPrice * float64(item.Quantity),
 			}
 			_, err = u.orderRepo.CreateOrderDetail(txCtx, detail)
 			if err != nil {
@@ -313,7 +313,7 @@ func (u *OrderUsecase) CheckoutOrder(ctx context.Context, userID int, req *domai
 				VariantName: item.VariantName,
 				SKU:         item.SKU,
 				Quantity:    item.Quantity,
-				UnitPrice:   item.Price,
+				UnitPrice:   item.SellPrice,
 				TotalCost:   detail.TotalCost,
 			})
 		}

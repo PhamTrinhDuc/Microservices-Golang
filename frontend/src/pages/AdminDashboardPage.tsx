@@ -87,7 +87,7 @@ export default function AdminDashboardPage() {
       <main className="flex-1 p-6 md:p-8 max-w-7xl overflow-hidden">
         {activeTab === 'orders' && <AdminOrdersTab stores={stores} />}
         {activeTab === 'vouchers' && <AdminVouchersTab />}
-        {activeTab === 'inventory' && <AdminInventoryTab stores={stores} reloadLookups={loadLookups} />}
+        {activeTab === 'inventory' && <AdminInventoryTab stores={stores} reloadLookups={loadLookups} setActiveTab={(tab) => setActiveTab(tab as any)} />}
         {activeTab === 'catalog' && (
           <AdminCatalogTab categories={categories} brands={brands} reloadLookups={loadLookups} />
         )}

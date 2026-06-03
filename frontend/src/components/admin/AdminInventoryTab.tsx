@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react'
 import { inventoryAPI } from '../../services/inventoryAPI'
+import { productAPI } from '../../services/productAPI'
 import type { Store, Supplier, ProductInventory, LowStockAlertResponse, InventoryLogResponse } from '../../types'
 
 interface AdminInventoryTabProps {
   stores: Store[]
   reloadLookups?: () => Promise<void>
+  setActiveTab?: (tab: string) => void
 }
 
-export default function AdminInventoryTab({ stores, reloadLookups }: AdminInventoryTabProps) {
+export default function AdminInventoryTab({ stores, reloadLookups, setActiveTab }: AdminInventoryTabProps) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [selectedStoreId, setSelectedStoreId] = useState<number>(1)
   const [storeInventory, setStoreInventory] = useState<ProductInventory[]>([])
   
-  // Tab within inventory: 'adjust' | 'import' | 'alerts' | 'logs' | 'suppliers' | 'stores'
-  const [invSubTab, setInvSubTab] = useState<'adjust' | 'import' | 'alerts' | 'logs' | 'suppliers' | 'stores'>('adjust')
+  // Tab within inventory: 'adjust' | 'import' | 'import-history' | 'alerts' | 'logs' | 'suppliers' | 'stores'
+  const [invSubTab, setInvSubTab] = useState<'adjust' | 'import' | 'import-history' | 'alerts' | 'logs' | 'suppliers' | 'stores'>('adjust')
   const [loading, setLoading] = useState(false)
 
   // CRUD Stores state
@@ -48,13 +50,37 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
   // Adjust Stock State
   const [adjustQtyInput, setAdjustQtyInput] = useState<{ [variantId: number]: number }>({})
   const [searchTerm, setSearchTerm] = useState('')
+  const [adjustPage, setAdjustPage] = useState(1)
 
   // Import Goods State
   const [importForm, setImportForm] = useState({
     supplierId: '',
     note: '',
-    items: [{ variant_id: 0, quantity: 1, price_import: 0 }],
+    items: [
+      {
+        variant_id: 0,
+        quantity: 1,
+        price_import: 0,
+        searchQuery: '',
+        searchResults: [] as any[],
+        selectedProduct: null as any,
+        variants: [] as any[],
+        lastImportPrice: 0,
+        showDropdown: false,
+      }
+    ],
   })
+
+  // Import History State
+  const [importInvoices, setImportInvoices] = useState<any[]>([])
+  const [importPage, setImportPage] = useState(1)
+  const [importTotalPages, setImportTotalPages] = useState(1)
+  const [importTotal, setImportTotal] = useState(0)
+
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceDetails, setInvoiceDetails] = useState<any[]>([])
+  const [invoiceDetailsLoading, setInvoiceDetailsLoading] = useState(false)
 
   // Alerts & Logs
   const [lowStockAlerts, setLowStockAlerts] = useState<LowStockAlertResponse[]>([])
@@ -108,6 +134,21 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
     }
   }
 
+  const loadImportHistory = async (page = 1) => {
+    try {
+      setLoading(true)
+      const res = await inventoryAPI.adminListImportInvoices(selectedStoreId, page, 10)
+      setImportInvoices(res.data || [])
+      setImportPage(res.page || 1)
+      setImportTotal(res.total || 0)
+      setImportTotalPages(Math.ceil((res.total || 0) / 10) || 1)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     void loadSuppliers()
   }, [])
@@ -117,8 +158,21 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
       if (invSubTab === 'adjust') void loadInventory(selectedStoreId)
       if (invSubTab === 'alerts') void loadAlerts()
       if (invSubTab === 'logs') void loadLogs()
+      if (invSubTab === 'import-history') void loadImportHistory(1)
     }
   }, [selectedStoreId, invSubTab])
+
+  // Robustly set dynamic store ID
+  useEffect(() => {
+    if (stores && stores.length > 0 && !stores.some(s => s.id === selectedStoreId)) {
+      setSelectedStoreId(stores[0].id)
+    }
+  }, [stores])
+
+  // Reset adjust page on search/store change
+  useEffect(() => {
+    setAdjustPage(1)
+  }, [searchTerm, selectedStoreId])
 
   // Adjust stock
   const handleSaveAdjust = async (variantId: number) => {
@@ -208,11 +262,159 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
     }
   }
 
+  // Search & select product / variant handlers
+  const handleSearchProduct = async (index: number, query: string) => {
+    const updated = [...importForm.items]
+    updated[index].searchQuery = query
+    
+    if (!query.trim()) {
+      updated[index].searchResults = []
+      updated[index].showDropdown = false
+      setImportForm(p => ({ ...p, items: updated }))
+      return
+    }
+
+    try {
+      const res = await productAPI.getProducts({ q: query, limit: 10 })
+      updated[index].searchResults = res.data || []
+      updated[index].showDropdown = true
+      setImportForm(p => ({ ...p, items: updated }))
+    } catch (err) {
+      console.error('Lỗi tìm kiếm sản phẩm:', err)
+    }
+  }
+
+  const handleSelectProduct = async (index: number, product: any) => {
+    try {
+      const fullProduct = await productAPI.getProductById(product.id)
+      const variants = fullProduct.variants || []
+
+      const updated = [...importForm.items]
+      updated[index].selectedProduct = fullProduct
+      updated[index].variants = variants
+      updated[index].searchQuery = fullProduct.name
+      updated[index].searchResults = []
+      updated[index].showDropdown = false
+
+      if (variants.length > 0) {
+        if (variants.length === 1) {
+          const v = variants[0]
+          updated[index].variant_id = v.id
+          const defaultPrice = v.latest_cost_price > 0 ? v.latest_cost_price : (v.sell_price || 0)
+          updated[index].price_import = defaultPrice
+          updated[index].lastImportPrice = v.latest_cost_price || 0
+        } else {
+          updated[index].variant_id = 0
+          updated[index].price_import = 0
+          updated[index].lastImportPrice = 0
+        }
+      } else {
+        updated[index].variant_id = 0
+        updated[index].price_import = 0
+        updated[index].lastImportPrice = 0
+      }
+
+      setImportForm(p => ({ ...p, items: updated }))
+    } catch (err) {
+      console.error('Lỗi chọn sản phẩm:', err)
+      alert('Không thể tải thông tin biến thể của sản phẩm này')
+    }
+  }
+
+  const handleSelectVariant = (index: number, variantId: number) => {
+    const updated = [...importForm.items]
+    updated[index].variant_id = variantId
+    const v = updated[index].variants.find((varItem: any) => varItem.id === variantId)
+    if (v) {
+      const defaultPrice = v.latest_cost_price > 0 ? v.latest_cost_price : (v.sell_price || 0)
+      updated[index].price_import = defaultPrice
+      updated[index].lastImportPrice = v.latest_cost_price || 0
+    } else {
+      updated[index].price_import = 0
+      updated[index].lastImportPrice = 0
+    }
+    setImportForm(p => ({ ...p, items: updated }))
+  }
+
+  const triggerImportShortcut = async (variantId: number, variantName: string, sku: string) => {
+    setInvSubTab('import')
+    try {
+      setLoading(true)
+      const lastImportPrice = await inventoryAPI.adminGetLastImportPrice(variantId)
+      const searchRes = await productAPI.getProducts({ q: sku || variantName, limit: 1 })
+      let selectedProduct: any = null
+      let variants: any[] = []
+      
+      if (searchRes.data && searchRes.data.length > 0) {
+        const product = searchRes.data[0]
+        const fullProduct = await productAPI.getProductById(product.id)
+        selectedProduct = fullProduct
+        variants = fullProduct.variants || []
+      }
+
+      const currentVariant = variants.find((v: any) => v.id === variantId)
+      const sellPrice = currentVariant ? (currentVariant.sell_price || 0) : 0
+      const defaultPrice = lastImportPrice > 0 ? lastImportPrice : sellPrice
+
+      setImportForm({
+        supplierId: suppliers.length > 0 ? String(suppliers[0].id) : '',
+        note: `Nhập hàng nhanh cho biến thể ${variantName} (SKU: ${sku})`,
+        items: [
+          {
+            variant_id: variantId,
+            quantity: 1,
+            price_import: defaultPrice,
+            searchQuery: variantName,
+            searchResults: [],
+            selectedProduct: selectedProduct,
+            variants: variants,
+            lastImportPrice: lastImportPrice,
+            showDropdown: false,
+          }
+        ]
+      })
+    } catch (err) {
+      console.error('Lỗi khi kích hoạt shortcut nhập hàng:', err)
+      setImportForm({
+        supplierId: suppliers.length > 0 ? String(suppliers[0].id) : '',
+        note: `Nhập hàng cho Variant ID: ${variantId}`,
+        items: [
+          {
+            variant_id: variantId,
+            quantity: 1,
+            price_import: 0,
+            searchQuery: variantName || String(variantId),
+            searchResults: [],
+            selectedProduct: null,
+            variants: [],
+            lastImportPrice: 0,
+            showDropdown: false,
+          }
+        ]
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // Create Import Goods
   const handleAddImportItem = () => {
     setImportForm(p => ({
       ...p,
-      items: [...p.items, { variant_id: 0, quantity: 1, price_import: 0 }],
+      items: [
+        ...p.items,
+        {
+          variant_id: 0,
+          quantity: 1,
+          price_import: 0,
+          searchQuery: '',
+          searchResults: [],
+          selectedProduct: null,
+          variants: [],
+          lastImportPrice: 0,
+          showDropdown: false,
+        }
+      ],
     }))
   }
 
@@ -223,17 +425,16 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
     }))
   }
 
-  const handleImportSubmit = async (e: React.FormEvent) => {
+  const handleImportSubmit = async (e: React.FormEvent, status: 'draft' | 'published') => {
     e.preventDefault()
     if (!importForm.supplierId) {
       alert('Vui lòng chọn nhà cung cấp')
       return
     }
 
-    // Validate items
     const invalidItem = importForm.items.find(i => i.variant_id <= 0 || i.quantity <= 0 || i.price_import <= 0)
     if (invalidItem) {
-      alert('Vui lòng điền đúng thông tin Variant ID, Số lượng và giá nhập lớn hơn 0')
+      alert('Vui lòng chọn sản phẩm / biến thể, số lượng và giá nhập lớn hơn 0')
       return
     }
 
@@ -243,18 +444,68 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         supplier_id: Number(importForm.supplierId),
         store_id: selectedStoreId,
         note: importForm.note ? importForm.note : null,
-        items: importForm.items,
+        status: status,
+        items: importForm.items.map(i => ({
+          variant_id: i.variant_id,
+          quantity: i.quantity,
+          price_import: i.price_import,
+        })),
       })
-      alert('Lập hóa đơn nhập hàng thành công!')
+      alert(status === 'draft' ? 'Lưu nháp phiếu nhập thành công!' : 'Lập hóa đơn nhập hàng thành công!')
       setImportForm({
         supplierId: suppliers.length > 0 ? String(suppliers[0].id) : '',
         note: '',
-        items: [{ variant_id: 0, quantity: 1, price_import: 0 }],
+        items: [
+          {
+            variant_id: 0,
+            quantity: 1,
+            price_import: 0,
+            searchQuery: '',
+            searchResults: [],
+            selectedProduct: null,
+            variants: [],
+            lastImportPrice: 0,
+            showDropdown: false,
+          }
+        ],
       })
-      setInvSubTab('adjust')
-      void loadInventory(selectedStoreId)
+      setInvSubTab('import-history')
+      void loadImportHistory(1)
     } catch (err: any) {
       alert(err.message || 'Lỗi khi nhập kho')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Import History Details & Confirm
+  const handleViewInvoiceDetails = async (invoice: any) => {
+    setSelectedInvoice(invoice)
+    setShowInvoiceModal(true)
+    setInvoiceDetailsLoading(true)
+    try {
+      const res = await inventoryAPI.adminGetImportInvoiceDetails(invoice.id)
+      setInvoiceDetails(res.details || [])
+    } catch (err) {
+      console.error(err)
+      alert('Không thể tải chi tiết hoá đơn nhập hàng')
+    } finally {
+      setInvoiceDetailsLoading(false)
+    }
+  }
+
+  const handleConfirmInvoice = async (invoiceId: number) => {
+    if (!window.confirm('Xác nhận nhập kho cho phiếu nhập hàng này? Số lượng tồn kho sẽ được cập nhật.')) return
+    try {
+      setLoading(true)
+      await inventoryAPI.adminConfirmImportInvoice(invoiceId)
+      alert('Xác nhận nhập kho thành công!')
+      if (selectedInvoice && selectedInvoice.id === invoiceId) {
+        setSelectedInvoice((p: any) => p ? { ...p, status: 'published' } : null)
+      }
+      void loadImportHistory(importPage)
+    } catch (err: any) {
+      alert(err.message || 'Không thể xác nhận nhập kho')
     } finally {
       setLoading(false)
     }
@@ -374,6 +625,7 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
         {[
           { id: 'adjust', label: 'Tồn kho' },
           { id: 'import', label: 'Nhập hàng' },
+          { id: 'import-history', label: 'Lịch sử nhập hàng' },
           { id: 'suppliers', label: 'Nhà cung cấp' },
           { id: 'stores', label: 'Cửa hàng' },
           { id: 'alerts', label: 'Cảnh báo hết hàng' },
@@ -413,6 +665,10 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
               )
             })
 
+            const pageSize = 10
+            const totalPages = Math.ceil(filteredInventory.length / pageSize) || 1
+            const paginatedInventory = filteredInventory.slice((adjustPage - 1) * pageSize, adjustPage * pageSize)
+
             return (
               <div className="space-y-4">
                 <div className="max-w-md">
@@ -438,7 +694,7 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-150">
-                      {filteredInventory.length === 0 ? (
+                      {paginatedInventory.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="p-8 text-center text-neutral-400">
                             {storeInventory.length === 0 
@@ -447,7 +703,7 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                           </td>
                         </tr>
                       ) : (
-                        filteredInventory.map((item) => {
+                        paginatedInventory.map((item) => {
                           const available = Math.max(0, item.quantity - item.reserved)
                           return (
                             <tr key={item.variant_id} className="hover:bg-neutral-50 transition-colors">
@@ -480,13 +736,22 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                                 />
                               </td>
                               <td className="p-4 text-center">
-                                <button
-                                  type="button"
-                                  onClick={() => handleSaveAdjust(item.variant_id)}
-                                  className="bg-black hover:bg-neutral-800 text-white text-[9px] uppercase font-black tracking-wider px-3.5 py-1.5 rounded transition-colors"
-                                >
-                                  Cập nhật
-                                </button>
+                                <div className="flex gap-2 justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveAdjust(item.variant_id)}
+                                    className="bg-black hover:bg-neutral-800 text-white text-[9px] uppercase font-black tracking-wider px-3.5 py-1.5 rounded transition-colors"
+                                  >
+                                    Cập nhật
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => triggerImportShortcut(item.variant_id, item.variant_name || `Biến thể #${item.variant_id}`, item.sku || '')}
+                                    className="border border-neutral-350 hover:border-black text-black text-[9px] uppercase font-black tracking-wider px-3 py-1.5 rounded transition-colors"
+                                  >
+                                    Nhập hàng
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           )
@@ -495,6 +760,29 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                     </tbody>
                   </table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex justify-end items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      disabled={adjustPage <= 1}
+                      onClick={() => setAdjustPage(adjustPage - 1)}
+                      className="border border-neutral-350 px-2.5 py-1 rounded disabled:opacity-30 font-semibold"
+                    >
+                      Trước
+                    </button>
+                    <span className="font-bold text-neutral-700">Trang {adjustPage} / {totalPages}</span>
+                    <button
+                      type="button"
+                      disabled={adjustPage >= totalPages}
+                      onClick={() => setAdjustPage(adjustPage + 1)}
+                      className="border border-neutral-350 px-2.5 py-1 rounded disabled:opacity-30 font-semibold"
+                    >
+                      Sau
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })()}
@@ -731,128 +1019,240 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
           )}
 
           {/* 3. IMPORT GOODS SUBVIEW */}
-          {invSubTab === 'import' && (
-            <form onSubmit={handleImportSubmit} className="bg-white border border-neutral-250 rounded-lg p-5 space-y-4 text-xs">
-              <h3 className="text-xs font-black uppercase tracking-wide">Phiếu Nhập Hàng Kho</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Chọn nhà cung cấp *</label>
-                  <select
-                    className="w-full border border-neutral-300 rounded px-2.5 py-2"
-                    value={importForm.supplierId}
-                    onChange={(e) => setImportForm(p => ({ ...p, supplierId: e.target.value }))}
-                    required
-                  >
-                    <option value="">Chọn nhà cung cấp</option>
-                    {suppliers.map(s => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          {invSubTab === 'import' && (() => {
+            const totalInvoicePrice = importForm.items.reduce((sum, item) => sum + (item.price_import * item.quantity), 0)
+            const totalInvoiceItems = importForm.items.reduce((sum, item) => sum + item.quantity, 0)
 
-                <div>
-                  <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Ghi chú phiếu nhập</label>
-                  <input
-                    type="text"
-                    placeholder="Ghi chú đính kèm..."
-                    className="w-full border border-neutral-300 rounded px-3 py-2"
-                    value={importForm.note}
-                    onChange={(e) => setImportForm(p => ({ ...p, note: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              {/* Items row selectors */}
-              <div className="space-y-2.5 border-t border-neutral-100 pt-4">
-                <div className="flex justify-between items-center">
-                  <p className="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">Danh sách sản phẩm nhập</p>
-                  <button
-                    type="button"
-                    onClick={handleAddImportItem}
-                    className="text-[10px] font-black text-neutral-700 hover:text-black uppercase"
-                  >
-                    + Thêm dòng nhập
-                  </button>
-                </div>
-
-                {importForm.items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end border border-neutral-100 p-3 rounded-lg bg-neutral-50 relative">
+            return (
+              <div className="space-y-4">
+                <form className="bg-white border border-neutral-250 rounded-lg p-5 space-y-4 text-xs">
+                  <h3 className="text-xs font-black uppercase tracking-wide">Phiếu Nhập Hàng Kho</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Variant ID *</label>
-                      <input
-                        type="number"
-                        placeholder="ID"
-                        className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white font-bold"
-                        value={item.variant_id || ''}
-                        onChange={(e) => {
-                          const updated = [...importForm.items]
-                          updated[index].variant_id = Number(e.target.value)
-                          setImportForm(p => ({ ...p, items: updated }))
-                        }}
+                      <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Chọn nhà cung cấp *</label>
+                      <select
+                        className="w-full border border-neutral-300 rounded px-2.5 py-2 bg-white"
+                        value={importForm.supplierId}
+                        onChange={(e) => setImportForm(p => ({ ...p, supplierId: e.target.value }))}
                         required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Số lượng nhập *</label>
-                      <input
-                        type="number"
-                        placeholder="Số lượng"
-                        className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white"
-                        value={item.quantity || ''}
-                        onChange={(e) => {
-                          const updated = [...importForm.items]
-                          updated[index].quantity = Number(e.target.value)
-                          setImportForm(p => ({ ...p, items: updated }))
-                        }}
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Giá nhập (đ/sp) *</label>
-                      <input
-                        type="number"
-                        placeholder="Giá nhập"
-                        className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white font-mono"
-                        value={item.price_import || ''}
-                        onChange={(e) => {
-                          const updated = [...importForm.items]
-                          updated[index].price_import = Number(e.target.value)
-                          setImportForm(p => ({ ...p, items: updated }))
-                        }}
-                        required
-                      />
-                    </div>
-
-                    <div className="flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveImportItem(index)}
-                        disabled={importForm.items.length <= 1}
-                        className="text-red-500 hover:text-red-700 disabled:opacity-30 p-2 text-xs"
                       >
-                        ✕ Gỡ bỏ
-                      </button>
+                        <option value="">Chọn nhà cung cấp</option>
+                        {suppliers.map(s => (
+                          <option key={s.id} value={s.id} disabled={s.is_deleted}>
+                            {s.name} {s.is_deleted ? '(Ngừng hoạt động)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Ghi chú phiếu nhập</label>
+                      <input
+                        type="text"
+                        placeholder="Ghi chú đính kèm..."
+                        className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+                        value={importForm.note}
+                        onChange={(e) => setImportForm(p => ({ ...p, note: e.target.value }))}
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
 
-              <div className="flex justify-end gap-2 border-t border-neutral-100 pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider px-6 py-2.5 rounded transition-colors"
-                >
-                  Xác nhận Nhập hàng
-                </button>
+                  {/* Items row selectors */}
+                  <div className="space-y-4 border-t border-neutral-100 pt-4">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[10px] uppercase font-bold text-neutral-700 tracking-wider">Danh sách sản phẩm nhập</p>
+                      <button
+                        type="button"
+                        onClick={handleAddImportItem}
+                        className="text-[10px] font-black text-neutral-700 hover:text-black uppercase"
+                      >
+                        + Thêm dòng nhập
+                      </button>
+                    </div>
+
+                    {importForm.items.map((item, index) => (
+                      <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start border border-neutral-150 p-4 rounded-lg bg-neutral-50/50 relative">
+                        {/* Search and Auto-complete dropdown */}
+                        <div className="md:col-span-5 relative">
+                          <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Tìm kiếm sản phẩm *</label>
+                          <input
+                            type="text"
+                            placeholder="Tìm theo tên hoặc SKU..."
+                            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white text-xs font-semibold"
+                            value={item.searchQuery}
+                            onChange={(e) => handleSearchProduct(index, e.target.value)}
+                            onFocus={() => {
+                              if (item.searchResults.length > 0) {
+                                const updated = [...importForm.items]
+                                updated[index].showDropdown = true
+                                setImportForm(p => ({ ...p, items: updated }))
+                              }
+                            }}
+                          />
+                          
+                          {item.showDropdown && (
+                            <div className="absolute left-0 right-0 mt-1 bg-white border border-neutral-200 rounded shadow-lg max-h-48 overflow-y-auto z-20">
+                              {item.searchResults.length === 0 ? (
+                                <div className="p-3 text-center text-neutral-500 text-xs">
+                                  Không tìm thấy sản phẩm.
+                                  {setActiveTab && (
+                                    <button
+                                      type="button"
+                                      className="text-blue-500 font-bold ml-1 hover:underline"
+                                      onClick={() => setActiveTab('catalog')}
+                                    >
+                                      [Tạo sản phẩm mới]
+                                    </button>
+                                  )}
+                                </div>
+                              ) : (
+                                item.searchResults.map((product) => (
+                                  <button
+                                    key={product.id}
+                                    type="button"
+                                    className="w-full text-left p-2.5 hover:bg-neutral-50 border-b border-neutral-100 flex items-center gap-2.5 text-xs transition-colors"
+                                    onClick={() => handleSelectProduct(index, product)}
+                                  >
+                                    <img src={product.image || '/placeholder-product.png'} className="w-8 h-8 object-cover rounded bg-neutral-100" />
+                                    <div>
+                                      <p className="font-bold text-neutral-850">{product.name}</p>
+                                      <p className="text-[10px] text-neutral-450 font-mono">ID: {product.id}</p>
+                                    </div>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+
+                          {/* Variant selection selector if multiple variants exist */}
+                          {item.variants && item.variants.length > 1 && (
+                            <div className="mt-2">
+                              <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Chọn biến thể *</label>
+                              <select
+                                className="w-full border border-neutral-300 rounded px-2.5 py-1 bg-white font-semibold text-xs"
+                                value={item.variant_id || ''}
+                                onChange={(e) => handleSelectVariant(index, Number(e.target.value))}
+                                required
+                              >
+                                <option value="">-- Chọn biến thể --</option>
+                                {item.variants.map((v: any) => (
+                                  <option key={v.id} value={v.id}>
+                                    {v.name} ({v.sku}) - Kho: {v.stock}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          {/* Displays selected details */}
+                          {item.variant_id > 0 && (
+                            <div className="mt-2 text-[10px] text-neutral-500">
+                              <p>
+                                Đã chọn: <strong className="text-neutral-800">
+                                  {item.variants.find((v: any) => v.id === item.variant_id)?.name || item.searchQuery}
+                                </strong>
+                              </p>
+                              {item.lastImportPrice > 0 && (
+                                <p className="mt-0.5 text-neutral-450 font-semibold font-mono">
+                                  Giá nhập gần nhất: {item.lastImportPrice.toLocaleString('vi-VN')} đ
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Số lượng *</label>
+                          <input
+                            type="number"
+                            min={1}
+                            placeholder="Số lượng"
+                            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white font-semibold text-center"
+                            value={item.quantity || ''}
+                            onChange={(e) => {
+                              const updated = [...importForm.items]
+                              updated[index].quantity = Math.max(1, Number(e.target.value))
+                              setImportForm(p => ({ ...p, items: updated }))
+                            }}
+                            required
+                          />
+                        </div>
+
+                        <div className="md:col-span-2">
+                          <label className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Giá nhập (đ/sp) *</label>
+                          <input
+                            type="number"
+                            min={0}
+                            placeholder="Giá nhập"
+                            className="w-full border border-neutral-300 rounded px-2.5 py-1.5 bg-white font-mono text-right"
+                            value={item.price_import || ''}
+                            onChange={(e) => {
+                              const updated = [...importForm.items]
+                              updated[index].price_import = Math.max(0, Number(e.target.value))
+                              setImportForm(p => ({ ...p, items: updated }))
+                            }}
+                            required
+                          />
+                        </div>
+
+                        <div className="md:col-span-2 text-right">
+                          <p className="block text-[9px] uppercase font-bold text-neutral-400 mb-1">Thành tiền</p>
+                          <p className="py-1.5 font-mono font-bold text-neutral-900 text-xs">
+                            {(item.price_import * item.quantity).toLocaleString('vi-VN')} đ
+                          </p>
+                        </div>
+
+                        <div className="md:col-span-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImportItem(index)}
+                            disabled={importForm.items.length <= 1}
+                            className="text-red-500 hover:text-red-700 disabled:opacity-30 p-1.5 text-xs mt-4"
+                            title="Xóa dòng này"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Summary Totals Box */}
+                  <div className="bg-neutral-50 border border-neutral-150 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs mt-4">
+                    <div>
+                      <p className="text-neutral-555">Tổng số mặt hàng: <strong className="text-neutral-850 font-bold">{importForm.items.length}</strong></p>
+                      <p className="text-neutral-555">Tổng số lượng nhập: <strong className="text-neutral-850 font-bold">{totalInvoiceItems}</strong></p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-neutral-450 uppercase font-black tracking-wider">Tổng giá trị phiếu nhập</p>
+                      <p className="text-lg font-black text-neutral-900 font-mono mt-0.5">{totalInvoicePrice.toLocaleString('vi-VN')} đ</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex justify-end gap-3 border-t border-neutral-100 pt-4">
+                    <button
+                      type="button"
+                      onClick={(e) => handleImportSubmit(e, 'draft')}
+                      disabled={loading}
+                      className="border border-neutral-350 hover:border-black text-black text-[10px] font-black uppercase tracking-wider px-6 py-2.5 rounded transition-colors"
+                    >
+                      Lưu bản nháp
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleImportSubmit(e, 'published')}
+                      disabled={loading}
+                      className="bg-black hover:bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider px-6 py-2.5 rounded transition-colors"
+                    >
+                      Xác nhận Nhập hàng
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
-          )}
+            )
+          })()}
 
           {/* 4. LOW STOCK ALERTS SUBVIEW */}
           {invSubTab === 'alerts' && (
@@ -865,12 +1265,13 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                     <th className="p-4 text-center">Tồn hiện tại</th>
                     <th className="p-4 text-center">Ngưỡng cảnh báo</th>
                     <th className="p-4">Tình trạng</th>
+                    <th className="p-4 text-center">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-150">
                   {lowStockAlerts.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-neutral-400">
+                      <td colSpan={6} className="p-8 text-center text-neutral-400">
                         Không có cảnh báo tồn kho thấp!
                       </td>
                     </tr>
@@ -886,6 +1287,15 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                         <td className="p-4 text-center text-neutral-555">{a.low_stock_threshold}</td>
                         <td className="p-4">
                           <span className="bg-red-50 border border-red-200 text-red-700 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider">Tồn kho cực thấp</span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => triggerImportShortcut(a.variant_id, a.variant_name, a.sku)}
+                            className="bg-black hover:bg-neutral-800 text-white text-[9px] uppercase font-black tracking-wider px-3 py-1.5 rounded transition-colors"
+                          >
+                            Nhập hàng
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -929,6 +1339,122 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* 3.1 IMPORT HISTORY SUBVIEW */}
+          {invSubTab === 'import-history' && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-white p-4 border border-neutral-200 rounded-lg shadow-sm">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wide text-neutral-850">
+                    Lịch Sử Nhập Hàng
+                  </h3>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Tổng số phiếu nhập hàng: <strong className="text-neutral-800 font-bold">{importTotal}</strong>
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white border border-neutral-200 rounded-lg overflow-x-auto shadow-sm">
+                <table className="w-full text-left text-xs border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
+                      <th className="p-4">Mã phiếu</th>
+                      <th className="p-4">Nhà cung cấp</th>
+                      <th className="p-4">Cửa hàng nhập</th>
+                      <th className="p-4">Người lập</th>
+                      <th className="p-4 text-center">Số lượng SKU</th>
+                      <th className="p-4 text-center">Trạng thái</th>
+                      <th className="p-4">Ngày tạo</th>
+                      <th className="p-4 text-center">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-150">
+                    {importInvoices.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-neutral-400">
+                          Chưa có lịch sử nhập hàng.
+                        </td>
+                      </tr>
+                    ) : (
+                      importInvoices.map((inv) => (
+                        <tr key={inv.id} className="hover:bg-neutral-50 transition-colors">
+                          <td className="p-4 font-mono font-bold text-neutral-900">
+                            #{inv.id}
+                          </td>
+                          <td className="p-4 font-bold text-neutral-700">
+                            {inv.supplier_name}
+                          </td>
+                          <td className="p-4 text-neutral-600">
+                            {inv.store_name}
+                          </td>
+                          <td className="p-4 text-neutral-550">
+                            {inv.creator_name || `User #${inv.created_by}`}
+                          </td>
+                          <td className="p-4 text-center font-bold text-neutral-750">
+                            {inv.total_items}
+                          </td>
+                          <td className="p-4 text-center">
+                            <span className={`px-2 py-0.5 rounded-[4px] text-[9px] font-black uppercase tracking-wider ${
+                              inv.status === 'published'
+                                ? 'bg-green-50 border border-green-200 text-green-700'
+                                : 'bg-yellow-50 border border-yellow-200 text-yellow-700'
+                            }`}>
+                              {inv.status === 'published' ? 'Đã nhập kho' : 'Bản nháp'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-neutral-400 font-mono">
+                            {new Date(inv.created_at).toLocaleString('vi-VN')}
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleViewInvoiceDetails(inv)}
+                                className="text-neutral-800 hover:text-black font-bold uppercase text-[9px] tracking-wider"
+                              >
+                                Chi tiết
+                              </button>
+                              {inv.status === 'draft' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleConfirmInvoice(inv.id)}
+                                  className="text-green-600 hover:text-green-800 font-bold uppercase text-[9px] tracking-wider"
+                                >
+                                  Nhập kho
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {importTotalPages > 1 && (
+                <div className="flex justify-end items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    disabled={importPage <= 1}
+                    onClick={() => loadImportHistory(importPage - 1)}
+                    className="border border-neutral-350 px-2.5 py-1 rounded disabled:opacity-30"
+                  >
+                    Trước
+                  </button>
+                  <span className="font-bold text-neutral-700">Trang {importPage} / {importTotalPages}</span>
+                  <button
+                    type="button"
+                    disabled={importPage >= importTotalPages}
+                    onClick={() => loadImportHistory(importPage + 1)}
+                    className="border border-neutral-350 px-2.5 py-1 rounded disabled:opacity-30"
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1187,6 +1713,130 @@ export default function AdminInventoryTab({ stores, reloadLookups }: AdminInvent
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Invoice Details Modal */}
+          {showInvoiceModal && selectedInvoice && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <div className="bg-white border border-neutral-200 rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 space-y-5 flex flex-col">
+                <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900">
+                    Chi Tiết Phiếu Nhập Hàng #{selectedInvoice.id}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setShowInvoiceModal(false)
+                      setSelectedInvoice(null)
+                      setInvoiceDetails([])
+                    }}
+                    className="text-neutral-450 hover:text-black"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="text-neutral-450 uppercase font-black text-[9px] tracking-wider">Nhà cung cấp</p>
+                    <p className="font-bold text-neutral-850 mt-0.5">{selectedInvoice.supplier_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-neutral-450 uppercase font-black text-[9px] tracking-wider">Cửa hàng nhập</p>
+                    <p className="font-bold text-neutral-850 mt-0.5">{selectedInvoice.store_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-neutral-450 uppercase font-black text-[9px] tracking-wider">Trạng thái</p>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase mt-1 ${
+                      selectedInvoice.status === 'published'
+                        ? 'bg-green-50 border border-green-200 text-green-700'
+                        : 'bg-yellow-50 border border-yellow-200 text-yellow-700'
+                    }`}>
+                      {selectedInvoice.status === 'published' ? 'Đã nhập kho' : 'Bản nháp'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-neutral-450 uppercase font-black text-[9px] tracking-wider">Ngày tạo</p>
+                    <p className="font-medium text-neutral-700 mt-0.5">{new Date(selectedInvoice.created_at).toLocaleString('vi-VN')}</p>
+                  </div>
+                  {selectedInvoice.note && (
+                    <div className="col-span-2">
+                      <p className="text-neutral-450 uppercase font-black text-[9px] tracking-wider">Ghi chú</p>
+                      <p className="text-neutral-700 mt-0.5 italic">"{selectedInvoice.note}"</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-neutral-100 pt-4 flex-1">
+                  <p className="text-[10px] uppercase font-black tracking-wider text-neutral-450 mb-2">Danh sách mặt hàng</p>
+                  {invoiceDetailsLoading ? (
+                    <div className="flex justify-center py-6">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                    </div>
+                  ) : (
+                    <div className="border border-neutral-200 rounded overflow-hidden">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-bold text-[9px] tracking-wider">
+                            <th className="p-3">Sản phẩm / Biến thể</th>
+                            <th className="p-3">SKU</th>
+                            <th className="p-3 text-right">Giá nhập</th>
+                            <th className="p-3 text-center">Số lượng</th>
+                            <th className="p-3 text-right">Tổng tiền</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-neutral-150">
+                          {invoiceDetails.map((detail) => (
+                            <tr key={detail.id} className="hover:bg-neutral-50">
+                              <td className="p-3">
+                                <p className="font-bold text-neutral-800">{detail.variant_name}</p>
+                              </td>
+                              <td className="p-3 font-mono text-[11px] text-neutral-600">
+                                {detail.sku}
+                              </td>
+                              <td className="p-3 text-right font-mono text-neutral-700">
+                                {detail.price_import.toLocaleString('vi-VN')} đ
+                              </td>
+                              <td className="p-3 text-center text-neutral-800">
+                                {detail.quantity}
+                              </td>
+                              <td className="p-3 text-right font-mono font-bold text-neutral-900">
+                                {(detail.price_import * detail.quantity).toLocaleString('vi-VN')} đ
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2 justify-end border-t border-neutral-100 pt-4 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowInvoiceModal(false)
+                      setSelectedInvoice(null)
+                      setInvoiceDetails([])
+                    }}
+                    className="border border-neutral-350 px-5 py-2.5 font-bold uppercase rounded text-neutral-600 hover:text-black"
+                  >
+                    Đóng
+                  </button>
+                  {selectedInvoice.status === 'draft' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowInvoiceModal(false)
+                        void handleConfirmInvoice(selectedInvoice.id)
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 font-black uppercase rounded"
+                    >
+                      Nhập kho phiếu này
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

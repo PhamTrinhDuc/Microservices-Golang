@@ -25,6 +25,9 @@ CREATE TABLE inventory_log (
 -- Index để tối ưu truy vấn lịch sử
 CREATE INDEX idx_inventory_log_store_var ON inventory_log(store_id, variant_id);
 CREATE INDEX idx_inventory_log_created ON inventory_log(created_at DESC);
+
+-- Bổ sung cột status vào bảng import_invoices để hỗ trợ phiếu nháp
+ALTER TABLE import_invoices ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'published';
 ```
 
 ---
@@ -62,7 +65,9 @@ erDiagram
 ### 3.2 Tồn kho & Hoá đơn & Logs (Inventory & Logs)
 * `GET /api/v1/admin/stores/:id/inventory` - Xem danh sách tồn kho cửa hàng (Chỉ Admin).
 * `PUT /api/v1/admin/stores/:id/inventory` - Điều chỉnh tồn kho thủ công (Tự động ghi nhận `manual_adjust` vào `inventory_log`) (Chỉ Admin).
-* `POST /api/v1/admin/inventory/import` - Tạo hóa đơn nhập kho & Tự động cộng kho & Ghi nhận `import` log (Chỉ Admin).
+* `POST /api/v1/admin/inventory/import` - Tạo hóa đơn nhập kho (Hỗ trợ status `'draft'` hoặc `'published'`). Nếu là `'published'` thì tự động cộng kho & ghi nhận `import` log (Chỉ Admin).
+* `PUT /api/v1/admin/inventory/imports/:id/publish` - Xác nhận hoá đơn nháp, cập nhật tồn kho vật lý và ghi nhận log (Chỉ Admin).
+* `GET /api/v1/admin/inventory/variants/:id/last-import-price` - Lấy giá nhập gần nhất của một biến thể từ các hoá đơn đã hoàn tất (Chỉ Admin).
 * `GET /api/v1/admin/inventory/imports` - Xem danh sách hoá đơn nhập hàng (Chỉ Admin).
 * `GET /api/v1/admin/inventory/imports/:id` - Xem chi tiết 1 hoá đơn nhập (kèm danh sách chi tiết hàng nhập) (Chỉ Admin).
 * `GET /api/v1/admin/inventory/low-stock` - **Cảnh báo hàng thấp**: Xem các variant có tồn kho `<= low_stock_threshold` của sản phẩm đó (Chỉ Admin).
@@ -107,11 +112,13 @@ sequenceDiagram
         
         R->>DB: 3. INSERT INTO import_invoice_details (...) (Lưu chi tiết)
         
-        Note over R: Tính qty_after = stock_before + import_qty
-        
-        R->>DB: 4. UPSERT INTO product_inventory (Cập nhật số lượng mới)
-        
-        R->>DB: 5. INSERT INTO inventory_log (variant_id, store_id, change_qty, qty_after, reason='import', ref_id=InvoiceID, created_by)
+        alt Nếu status là 'published' (Đồng bộ kho ngay)
+            Note over R: Tính qty_after = stock_before + import_qty
+            R->>DB: 4. UPSERT INTO product_inventory (Cập nhật số lượng mới)
+            R->>DB: 5. INSERT INTO inventory_log (variant_id, store_id, change_qty, qty_after, reason='import', ref_id=InvoiceID, created_by)
+        else Nếu status là 'draft'
+            Note over R: Chỉ lưu thông tin hóa đơn nháp, không thay đổi tồn kho
+        end
     end
     
     R->>DB: Commit(ctx)
@@ -280,6 +287,7 @@ classDiagram
         +int SupplierID
         +int StoreID
         +string Note
+        +string Status
         +ImportItemDTO[] Items
     }
 
@@ -317,6 +325,8 @@ classDiagram
         +UpdateSupplier(ctx: *gin.Context) void
         +DeleteSupplier(ctx: *gin.Context) void
         +ImportGoods(ctx: *gin.Context) void
+        +ConfirmImportInvoice(ctx: *gin.Context) void
+        +GetLastImportPrice(ctx: *gin.Context) void
         +AdjustInventory(ctx: *gin.Context) void
         +ListStoreInventory(ctx: *gin.Context) void
         +GetLowStockAlerts(ctx: *gin.Context) void
@@ -332,6 +342,8 @@ classDiagram
         +UpdateSupplier(ctx: Context, id: int, req: *UpdateSupplierRequest) (*Supplier, error)
         +DeleteSupplier(ctx: Context, id: int) error
         +ImportGoods(ctx: Context, creatorID: int, req: *ImportInvoiceRequest) (*ImportInvoice, error)
+        +ConfirmImportInvoice(ctx: Context, invoiceID: int) error
+        +GetLastImportPrice(ctx: Context, variantID: int) (float64, error)
         +AdjustInventory(ctx: Context, storeID: int, creatorID: int, req: *ManualAdjustRequest) error
         +GetLowStockAlerts(ctx: Context, storeID *int) ([]*LowStockAlertResponse, error)
         +GetInventoryLogs(ctx: Context, q: *InventoryLogsQuery) (*InventoryLogsResult, error)
@@ -348,6 +360,8 @@ classDiagram
         +UpdateSupplier(ctx: Context, s: *Supplier) (*Supplier, error)
         +DeleteSupplier(ctx: Context, id: int) error
         +CreateImportInvoice(ctx: Context, creatorID: int, invoice: *ImportInvoice, details: []*ImportInvoiceDetail) (*ImportInvoice, error)
+        +ConfirmImportInvoice(ctx: Context, invoiceID: int) error
+        +GetLastImportPrice(ctx: Context, variantID: int) (float64, error)
         +AdjustInventory(ctx: Context, storeID: int, creatorID: int, adjustments: []*AdjustItemDTO) error
         +GetLowStockAlerts(ctx: Context, storeID *int) ([]*LowStockAlertResponse, error)
         +GetInventoryLogs(ctx: Context, q: *InventoryLogsQuery) (*InventoryLogsResult, error)

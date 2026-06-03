@@ -96,6 +96,7 @@ export const inventoryAPI = {
     supplier_id: number
     store_id: number
     note?: string | null
+    status?: 'draft' | 'published'
     items: { variant_id: number; quantity: number; price_import: number }[]
   }): Promise<any> => {
     const res = await api.post<any>('/admin/inventory/import', payload)
@@ -118,6 +119,15 @@ export const inventoryAPI = {
     return res.data
   },
 
+  adminConfirmImportInvoice: async (id: number): Promise<void> => {
+    await api.put(`/admin/inventory/imports/${id}/publish`)
+  },
+
+  adminGetLastImportPrice: async (variantId: number): Promise<number> => {
+    const res = await api.get<number>(`/admin/inventory/variants/${variantId}/last-import-price`)
+    return res.data || 0
+  },
+
   // Alerts & Logs
   adminGetLowStockAlerts: async (storeId?: number): Promise<LowStockAlertResponse[]> => {
     const params: any = {}
@@ -129,7 +139,12 @@ export const inventoryAPI = {
   },
 
   adminGetInventoryLogs: async (params?: { store_id?: number; variant_id?: number; reason?: string; page?: number; limit?: number }): Promise<{ logs: InventoryLogResponse[]; total_count: number; page: number; limit: number }> => {
-    const res = await api.get<{ logs: InventoryLogResponse[]; total_count: number; page: number; limit: number }>('/admin/inventory/logs', { params })
-    return res.data
+    const res = await api.get<any>('/admin/inventory/logs', { params })
+    return {
+      logs: res.data?.data || [],
+      total_count: res.data?.pagination?.total || 0,
+      page: res.data?.pagination?.page || 1,
+      limit: res.data?.pagination?.limit || 20,
+    }
   },
 }

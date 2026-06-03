@@ -165,14 +165,16 @@ const ProductDetailPage = () => {
   }
 
   // Determine current active prices and stock based on variant selection
-  const originalPrice = selectedVariant ? selectedVariant.price : (product.price || 0)
+  const originalPrice = selectedVariant 
+    ? (selectedVariant.compare_price || selectedVariant.sell_price) 
+    : (product.price || 0)
   const displayPrice = selectedVariant 
-    ? (selectedVariant.discount_price || selectedVariant.price)
+    ? selectedVariant.sell_price
     : (product.discount_price || product.price || 0)
   
   const hasDiscount = displayPrice < originalPrice
   const discountPercent = hasDiscount 
-    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 15) // Fallback discount percent if needed, or exact
+    ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
     : 0
 
   const activeStock = selectedVariant ? selectedVariant.stock : product.stock

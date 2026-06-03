@@ -277,8 +277,8 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
         attributes: attrs,
         name: variantName,
         sku: generatedSKU,
-        price: 0,
-        priceBase: '',
+        sell_price: 0,
+        compare_price: '',
         weight: productForm.weight || 0,
         isActive: true,
         isExisting: false,
@@ -296,11 +296,11 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
       alert('Vui lòng nhập giá trị hợp lệ!')
       return
     }
-    setVariantRows(prev => prev.map(row => ({ ...row, price: val })))
+    setVariantRows(prev => prev.map(row => ({ ...row, sell_price: val })))
   }
 
   const handleBulkApplyPriceBase = () => {
-    setVariantRows(prev => prev.map(row => ({ ...row, priceBase: bulkPriceBase })))
+    setVariantRows(prev => prev.map(row => ({ ...row, compare_price: bulkPriceBase })))
   }
 
   const handleBulkApplyWeight = () => {
@@ -418,8 +418,8 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
           await productAPI.adminGenerateVariant(productId, {
             name: row.name,
             sku: row.sku,
-            price: Number(row.price),
-            price_base: row.priceBase ? Number(row.priceBase) : undefined,
+            sell_price: Number(row.sell_price),
+            compare_price: row.compare_price ? Number(row.compare_price) : undefined,
             weight: row.weight ? Number(row.weight) : undefined,
             option_value_ids: ids
           })
@@ -433,8 +433,8 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
           await productAPI.adminUpdateVariant(row.id, {
             name: row.name,
             sku: row.sku,
-            price: Number(row.price),
-            price_base: row.priceBase ? Number(row.priceBase) : undefined,
+            sell_price: Number(row.sell_price),
+            compare_price: row.compare_price ? Number(row.compare_price) : undefined,
             weight: row.weight ? Number(row.weight) : undefined
           })
         }
@@ -520,8 +520,8 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
             attributes: attrs,
             name: v.name,
             sku: v.sku,
-            price: v.price,
-            priceBase: v.price_base || '',
+            sell_price: v.sell_price,
+            compare_price: v.compare_price || '',
             weight: v.weight || 0,
             isActive: v.is_active,
             isExisting: true,
@@ -1495,10 +1495,10 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                                       <input
                                         type="number"
                                         className="border border-neutral-300 rounded px-2 py-1 w-24 text-right text-xs font-bold font-mono"
-                                        value={row.price || ''}
+                                        value={row.sell_price || ''}
                                         onChange={(e) => {
                                           const updated = [...variantRows]
-                                          updated[index].price = Number(e.target.value)
+                                          updated[index].sell_price = Number(e.target.value)
                                           setVariantRows(updated)
                                         }}
                                         placeholder="đ"
@@ -1510,10 +1510,10 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                                       <input
                                         type="number"
                                         className="border border-neutral-300 rounded px-2 py-1 w-24 text-right text-xs font-mono text-neutral-500"
-                                        value={row.priceBase || ''}
+                                        value={row.compare_price || ''}
                                         onChange={(e) => {
                                           const updated = [...variantRows]
-                                          updated[index].priceBase = e.target.value
+                                          updated[index].compare_price = e.target.value
                                           setVariantRows(updated)
                                         }}
                                         placeholder="đ"

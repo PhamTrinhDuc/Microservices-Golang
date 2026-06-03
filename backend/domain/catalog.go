@@ -85,16 +85,17 @@ type VariantOption struct {
 }
 
 type ProductVariant struct {
-	ID        int             `json:"id" db:"id"`
-	ProductID string          `json:"product_id" db:"product_id"`
-	Name      string          `json:"name" db:"name"`
-	SKU       string          `json:"sku" db:"sku"`
-	Price     float64         `json:"price" db:"price"`
-	PriceBase *float64        `json:"price_base" db:"price_base"`
-	Weight    *float64        `json:"weight" db:"weight"`
-	IsActive  bool            `json:"is_active" db:"is_active"`
-	IsDeleted bool            `json:"is_deleted" db:"is_deleted"`
-	Options   []VariantOption `json:"options,omitempty"`
+	ID              int             `json:"id" db:"id"`
+	ProductID       string          `json:"product_id" db:"product_id"`
+	Name            string          `json:"name" db:"name"`
+	SKU             string          `json:"sku" db:"sku"`
+	SellPrice       float64         `json:"sell_price" db:"sell_price"`
+	ComparePrice    *float64        `json:"compare_price" db:"compare_price"`
+	LatestCostPrice float64         `json:"latest_cost_price" db:"latest_cost_price"`
+	Weight          *float64        `json:"weight" db:"weight"`
+	IsActive        bool            `json:"is_active" db:"is_active"`
+	IsDeleted       bool            `json:"is_deleted" db:"is_deleted"`
+	Options         []VariantOption `json:"options,omitempty"`
 }
 
 type ProductImage struct {
@@ -173,12 +174,12 @@ type OptionDTO struct {
 }
 
 type VariantDTO struct {
-	Name        string   `json:"name" validate:"required"`
-	SKU         string   `json:"sku" validate:"required"`
-	Price       float64  `json:"price" validate:"required,gt=0"`
-	PriceBase   *float64 `json:"price_base"`
-	Weight      *float64 `json:"weight"`
-	OptionValue string   `json:"option_value" validate:"required"`
+	Name         string   `json:"name" validate:"required"`
+	SKU          string   `json:"sku" validate:"required"`
+	SellPrice    float64  `json:"sell_price" validate:"required,gt=0"`
+	ComparePrice *float64 `json:"compare_price"`
+	Weight       *float64 `json:"weight"`
+	OptionValue  string   `json:"option_value" validate:"required"`
 }
 
 type CreateProductRequest struct {
@@ -229,18 +230,18 @@ type AddOptionValuesRequest struct {
 type GenerateVariantRequest struct {
 	Name           string   `json:"name" validate:"required"`
 	SKU            string   `json:"sku" validate:"required"`
-	Price          float64  `json:"price" validate:"required,gt=0"`
-	PriceBase      *float64 `json:"price_base"`
+	SellPrice      float64  `json:"sell_price" validate:"required,gt=0"`
+	ComparePrice   *float64 `json:"compare_price"`
 	Weight         *float64 `json:"weight"`
 	OptionValueIDs []int    `json:"option_value_ids" validate:"required,min=1"`
 }
 
 type UpdateVariantRequest struct {
-	Name      string   `json:"name" validate:"required"`
-	SKU       string   `json:"sku" validate:"required"`
-	Price     float64  `json:"price" validate:"required,gt=0"`
-	PriceBase *float64 `json:"price_base"`
-	Weight    *float64 `json:"weight"`
+	Name         string   `json:"name" validate:"required"`
+	SKU          string   `json:"sku" validate:"required"`
+	SellPrice    float64  `json:"sell_price" validate:"required,gt=0"`
+	ComparePrice *float64 `json:"compare_price"`
+	Weight       *float64 `json:"weight"`
 }
 
 type ProductSearchQuery struct {
@@ -309,7 +310,7 @@ type CatalogRepository interface {
 	
 	// Variant
 	CreateVariant(ctx context.Context, variant *ProductVariant, optionValueIDs []int) (*ProductVariant, error)
-	UpdateVariant(ctx context.Context, id int, name, sku string, price float64, priceBase, weight *float64) (*ProductVariant, error)
+	UpdateVariant(ctx context.Context, id int, name, sku string, sellPrice float64, comparePrice, weight *float64) (*ProductVariant, error)
 	DeleteVariant(ctx context.Context, id int) error
 }
 

@@ -674,7 +674,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                     <span className="font-mono font-semibold text-neutral-850 shrink-0 select-none">
-                      {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                      {(item.sell_price * item.quantity).toLocaleString('vi-VN')} đ
                     </span>
                   </div>
                 ))}

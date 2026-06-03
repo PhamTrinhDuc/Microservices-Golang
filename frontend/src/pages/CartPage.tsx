@@ -183,11 +183,11 @@ const CartPage = () => {
                       {/* Pricing block */}
                       <div className="flex flex-col items-end shrink-0 min-w-[100px]">
                         <span className="text-xs font-black text-neutral-900">
-                          {(item.price * item.quantity).toLocaleString('vi-VN')} đ
+                          {(item.sell_price * item.quantity).toLocaleString('vi-VN')} đ
                         </span>
                         {item.quantity > 1 && (
                           <span className="text-[10px] text-neutral-400 mt-0.5">
-                            {item.price.toLocaleString('vi-VN')} đ / sp
+                            {item.sell_price.toLocaleString('vi-VN')} đ / sp
                           </span>
                         )}
                       </div>

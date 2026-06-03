@@ -378,7 +378,7 @@ func (r *CatalogRepository) CreateProduct(ctx context.Context, input *domain.Cre
 
 	// 4. Insert Variants and link Variant Options
 	variantQuery := `
-		INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active, is_deleted)
+		INSERT INTO product_variant (product_id, name, sku, sell_price, compare_price, weight, is_active, is_deleted)
 		VALUES ($1, $2, $3, $4, $5, $6, true, false)
 		RETURNING id`
 
@@ -392,8 +392,8 @@ func (r *CatalogRepository) CreateProduct(ctx context.Context, input *domain.Cre
 			input.Product.ID,
 			variant.Name,
 			variant.SKU,
-			variant.Price,
-			variant.PriceBase,
+			variant.SellPrice,
+			variant.ComparePrice,
 			variant.Weight,
 		).Scan(&variantID)
 		if err != nil {
@@ -470,18 +470,18 @@ func (r *CatalogRepository) GetProductByID(ctx context.Context, id string) (*dom
 }
 
 func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
-	countQueryStr := `SELECT COUNT(*) FROM product WHERE is_deleted = false AND is_active = true`
+	countQueryStr := `SELECT COUNT(*) FROM product p WHERE p.is_deleted = false AND p.is_active = true`
 	selectQueryStr := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
-		       COALESCE(min_var.price_base, min_var.price, 0) as price,
-		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
-		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
+		       COALESCE(min_var.compare_price, min_var.sell_price, 0) as price,
+		       CASE WHEN min_var.compare_price > min_var.sell_price THEN min_var.sell_price ELSE NULL END as discount_price,
+		       CASE WHEN min_var.compare_price > min_var.sell_price THEN ROUND((min_var.compare_price - min_var.sell_price) / min_var.compare_price * 100) ELSE 0 END as discount_percent,
 		       COALESCE(inv.total_qty, 0) as stock,
 		       COALESCE(avg_rev.rating, 0.0) as rating,
 		       COALESCE(avg_rev.review_count, 0) as review_count
 		FROM product p
 		LEFT JOIN (
-			SELECT product_id, MIN(price) as price, MIN(price_base) as price_base
+			SELECT product_id, MIN(sell_price) as sell_price, MIN(compare_price) as compare_price
 			FROM product_variant
 			WHERE is_deleted = false AND is_active = true
 			GROUP BY product_id
@@ -517,7 +517,7 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 	}
 
 	if query.Query != "" {
-		conditions = append(conditions, fmt.Sprintf("(name ILIKE $%d OR slug ILIKE $%d OR id ILIKE $%d)", placeholderIdx, placeholderIdx, placeholderIdx))
+		conditions = append(conditions, fmt.Sprintf("(p.name ILIKE $%d OR p.slug ILIKE $%d OR p.id ILIKE $%d OR EXISTS (SELECT 1 FROM product_variant pv WHERE pv.product_id = p.id AND pv.sku ILIKE $%d AND pv.is_deleted = false))", placeholderIdx, placeholderIdx, placeholderIdx, placeholderIdx))
 		args = append(args, "%"+query.Query+"%")
 		placeholderIdx++
 	}
@@ -633,9 +633,9 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 	prodQuery := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
 		       b.name as brand_name, c.name as category_name,
-		       COALESCE(min_var.price_base, min_var.price, 0) as price,
-		       CASE WHEN min_var.price_base > min_var.price THEN min_var.price ELSE NULL END as discount_price,
-		       CASE WHEN min_var.price_base > min_var.price THEN ROUND((min_var.price_base - min_var.price) / min_var.price_base * 100) ELSE 0 END as discount_percent,
+		       COALESCE(min_var.compare_price, min_var.sell_price, 0) as price,
+		       CASE WHEN min_var.compare_price > min_var.sell_price THEN min_var.sell_price ELSE NULL END as discount_price,
+		       CASE WHEN min_var.compare_price > min_var.sell_price THEN ROUND((min_var.compare_price - min_var.sell_price) / min_var.compare_price * 100) ELSE 0 END as discount_percent,
 		       COALESCE(inv.total_qty, 0) as stock,
 		       COALESCE(avg_rev.rating, 0.0) as rating,
 		       COALESCE(avg_rev.review_count, 0) as review_count
@@ -643,7 +643,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 		JOIN brand b ON p.brand_id = b.id
 		JOIN category c ON p.category_id = c.id
 		LEFT JOIN (
-			SELECT product_id, MIN(price) as price, MIN(price_base) as price_base
+			SELECT product_id, MIN(sell_price) as sell_price, MIN(compare_price) as compare_price
 			FROM product_variant
 			WHERE is_deleted = false AND is_active = true
 			GROUP BY product_id
@@ -772,7 +772,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 
 	// 5. Get Variants
 	variantsQuery := `
-		SELECT id, product_id, name, sku, price, price_base, weight, is_active, is_deleted
+		SELECT id, product_id, name, sku, sell_price, compare_price, latest_cost_price, weight, is_active, is_deleted
 		FROM product_variant
 		WHERE product_id = $1 AND is_deleted = false
 		ORDER BY id ASC`
@@ -788,7 +788,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 
 	for variantsRows.Next() {
 		v := &domain.ProductVariant{}
-		err := variantsRows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.Price, &v.PriceBase, &v.Weight, &v.IsActive, &v.IsDeleted)
+		err := variantsRows.Scan(&v.ID, &v.ProductID, &v.Name, &v.SKU, &v.SellPrice, &v.ComparePrice, &v.LatestCostPrice, &v.Weight, &v.IsActive, &v.IsDeleted)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan variant: %w", err)
 		}
@@ -1081,7 +1081,7 @@ func (r *CatalogRepository) CreateVariant(ctx context.Context, variant *domain.P
 
 	// 1. Insert Variant
 	query := `
-		INSERT INTO product_variant (product_id, name, sku, price, price_base, weight, is_active, is_deleted)
+		INSERT INTO product_variant (product_id, name, sku, sell_price, compare_price, weight, is_active, is_deleted)
 		VALUES ($1, $2, $3, $4, $5, $6, true, false)
 		RETURNING id`
 
@@ -1089,8 +1089,8 @@ func (r *CatalogRepository) CreateVariant(ctx context.Context, variant *domain.P
 		variant.ProductID,
 		variant.Name,
 		variant.SKU,
-		variant.Price,
-		variant.PriceBase,
+		variant.SellPrice,
+		variant.ComparePrice,
 		variant.Weight,
 	).Scan(&variant.ID)
 
@@ -1118,21 +1118,22 @@ func (r *CatalogRepository) CreateVariant(ctx context.Context, variant *domain.P
 	return variant, nil
 }
 
-func (r *CatalogRepository) UpdateVariant(ctx context.Context, id int, name, sku string, price float64, priceBase, weight *float64) (*domain.ProductVariant, error) {
+func (r *CatalogRepository) UpdateVariant(ctx context.Context, id int, name, sku string, sellPrice float64, comparePrice, weight *float64) (*domain.ProductVariant, error) {
 	query := `
 		UPDATE product_variant
-		SET name = $1, sku = $2, price = $3, price_base = $4, weight = $5
+		SET name = $1, sku = $2, sell_price = $3, compare_price = $4, weight = $5
 		WHERE id = $6 AND is_deleted = false
-		RETURNING id, product_id, name, sku, price, price_base, weight, is_active, is_deleted`
+		RETURNING id, product_id, name, sku, sell_price, compare_price, latest_cost_price, weight, is_active, is_deleted`
 
 	v := &domain.ProductVariant{}
-	err := r.db.QueryRow(ctx, query, name, sku, price, priceBase, weight, id).Scan(
+	err := r.db.QueryRow(ctx, query, name, sku, sellPrice, comparePrice, weight, id).Scan(
 		&v.ID,
 		&v.ProductID,
 		&v.Name,
 		&v.SKU,
-		&v.Price,
-		&v.PriceBase,
+		&v.SellPrice,
+		&v.ComparePrice,
+		&v.LatestCostPrice,
 		&v.Weight,
 		&v.IsActive,
 		&v.IsDeleted,
