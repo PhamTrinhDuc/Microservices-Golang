@@ -166,3 +166,29 @@ func (r *UserRepository) List(ctx context.Context, page, limit int, query string
 
 	return users, total, nil
 }
+
+func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
+	query := `
+		UPDATE users
+		SET full_name = $1, password = $2, phone = $3, gender = $4, dob = $5, avatar = $6, updated_at = NOW()
+		WHERE id = $7`
+
+	tag, err := r.db.Exec(ctx, query,
+		u.FullName,
+		u.Password,
+		u.Phone,
+		u.Gender,
+		u.DOB,
+		u.Avatar,
+		u.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return domain.ErrUserNotFound
+	}
+
+	return nil
+}

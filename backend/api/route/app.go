@@ -22,6 +22,8 @@ func SetupUserRoutes(router *gin.RouterGroup, uc *controller.UserController, aut
 	user.Use(authMiddleware.Handler())
 	{
 		user.GET("/profile", uc.GetMe)
+		user.PUT("/profile", uc.UpdateProfile)
+		user.PUT("/profile/password", uc.UpdatePassword)
 	}
 
 	// Admin control endpoints
@@ -40,6 +42,7 @@ func SetupAddressRoutes(router *gin.RouterGroup, ac *controller.AddressControlle
 	{
 		address.GET("", ac.List)
 		address.POST("", ac.Create)
+		address.PUT("/:id", ac.Update)
 		address.PUT("/:id/default", ac.SetDefault)
 		address.DELETE("/:id", ac.Delete)
 	}
@@ -135,6 +138,7 @@ func SetupCartRoutes(router *gin.RouterGroup, cc *controller.CartController, aut
 func SetupPromotionVoucherRoutes(router *gin.RouterGroup, pvc *controller.PromotionVoucherController, authMiddleware *middleware.AuthMiddleware) {
 	// Public / customer endpoints
 	router.GET("/vouchers", pvc.ListActiveVouchers)
+	router.GET("/promotions", pvc.ListPromotions)
 
 	// Apply voucher requires authenticated user
 	customer := router.Group("")
@@ -210,6 +214,23 @@ func SetupUploadRoutes(router *gin.RouterGroup, uc *controller.UploadController,
 	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
 	{
 		admin.POST("/upload", uc.UploadImage)
+	}
+
+	// General authenticated users can also upload files (e.g. avatars)
+	userUpload := router.Group("")
+	userUpload.Use(authMiddleware.Handler())
+	{
+		userUpload.POST("/upload", uc.UploadImage)
+	}
+}
+
+// SetupLocationRoutes sets up public address helper endpoints
+func SetupLocationRoutes(router *gin.RouterGroup, lc *controller.LocationController) {
+	location := router.Group("/location")
+	{
+		location.GET("/provinces", lc.GetProvinces)
+		location.GET("/provinces/:code/districts", lc.GetDistricts)
+		location.GET("/districts/:code/wards", lc.GetWards)
 	}
 }
 

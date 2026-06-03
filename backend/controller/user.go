@@ -141,6 +141,66 @@ func (uc *UserController) GetMe(ctx *gin.Context) {
 	utils.RespondOK(ctx, user)
 }
 
+// UpdateProfile handles PUT /profile.
+func (uc *UserController) UpdateProfile(ctx *gin.Context) {
+	userIDVal, exists := ctx.Get("user_id")
+	if !exists {
+		utils.RespondUnauthorized(ctx, "unauthorized context missing user_id")
+		return
+	}
+	userID := userIDVal.(int)
+
+	var req domain.UpdateProfileRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	user, err := uc.useCase.UpdateProfile(ctx.Request.Context(), userID, &req)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			utils.RespondNotFound(ctx, err.Error())
+			return
+		}
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, user)
+}
+
+// UpdatePassword handles PUT /profile/password.
+func (uc *UserController) UpdatePassword(ctx *gin.Context) {
+	userIDVal, exists := ctx.Get("user_id")
+	if !exists {
+		utils.RespondUnauthorized(ctx, "unauthorized context missing user_id")
+		return
+	}
+	userID := userIDVal.(int)
+
+	var req domain.UpdatePasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	err := uc.useCase.UpdatePassword(ctx.Request.Context(), userID, &req)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			utils.RespondNotFound(ctx, err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidPassword) {
+			utils.RespondBadRequest(ctx, "Mật khẩu cũ không chính xác")
+			return
+		}
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, gin.H{"message": "Đổi mật khẩu thành công"})
+}
+
 type lockRequest struct {
 	IsLock bool `json:"is_lock"`
 }

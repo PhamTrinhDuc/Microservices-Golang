@@ -13,6 +13,7 @@ import (
 	"backend/api/middleware"
 	"backend/api/route"
 	"backend/bootstrap"
+	"backend/controller"
 	"backend/internal/auth"
 	"backend/internal/utils"
 
@@ -78,6 +79,7 @@ func main() {
 	// 4. Initialize Dependency Container & Router wiring
 	container := bootstrap.NewContainer(db.GetPool())
 	authMiddleware := middleware.NewAuthMiddleware()
+	locationCtl := controller.NewLocationController()
 
 	v1 := r.Group("/api/v1")
 	route.SetupUserRoutes(v1, container.UserCtl, authMiddleware)
@@ -89,6 +91,7 @@ func main() {
 	route.SetupOrderRoutes(v1, container.OrderCtl, authMiddleware)
 	route.SetupBannerRoutes(v1, container.BannerCtl, authMiddleware)
 	route.SetupUploadRoutes(v1, container.UploadCtl, authMiddleware)
+	route.SetupLocationRoutes(v1, locationCtl)
 
 	// 5. Start Server
 	serverPort := utils.GetEnvString("BACKEND_PORT", defaultPort)

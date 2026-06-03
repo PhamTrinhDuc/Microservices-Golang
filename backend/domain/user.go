@@ -41,10 +41,24 @@ type GoogleLoginRequest struct {
 	Credential string `json:"credential" validate:"required"`
 }
 
+type UpdateProfileRequest struct {
+	FullName string  `json:"full_name" validate:"required,min=2"`
+	Phone    *string `json:"phone"`
+	Gender   *string `json:"gender"`
+	DOB      *string `json:"dob"`
+	Avatar   *string `json:"avatar"`
+}
+
+type UpdatePasswordRequest struct {
+	OldPassword string `json:"old_password" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,min=6"`
+}
+
 type UserRepository interface {
 	Create(ctx context.Context, u *User) (*User, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	Update(ctx context.Context, u *User) error
 	UpdateLockStatus(ctx context.Context, id int, isLock bool) error
 	List(ctx context.Context, page, limit int, query string) ([]*User, int, error)
 }
@@ -54,6 +68,8 @@ type UserUsecase interface {
 	Authenticate(ctx context.Context, email, password string) (*User, string, error)
 	LoginOrRegisterWithGoogle(ctx context.Context, idToken string) (*User, string, error)
 	GetByID(ctx context.Context, id int) (*User, error)
+	UpdateProfile(ctx context.Context, id int, req *UpdateProfileRequest) (*User, error)
+	UpdatePassword(ctx context.Context, id int, req *UpdatePasswordRequest) error
 	LockUser(ctx context.Context, id int, isLock bool) error
 	List(ctx context.Context, page, limit int, query string) ([]*User, int, error)
 }

@@ -37,6 +37,7 @@ type AddressRepository interface {
 type AddressUsecase interface {
 	Create(ctx context.Context, userID int, req *CreateAddressRequest) (*Address, error)
 	List(ctx context.Context, userID int) ([]*Address, error)
+	Update(ctx context.Context, userID, addressID int, req *CreateAddressRequest) (*Address, error)
 	SetDefault(ctx context.Context, userID, addressID int) error
 	Delete(ctx context.Context, userID, addressID int) error
 }
