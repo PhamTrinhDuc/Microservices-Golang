@@ -2,7 +2,7 @@ package slm
 
 import (
 	"context"
-	"multi-agent/internal/utils"
+	"multi-agent/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

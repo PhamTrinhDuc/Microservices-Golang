@@ -73,7 +73,7 @@ func (s *thresholdStrategy) Compact(ctx agent.CallbackContext, req *model.LLMReq
 
 	for attempt := range s.maxCompactionAttempts {
 		slog.Info(
-			fmt.Sprintf("%s [%s]: attempt %d: before compaction", PackageName, StrategyThreshold),
+			fmt.Sprintf("%s [%s]: attempt %d: before compaction", PackageName, StrategyThreshold, attempt),
 			"agent", ctx.AgentName(),
 			"session", ctx.SessionID(),
 			"attempt", attempt+1,
