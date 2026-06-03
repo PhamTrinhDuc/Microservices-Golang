@@ -69,6 +69,7 @@ export const productAPI = {
         created_at: p.created_at,
         updated_at: p.updated_at,
         brand: brand || (p.brand_id ? { id: p.brand_id, name: `Brand #${p.brand_id}`, slug: '', is_active: true } : null),
+        specs_jsonb: p.specs_jsonb,
       }
     })
 
