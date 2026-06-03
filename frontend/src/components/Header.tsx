@@ -16,6 +16,9 @@ const Header = () => {
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!searchQuery.trim() && selectedCategory === 'all') {
+      return
+    }
     let url = '/browse'
     const params = new URLSearchParams()
     
@@ -31,7 +34,6 @@ const Header = () => {
       url += `?${queryString}`
     }
     navigate(url)
-    setSearchQuery('')
   }
 
   return (

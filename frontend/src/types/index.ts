@@ -113,6 +113,7 @@ export interface Product {
   variants?: ProductVariant[]
   images?: string[]
   reviews?: Review[]
+  specs_jsonb?: any
 }
 
 export interface Review {
