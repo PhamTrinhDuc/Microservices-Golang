@@ -1,9 +1,14 @@
 import { api } from './api'
-import type { Voucher, ApplyVoucherRequest, ApplyVoucherResponse, CreateVoucherRequest, UpdateVoucherRequest, CreatePromotionRequest, Promotion } from '../types'
+import type { Voucher, ApplyVoucherRequest, ApplyVoucherResponse, CreateVoucherRequest, UpdateVoucherRequest, CreatePromotionRequest, Promotion, UpdatePromotionRequest } from '../types'
 
 export const voucherAPI = {
   getVouchers: async (): Promise<Voucher[]> => {
     const res = await api.get<Voucher[]>('/vouchers')
+    return res.data || []
+  },
+
+  getPromotions: async (): Promise<Promotion[]> => {
+    const res = await api.get<Promotion[]>('/promotions')
     return res.data || []
   },
 
@@ -40,6 +45,11 @@ export const voucherAPI = {
 
   adminCreatePromotion: async (payload: CreatePromotionRequest): Promise<Promotion> => {
     const res = await api.post<Promotion>('/admin/promotions', payload)
+    return res.data
+  },
+
+  adminUpdatePromotion: async (id: number, payload: UpdatePromotionRequest): Promise<Promotion> => {
+    const res = await api.put<Promotion>(`/admin/promotions/${id}`, payload)
     return res.data
   },
 

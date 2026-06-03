@@ -12,6 +12,11 @@ export const addressAPI = {
     return res.data
   },
 
+  updateAddress: async (addressId: number, payload: CreateAddressRequest): Promise<Address> => {
+    const res = await api.put<Address>(`/addresses/${addressId}`, payload)
+    return res.data
+  },
+
   setDefaultAddress: async (addressId: number): Promise<{ message: string }> => {
     const res = await api.put<{ message: string }>(`/addresses/${addressId}/default`)
     return res.data

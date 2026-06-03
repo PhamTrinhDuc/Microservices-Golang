@@ -4,7 +4,8 @@ import ProductCard from '../components/ProductCard'
 import { useCatalog } from '../hooks/useCatalog'
 import { useFeaturedProducts } from '../hooks/useProducts'
 import { bannerAPI } from '../services/bannerAPI'
-import type { Banner } from '../types'
+import { voucherAPI } from '../services/voucherAPI'
+import type { Banner, Promotion, Product } from '../types'
 
 const HomePage = () => {
   const { categories, brands, loading: catalogLoading } = useCatalog()
@@ -13,45 +14,13 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState<'for_you' | 'best_seller' | 'discount' | 'newest'>('for_you')
   const [currentSlide, setCurrentSlide] = useState(0)
 
-  // Flash Sale Countdown timer state
-  const [timeLeft, setTimeLeft] = useState({ hours: 9, minutes: 17, seconds: 56 })
+  // Flash Sale Countdown timer & promotions state
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 })
+  const [promotions, setPromotions] = useState<Promotion[]>([])
+  const [countdownTarget, setCountdownTarget] = useState<Date | null>(null)
 
   // Dynamic slides state
-  const [slides, setSlides] = useState<Banner[]>([
-    {
-      id: 1,
-      title: 'LIMIT TIME OFFER',
-      subtitle: 'Sản phẩm công nghệ giảm giá tới 50%',
-      description: 'Cơ hội sở hữu laptop, điện thoại cao cấp chính hãng với giá rẻ nhất thị trường.',
-      image_url: 'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=600&q=80',
-      tag: 'Điện tử & Công nghệ',
-      link_url: '/browse',
-      sort_order: 1,
-      is_active: true
-    },
-    {
-      id: 2,
-      title: 'NEW FASHION ERA',
-      subtitle: 'Bộ sưu tập thời trang mùa hè cực hot',
-      description: 'Phong cách tối giản thời thượng. Hoàn tiền 100% nếu không hài lòng.',
-      image_url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80',
-      tag: 'Fashion & LifeStyle',
-      link_url: '/browse',
-      sort_order: 2,
-      is_active: true
-    },
-    {
-      id: 3,
-      title: 'PREMIUM LIVING',
-      subtitle: 'Trang trí nhà cửa cùng BeliBeli Home',
-      description: 'Giảm giá cực sâu cho các dòng máy xay, nồi chiên không dầu và robot hút bụi.',
-      image_url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80',
-      tag: 'Gia dụng & Đời sống',
-      link_url: '/browse',
-      sort_order: 3,
-      is_active: true
-    },
-  ])
+  const [slides, setSlides] = useState<Banner[]>([])
 
   const loadBanners = async () => {
     try {
@@ -64,21 +33,60 @@ const HomePage = () => {
     }
   }
 
+  const loadPromotions = async () => {
+    try {
+      const data = await voucherAPI.getPromotions()
+      setPromotions(data)
+      
+      // Find the closest active promotion that ends in the future
+      const now = new Date()
+      const activeFuturePromotions = data.filter(p => {
+        if (!p.is_active || p.is_deleted) return false
+        const startDate = new Date(p.start_date)
+        const endDate = new Date(p.end_date)
+        return now >= startDate && endDate > now
+      })
+      
+      if (activeFuturePromotions.length > 0) {
+        activeFuturePromotions.sort((a, b) => new Date(a.end_date).getTime() - new Date(b.end_date).getTime())
+        setCountdownTarget(new Date(activeFuturePromotions[0].end_date))
+      } else {
+        setCountdownTarget(null)
+      }
+    } catch (err) {
+      console.error('Failed to load promotions:', err)
+      setCountdownTarget(null)
+    }
+  }
+
   useEffect(() => {
     void loadBanners()
+    void loadPromotions()
   }, [])
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 }
-        if (prev.minutes > 0) return { ...prev, minutes: prev.minutes - 1, seconds: 59 }
-        if (prev.hours > 0) return { hours: prev.hours - 1, minutes: 59, seconds: 59 }
-        return { hours: 9, minutes: 17, seconds: 56 }
-      })
-    }, 1000)
+    if (!countdownTarget) return
+
+    const updateTimer = () => {
+      const now = new Date().getTime()
+      const distance = countdownTarget.getTime() - now
+
+      if (distance <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 })
+        return
+      }
+
+      const hours = Math.floor(distance / (1000 * 60 * 60))
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000)
+
+      setTimeLeft({ hours, minutes, seconds })
+    }
+
+    updateTimer()
+    const timer = setInterval(updateTimer, 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [countdownTarget])
 
   // Auto rotate slides
   useEffect(() => {
@@ -106,79 +114,111 @@ const HomePage = () => {
     }
   }
 
+  // Find matching promotion for a product and override display discount price
+  const getProductWithPromotion = (product: Product, promo: Promotion): Product => {
+    let calculatedDiscountPrice = product.discount_price
+    if (promo.discount_type === 'percentage') {
+      calculatedDiscountPrice = product.price * (1 - promo.discount_value / 100)
+    } else if (promo.discount_type === 'fixed') {
+      calculatedDiscountPrice = product.price - promo.discount_value
+    }
+    return {
+      ...product,
+      discount_price: calculatedDiscountPrice,
+    }
+  }
+
+  // Get active promotions
+  const activePromotions = promotions.filter(promo => {
+    if (!promo.is_active || promo.is_deleted) return false
+    const now = new Date()
+    const startDate = new Date(promo.start_date)
+    const endDate = new Date(promo.end_date)
+    return now >= startDate && now <= endDate
+  })
+
   // Get discount products for Flash Sale
   const flashSaleProducts = featuredProducts 
-    ? featuredProducts.filter(p => !!p.discount_price).slice(0, 4)
+    ? (activePromotions.length > 0
+        ? activePromotions.map(promo => {
+            const prod = featuredProducts.find(p => p.id === promo.product_id)
+            if (!prod) return null
+            return getProductWithPromotion(prod, promo)
+          }).filter((p): p is Product => p !== null)
+        : []
+      ).slice(0, 5)
     : []
 
   return (
     <div className="bg-neutral-50 min-h-screen pb-20 font-sans">
       
       {/* Hero Slider Container */}
-      <div className="w-full bg-neutral-100 py-6 border-b border-neutral-200">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="relative overflow-hidden rounded-lg bg-white border border-neutral-200 shadow-sm min-h-[380px] flex flex-col md:flex-row items-center">
-            
-            {/* Slide Info */}
-            <div className="flex-1 p-8 md:p-12 space-y-6">
-              {slides[currentSlide]?.tag && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white">
-                  {slides[currentSlide].tag}
-                </span>
-              )}
-              <h1 className="text-3xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none">
-                {slides[currentSlide]?.title} <br />
-                {slides[currentSlide]?.subtitle && (
-                  <span className="text-neutral-500 text-2xl md:text-3xl font-semibold">
-                    {slides[currentSlide].subtitle}
+      {slides.length > 0 && (
+        <div className="w-full bg-neutral-100 py-6 border-b border-neutral-200">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="relative overflow-hidden rounded-lg bg-white border border-neutral-200 shadow-sm min-h-[380px] flex flex-col md:flex-row items-center">
+              
+              {/* Slide Info */}
+              <div className="flex-1 p-8 md:p-12 space-y-6">
+                {slides[currentSlide]?.tag && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-3.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white">
+                    {slides[currentSlide].tag}
                   </span>
                 )}
-              </h1>
-              {slides[currentSlide]?.description && (
-                <p className="text-xs text-neutral-550 leading-relaxed max-w-md">
-                  {slides[currentSlide].description}
-                </p>
-              )}
-              <div className="flex gap-3 pt-2">
-                <Link
-                  to={slides[currentSlide]?.link_url || '/browse'}
-                  className="bg-black text-white text-xs font-bold px-6 py-3 rounded hover:bg-neutral-800 transition-colors"
-                >
-                  Mua ngay
-                </Link>
-                <Link
-                  to={slides[currentSlide]?.link_url || '/browse'}
-                  className="border border-neutral-250 text-neutral-800 text-xs font-bold px-6 py-3 rounded hover:bg-neutral-50 transition-colors"
-                >
-                  Xem thêm
-                </Link>
+                <h1 className="text-3xl md:text-5xl font-black text-neutral-900 tracking-tight leading-none">
+                  {slides[currentSlide]?.title} <br />
+                  {slides[currentSlide]?.subtitle && (
+                    <span className="text-neutral-500 text-2xl md:text-3xl font-semibold">
+                      {slides[currentSlide].subtitle}
+                    </span>
+                  )}
+                </h1>
+                {slides[currentSlide]?.description && (
+                  <p className="text-xs text-neutral-550 leading-relaxed max-w-md">
+                    {slides[currentSlide].description}
+                  </p>
+                )}
+                <div className="flex gap-3 pt-2">
+                  <Link
+                    to={slides[currentSlide]?.link_url || '/browse'}
+                    className="bg-black text-white text-xs font-bold px-6 py-3 rounded hover:bg-neutral-800 transition-colors"
+                  >
+                    Mua ngay
+                  </Link>
+                  <Link
+                    to={slides[currentSlide]?.link_url || '/browse'}
+                    className="border border-neutral-250 text-neutral-800 text-xs font-bold px-6 py-3 rounded hover:bg-neutral-50 transition-colors"
+                  >
+                    Xem thêm
+                  </Link>
+                </div>
               </div>
-            </div>
 
-            {/* Slide Visual Graphic */}
-            <div className="flex-1 w-full md:w-auto h-[260px] md:h-[380px] p-6 flex justify-center items-center bg-neutral-50 md:bg-white border-t md:border-t-0 md:border-l border-neutral-200">
-              <div className="w-full h-full relative overflow-hidden rounded">
-                <img
-                  src={slides[currentSlide]?.image_url}
-                  alt={slides[currentSlide]?.title}
-                  className="w-full h-full object-cover transition-opacity duration-500"
-                />
+              {/* Slide Visual Graphic */}
+              <div className="flex-1 w-full md:w-auto h-[260px] md:h-[380px] p-6 flex justify-center items-center bg-neutral-50 md:bg-white border-t md:border-t-0 md:border-l border-neutral-200">
+                <div className="w-full h-full relative overflow-hidden rounded">
+                  <img
+                    src={slides[currentSlide]?.image_url}
+                    alt={slides[currentSlide]?.title}
+                    className="w-full h-full object-cover transition-opacity duration-500"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Carousel Navigation Indicators */}
-            <div className="absolute bottom-4 left-8 md:left-12 flex gap-1.5">
-              {slides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-6 bg-black' : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'}`}
-                />
-              ))}
+              {/* Carousel Navigation Indicators */}
+              <div className="absolute bottom-4 left-8 md:left-12 flex gap-1.5">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-6 bg-black' : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Grid Content */}
       <div className="mx-auto max-w-7xl px-4 py-8 space-y-12">
@@ -227,7 +267,7 @@ const HomePage = () => {
 
         {/* Flash Sale Countdown Section */}
         {flashSaleProducts.length > 0 && (
-          <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-4">
+          <div className="border border-neutral-200 rounded-lg p-5 bg-white space-y-4 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="bg-red-500 text-white text-xs font-black tracking-wider px-2.5 py-1 rounded-sm uppercase">
@@ -235,36 +275,57 @@ const HomePage = () => {
                 </span>
                 
                 {/* Timer */}
-                <div className="flex items-center gap-1.5 font-bold text-sm text-neutral-800">
-                  <span className="bg-neutral-900 text-white px-1.5 py-0.5 rounded text-xs font-mono">{String(timeLeft.hours).padStart(2, '0')}</span>
+                <div className="flex items-center gap-1.5 font-bold text-sm text-neutral-850">
+                  <span className="bg-neutral-900 text-white px-2 py-0.5 rounded text-xs font-mono">{String(timeLeft.hours).padStart(2, '0')}</span>
                   <span>:</span>
-                  <span className="bg-neutral-900 text-white px-1.5 py-0.5 rounded text-xs font-mono">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                  <span className="bg-neutral-900 text-white px-2 py-0.5 rounded text-xs font-mono">{String(timeLeft.minutes).padStart(2, '0')}</span>
                   <span>:</span>
-                  <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-xs font-mono">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className="bg-red-500 text-white px-2 py-0.5 rounded text-xs font-mono">{String(timeLeft.seconds).padStart(2, '0')}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-neutral-400">Kết thúc lúc 24:00 hôm nay</span>
+                <span className="text-xs font-semibold text-neutral-550 flex items-center gap-1.5 bg-neutral-100 px-3 py-1 rounded-full">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                  Kết thúc lúc {countdownTarget ? countdownTarget.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '24:00'} {countdownTarget ? `(${countdownTarget.toLocaleDateString('vi-VN')})` : 'hôm nay'}
+                </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {flashSaleProducts.map(product => (
-                <div key={product.id} className="relative">
-                  <ProductCard product={product} />
+                <div key={product.id} className="relative flex flex-col justify-between">
+                  <div className="flex-1">
+                    <ProductCard product={product} />
+                  </div>
                   
                   {/* Stock Left Progress Bar */}
-                  <div className="mt-2.5 px-3">
-                    <div className="w-full bg-neutral-100 rounded-full h-1.5 relative overflow-hidden">
-                      <div 
-                        className="bg-red-500 h-full rounded-full" 
-                        style={{ width: `${Math.max(10, (product.stock / 20) * 100)}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-[9px] text-neutral-400 font-bold mt-1 uppercase">
-                      <span>Đã bán {(20 - product.stock) > 0 ? (20 - product.stock) : 4}</span>
-                      <span>Chỉ còn {product.stock}</span>
-                    </div>
+                  <div className="mt-3 px-1">
+                    {(() => {
+                      const totalStock = product.stock + Math.max(5, (product.stock % 7) + 3)
+                      const soldCount = totalStock - product.stock
+                      const soldPercentage = Math.round((soldCount / totalStock) * 100)
+                      return (
+                        <>
+                          <div className="flex justify-between items-center text-[10px] text-neutral-600 font-bold mb-1 uppercase tracking-wider">
+                            <span className="flex items-center gap-1">
+                              <span className="text-red-500 animate-pulse">🔥</span>
+                              Đã bán {soldCount}
+                            </span>
+                            <span className="text-neutral-400">Còn {product.stock}</span>
+                          </div>
+                          <div className="w-full bg-neutral-100 rounded-full h-3.5 relative overflow-hidden shadow-inner border border-neutral-200">
+                            <div 
+                              className="bg-gradient-to-r from-orange-500 via-red-500 to-rose-600 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(239,68,68,0.3)]" 
+                              style={{ width: `${soldPercentage}%` }}
+                            >
+                              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white leading-none">
+                                {soldPercentage}%
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               ))}

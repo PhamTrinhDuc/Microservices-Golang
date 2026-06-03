@@ -328,6 +328,16 @@ export interface CreatePromotionRequest {
   end_date: string
 }
 
+export interface UpdatePromotionRequest {
+  name: string
+  description?: string | null
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  start_date: string
+  end_date: string
+  is_active: boolean
+}
+
 export interface Store {
   id: number
   name: string

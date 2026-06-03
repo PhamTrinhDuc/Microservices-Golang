@@ -127,9 +127,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="mt-auto pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
           <div className="flex flex-col">
             {hasDiscount && (
-              <span className="text-[10px] text-neutral-400 line-through mb-0.5">
-                {originalPrice.toLocaleString('vi-VN')} đ
-              </span>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] text-neutral-400 line-through">
+                  {originalPrice.toLocaleString('vi-VN')} đ
+                </span>
+                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1 py-0.2 rounded">
+                  Tiết kiệm {(originalPrice - displayPrice).toLocaleString('vi-VN')}đ
+                </span>
+              </div>
             )}
             <span className="text-sm font-black text-neutral-900">
               {displayPrice.toLocaleString('vi-VN')} đ

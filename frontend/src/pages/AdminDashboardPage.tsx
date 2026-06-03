@@ -10,8 +10,9 @@ import AdminInventoryTab from '../components/admin/AdminInventoryTab'
 import AdminCatalogTab from '../components/admin/AdminCatalogTab'
 import AdminUsersTab from '../components/admin/AdminUsersTab'
 import AdminBannersTab from '../components/admin/AdminBannersTab'
+import AdminFlashSaleTab from '../components/admin/AdminFlashSaleTab'
 
-type ActiveTab = 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners'
+type ActiveTab = 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners' | 'flashsales'
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('orders')
@@ -51,7 +52,8 @@ export default function AdminDashboardPage() {
           <nav className="space-y-1.5 px-3">
             {[
               { id: 'orders', label: 'Đơn hàng', desc: 'Quản lý đơn đặt hàng' },
-              { id: 'vouchers', label: 'Khuyến mãi & Vouchers', desc: 'Mã ưu đãi, giảm giá' },
+              { id: 'vouchers', label: 'Mã giảm giá (Vouchers)', desc: 'Mã giảm giá đơn hàng' },
+              { id: 'flashsales', label: 'Quản lý Flash Sale', desc: 'Giảm giá sốc, đếm ngược' },
               { id: 'inventory', label: 'Kho & Cửa hàng', desc: 'Kho hàng, nhập kho, nhà cc' },
               { id: 'catalog', label: 'Danh mục & Sản phẩm', desc: 'Thêm mới catalog sản phẩm' },
               { id: 'banners', label: 'Banners trang chủ', desc: 'Quản lý ảnh slider trang chủ' },
@@ -87,6 +89,7 @@ export default function AdminDashboardPage() {
       <main className="flex-1 p-6 md:p-8 max-w-7xl overflow-hidden">
         {activeTab === 'orders' && <AdminOrdersTab stores={stores} />}
         {activeTab === 'vouchers' && <AdminVouchersTab />}
+        {activeTab === 'flashsales' && <AdminFlashSaleTab />}
         {activeTab === 'inventory' && <AdminInventoryTab stores={stores} reloadLookups={loadLookups} setActiveTab={(tab) => setActiveTab(tab as any)} />}
         {activeTab === 'catalog' && (
           <AdminCatalogTab categories={categories} brands={brands} reloadLookups={loadLookups} />

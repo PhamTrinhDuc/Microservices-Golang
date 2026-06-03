@@ -14,6 +14,7 @@ import CartPage from './pages/CartPage'
 import CheckoutPage from './pages/CheckoutPage'
 import OrderSuccessPage from './pages/OrderSuccessPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
+import ProfilePage from './pages/ProfilePage'
 import { useCart } from './hooks/useCart'
 import { useAuth } from './hooks/useAuth'
 import { tokenManager } from './utils/tokenManager'
@@ -99,6 +100,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <OrderSuccessPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

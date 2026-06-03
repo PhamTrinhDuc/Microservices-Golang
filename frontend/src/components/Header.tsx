@@ -102,7 +102,7 @@ const Header = () => {
 
           {/* Search Input Group with Dropdown */}
           <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-            <div className="flex items-center rounded-md border border-neutral-300 bg-white hover:border-neutral-400 focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all">
+            <div className="flex items-center rounded-md border border-neutral-400 bg-white hover:border-neutral-500 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 focus-within:shadow-md transition-all duration-300">
               {/* Category Select Dropdown */}
               <div className="relative border-r border-neutral-200">
                 <select
