@@ -103,6 +103,8 @@ func SetupInventoryRoutes(router *gin.RouterGroup, ic *controller.InventoryContr
 		admin.POST("/inventory/import", ic.ImportGoods)
 		admin.GET("/inventory/imports", ic.ListImportInvoices)
 		admin.GET("/inventory/imports/:id", ic.GetImportInvoiceDetails)
+		admin.PUT("/inventory/imports/:id/publish", ic.ConfirmImportInvoice)
+		admin.GET("/inventory/variants/:id/last-import-price", ic.GetLastImportPrice)
 		admin.GET("/inventory/low-stock", ic.GetLowStockAlerts)
 		admin.GET("/inventory/logs", ic.GetInventoryLogs)
 	}

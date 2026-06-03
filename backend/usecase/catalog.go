@@ -291,8 +291,8 @@ func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateP
 			ProductID: req.ID,
 			Name:      vDTO.Name,
 			SKU:       vDTO.SKU,
-			Price:     vDTO.Price,
-			PriceBase: vDTO.PriceBase,
+			SellPrice: vDTO.SellPrice,
+			ComparePrice: vDTO.ComparePrice,
 			Weight:    vDTO.Weight,
 			Options: []domain.VariantOption{
 				{
@@ -483,8 +483,8 @@ func (uc *CatalogUsecase) GenerateVariant(ctx context.Context, productID string,
 		ProductID: productID,
 		Name:      req.Name,
 		SKU:       req.SKU,
-		Price:     req.Price,
-		PriceBase: req.PriceBase,
+		SellPrice: req.SellPrice,
+		ComparePrice: req.ComparePrice,
 		Weight:    req.Weight,
 	}
 
@@ -495,7 +495,7 @@ func (uc *CatalogUsecase) UpdateVariant(ctx context.Context, id int, req *domain
 	if req == nil {
 		return nil, errors.New("request payload cannot be nil")
 	}
-	return uc.repo.UpdateVariant(ctx, id, req.Name, req.SKU, req.Price, req.PriceBase, req.Weight)
+	return uc.repo.UpdateVariant(ctx, id, req.Name, req.SKU, req.SellPrice, req.ComparePrice, req.Weight)
 }
 
 func (uc *CatalogUsecase) DeleteVariant(ctx context.Context, id int) error {

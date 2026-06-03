@@ -66,8 +66,9 @@ export interface ProductVariant {
   product_id: string
   name: string
   sku: string
-  price: number
-  price_base?: number | null
+  sell_price: number
+  compare_price?: number | null
+  latest_cost_price: number
   discount_price?: number | null
   weight?: number | null
   is_active: boolean
@@ -133,8 +134,8 @@ export interface CartItem {
   variant_id: number
   variant_name: string
   sku: string
-  price: number
-  price_base: number
+  sell_price: number
+  compare_price: number
   product_id: string
   product_name: string
   image_url?: string
@@ -380,6 +381,7 @@ export interface ImportInvoiceResponse {
   creator_name: string
   total_items: number
   note?: string | null
+  status: string
   created_at: string
 }
 

@@ -8,7 +8,7 @@ export const useCart = () => {
   const cart = useSelector((state: RootState) => state.cart)
 
   const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0)
-  const cartSubtotal = cart.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const cartSubtotal = cart.items.reduce((sum, item) => sum + (item.sell_price * item.quantity), 0)
 
   const handleFetchCart = useCallback(() => dispatch(fetchCart()), [dispatch])
   const handleAddToCart = useCallback((variantId: number, quantity: number) => 

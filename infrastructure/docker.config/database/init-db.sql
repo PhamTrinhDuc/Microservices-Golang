@@ -166,8 +166,9 @@ CREATE TABLE product_variant (
     product_id VARCHAR(50) NOT NULL REFERENCES product(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     sku VARCHAR(100) UNIQUE NOT NULL,
-    price NUMERIC(15, 2) NOT NULL,
-    price_base NUMERIC(15, 2),
+    sell_price NUMERIC(15, 2) NOT NULL,
+    compare_price NUMERIC(15, 2),
+    latest_cost_price NUMERIC(15, 2) NOT NULL DEFAULT 0,
     weight NUMERIC(10, 2),
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
@@ -216,9 +217,10 @@ CREATE TABLE suppliers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address TEXT,
+    phone VARCHAR(50),
+    email VARCHAR(255),
     contact_name VARCHAR(255),
     contact_phone VARCHAR(50),
-    contact_email VARCHAR(255),
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
@@ -229,6 +231,7 @@ CREATE TABLE import_invoices (
     created_by INTEGER NOT NULL REFERENCES users(id),
     total_items INTEGER NOT NULL DEFAULT 0,
     note TEXT,
+    status VARCHAR(50) NOT NULL DEFAULT 'published',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

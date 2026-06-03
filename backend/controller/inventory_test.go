@@ -26,6 +26,8 @@ type mockInventoryUsecase struct {
 	UpdateSupplierFunc          func(ctx context.Context, id int, req *domain.UpdateSupplierRequest) (*domain.Supplier, error)
 	DeleteSupplierFunc          func(ctx context.Context, id int) error
 	ImportGoodsFunc             func(ctx context.Context, creatorID int, req *domain.ImportGoodsRequest) (*domain.ImportInvoice, error)
+	ConfirmImportInvoiceFunc    func(ctx context.Context, invoiceID int) error
+	GetLastImportPriceFunc      func(ctx context.Context, variantID int) (float64, error)
 	ListImportInvoicesFunc      func(ctx context.Context, storeID *int, page, limit int) ([]*domain.ImportInvoiceResponse, int, error)
 	GetImportInvoiceDetailsFunc func(ctx context.Context, invoiceID int) (*domain.ImportInvoiceDetailsResponse, error)
 	AdjustInventoryFunc         func(ctx context.Context, storeID int, creatorID int, req *domain.AdjustInventoryRequest) error
@@ -72,6 +74,14 @@ func (m *mockInventoryUsecase) DeleteSupplier(ctx context.Context, id int) error
 
 func (m *mockInventoryUsecase) ImportGoods(ctx context.Context, creatorID int, req *domain.ImportGoodsRequest) (*domain.ImportInvoice, error) {
 	return m.ImportGoodsFunc(ctx, creatorID, req)
+}
+
+func (m *mockInventoryUsecase) ConfirmImportInvoice(ctx context.Context, invoiceID int) error {
+	return m.ConfirmImportInvoiceFunc(ctx, invoiceID)
+}
+
+func (m *mockInventoryUsecase) GetLastImportPrice(ctx context.Context, variantID int) (float64, error) {
+	return m.GetLastImportPriceFunc(ctx, variantID)
 }
 
 func (m *mockInventoryUsecase) ListImportInvoices(ctx context.Context, storeID *int, page, limit int) ([]*domain.ImportInvoiceResponse, int, error) {

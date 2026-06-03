@@ -403,3 +403,41 @@ func (ctl *InventoryController) GetInventoryLogs(ctx *gin.Context) {
 
 	utils.RespondOK(ctx, res)
 }
+
+func (ctl *InventoryController) ConfirmImportInvoice(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		utils.RespondBadRequest(ctx, "invalid invoice id")
+		return
+	}
+
+	err = ctl.usecase.ConfirmImportInvoice(ctx.Request.Context(), id)
+	if err != nil {
+		if errors.Is(err, domain.ErrImportInvoiceNotFound) {
+			utils.RespondNotFound(ctx, err.Error())
+			return
+		}
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, gin.H{"message": "import invoice confirmed and published successfully"})
+}
+
+func (ctl *InventoryController) GetLastImportPrice(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	variantID, err := strconv.Atoi(idParam)
+	if err != nil {
+		utils.RespondBadRequest(ctx, "invalid variant id")
+		return
+	}
+
+	price, err := ctl.usecase.GetLastImportPrice(ctx.Request.Context(), variantID)
+	if err != nil {
+		utils.RespondInternalError(ctx, err.Error())
+		return
+	}
+
+	utils.RespondOK(ctx, price)
+}

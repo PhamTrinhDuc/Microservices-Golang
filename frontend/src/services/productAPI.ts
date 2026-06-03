@@ -138,8 +138,9 @@ export const productAPI = {
         product_id: v.product_id,
         name: v.name,
         sku: v.sku,
-        price: v.price,
-        price_base: v.price_base,
+        sell_price: v.sell_price,
+        compare_price: v.compare_price,
+        latest_cost_price: v.latest_cost_price,
         weight: v.weight,
         is_active: v.is_active,
         stock: p.stock, // Fallback variant stock to total product stock
@@ -193,8 +194,8 @@ export const productAPI = {
   adminGenerateVariant: async (productId: string, payload: {
     name: string
     sku: string
-    price: number
-    price_base?: number
+    sell_price: number
+    compare_price?: number
     weight?: number
     option_value_ids: number[]
   }): Promise<any> => {
@@ -252,8 +253,8 @@ export const productAPI = {
   adminUpdateVariant: async (id: number, payload: {
     name: string
     sku: string
-    price: number
-    price_base?: number
+    sell_price: number
+    compare_price?: number
     weight?: number
   }): Promise<any> => {
     const res = await api.put<any>(`/admin/variants/${id}`, payload)

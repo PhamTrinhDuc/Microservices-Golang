@@ -22,8 +22,8 @@ type CartItemResponse struct {
 	VariantID   int      `json:"variant_id"`
 	VariantName string   `json:"variant_name"`
 	SKU         string   `json:"sku"`
-	Price       float64  `json:"price"`
-	PriceBase   *float64 `json:"price_base"`
+	SellPrice    float64  `json:"sell_price"`
+	ComparePrice *float64 `json:"compare_price"`
 	ProductID   string   `json:"product_id"`
 	ProductName string   `json:"product_name"`
 	ImageURL    *string  `json:"image_url"`
