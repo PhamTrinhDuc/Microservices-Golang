@@ -1,3 +1,22 @@
+// Copyright 2025 Alby Hernández
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package embedder provides a client for generating text embeddings via any
+// OpenAI-compatible API. This includes OpenAI itself, Ollama (v1/embeddings),
+// Groq, Together, and any other provider that speaks the OpenAI embeddings
+// protocol. Configure via OPENAI_BASE_URL, OPENAI_API_KEY, and
+// OPENAI_EMBEDDING_MODEL environment variables.
 package embedder
 
 import (
@@ -5,190 +24,124 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"strings"
+	"time"
 )
 
-// EmbeddingModel defines the interface for generating text embeddings.
-type EmbeddingModel interface {
-	Embed(ctx context.Context, text string) ([]float32, error)
-	Dimension() int
+const (
+	// defaultTimeout is the HTTP client timeout for embedding requests.
+	defaultTimeout = 60 * time.Second
+
+	// embeddingsPath is the OpenAI-compatible embeddings endpoint path.
+	embeddingsPath = "/v1/embeddings"
+)
+
+// Embedder calls an OpenAI-compatible API to generate text embeddings.
+// Works with OpenAI, Ollama, Groq, Together, and any compatible provider.
+type Embedder struct {
+	baseURL    string
+	apiKey     string
+	model      string
+	httpClient *http.Client
 }
 
-// OpenAICompatibleEmbedding implements EmbeddingModel using the OpenAI embeddings API format.
-// This is the de facto standard supported by: OpenAI, Ollama (/v1), Azure OpenAI, vLLM, LocalAI, LiteLLM, etc.
-type OpenAICompatibleEmbedding struct {
-	BaseURL       string // e.g., "https://api.openai.com/v1", "http://localhost:11434/v1"
-	APIKey        string // optional, not required for local models
-	Model         string // e.g., "text-embedding-3-small", "nomic-embed-text"
-	dim           int    // embedding dimension, auto-detected if 0
-	dimensionsSet bool   // whether dim was explicitly set by the user
-
-	// HTTPClient allows customizing the HTTP client used for requests.
-	// If nil, http.DefaultClient is used.
-	HTTPClient *http.Client
-}
-
-// OpenAICompatibleConfig holds configuration for the embedding and llm model.
-type OpenAICompatibleConfig struct {
-	BaseURL   string
-	APIKey    string
-	Model     string
-	Dimension int // optional, will be auto-detected on first call if 0
-
-	// HTTPClient allows customizing the HTTP client used for requests.
-	// Useful for testing with mock servers.
-	HTTPClient *http.Client
-}
-
-// NewOpenAICompatibleEmbedding creates a new embedding model using OpenAI-compatible API.
-// Works with OpenAI, Ollama, vLLM, LocalAI, LiteLLM, Azure OpenAI, etc.
-func NewOpenAICompatibleEmbedding(cfg OpenAICompatibleConfig) *OpenAICompatibleEmbedding {
-	httpClient := cfg.HTTPClient
-	if httpClient == nil {
-		httpClient = http.DefaultClient
-	}
-	return &OpenAICompatibleEmbedding{
-		BaseURL:       strings.TrimSuffix(cfg.BaseURL, "/"),
-		APIKey:        cfg.APIKey,
-		Model:         cfg.Model,
-		dim:           cfg.Dimension,
-		dimensionsSet: cfg.Dimension > 0,
-		HTTPClient:    httpClient,
+// New creates an Embedder targeting the given OpenAI-compatible base URL,
+// using the provided API key and model name.
+//
+// For Ollama: baseURL = "http://localhost:11434", apiKey = "ollama" (any non-empty string)
+// For OpenAI: baseURL = "https://api.openai.com", apiKey = "sk-..."
+func New(baseURL, apiKey, model string) *Embedder {
+	return &Embedder{
+		baseURL: baseURL,
+		apiKey:  apiKey,
+		model:   model,
+		httpClient: &http.Client{
+			Timeout: defaultTimeout,
+		},
 	}
 }
 
-// Dimension returns the embedding dimension.
-// Returns 0 if not yet known (will be auto-detected on first Embed call).
-func (e *OpenAICompatibleEmbedding) Dimension() int {
-	return e.dim
+// embeddingRequest is the JSON payload for the OpenAI embeddings endpoint.
+type embeddingRequest struct {
+	Model string `json:"model"`
+	Input string `json:"input"`
 }
 
-// Embed generates an embedding vector for the given text.
-func (e *OpenAICompatibleEmbedding) Embed(ctx context.Context, text string) ([]float32, error) {
-	reqBody := map[string]any{
-		"model": e.Model,
-		"input": text,
-	}
-	if e.dimensionsSet && e.dim > 0 {
-		reqBody["dimensions"] = e.dim
-	}
-	jsonBody, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", e.BaseURL+"/embeddings", bytes.NewReader(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if e.APIKey != "" {
-		req.Header.Set("Authorization", "Bearer "+e.APIKey)
-	}
-
-	resp, err := e.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call embedding API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("embedding API returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result embeddingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	if len(result.Data) == 0 {
-		return nil, fmt.Errorf("no embedding returned")
-	}
-
-	embedding := result.Data[0].Embedding
-
-	// Auto-detect dimension on first successful call
-	if e.dim == 0 && len(embedding) > 0 {
-		e.dim = len(embedding)
-	}
-
-	return embedding, nil
-}
-
-func (e *OpenAICompatibleEmbedding) Embeds(ctx context.Context, texts []string) ([][]float32, error) {
-	reqBody := map[string]any{
-		"model": e.Model,
-		"input": texts,
-	}
-	if e.dimensionsSet && e.dim > 0 {
-		reqBody["dimensions"] = e.dim
-	}
-	jsonBody, err := json.Marshal(reqBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", e.BaseURL+"/embeddings", bytes.NewReader(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if e.APIKey != "" {
-		req.Header.Set("Authorization", "Bearer "+e.APIKey)
-	}
-
-	resp, err := e.HTTPClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call embedding API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("embedding API returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var result embeddingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-
-	if len(result.Data) == 0 {
-		return nil, fmt.Errorf("no embeddings returned")
-	}
-
-	// OpenAI doesn't guarantee the order in result.Data matches input order,
-	// but they provide an 'index' field to reconstruct it.
-	embeddings := make([][]float32, len(texts))
-	for _, data := range result.Data {
-		if data.Index < len(embeddings) {
-			embeddings[data.Index] = data.Embedding
-		}
-	}
-
-	// Auto-detect dimension on first successful call
-	if e.dim == 0 && len(result.Data) > 0 && len(result.Data[0].Embedding) > 0 {
-		e.dim = len(result.Data[0].Embedding)
-	}
-
-	return embeddings, nil
-}
-
-// embeddingResponse represents the OpenAI embeddings API response format.
+// embeddingResponse is the JSON response from the OpenAI embeddings endpoint.
 type embeddingResponse struct {
 	Data []struct {
 		Embedding []float32 `json:"embedding"`
-		Index     int       `json:"index"`
 	} `json:"data"`
-	Model string `json:"model"`
-	Usage struct {
-		PromptTokens int `json:"prompt_tokens"`
-		TotalTokens  int `json:"total_tokens"`
-	} `json:"usage"`
 }
 
-// Ensure interface is implemented
-var _ EmbeddingModel = (*OpenAICompatibleEmbedding)(nil)
+// Embed generates an embedding vector for the given text using the configured
+// model. Returns a float32 slice whose length equals the model's embedding
+// dimension. The caller must use the same model for ingestion and search.
+func (e *Embedder) Embed(ctx context.Context, text string) ([]float32, error) {
+	payload, err := json.Marshal(embeddingRequest{
+		Model: e.model,
+		Input: text,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("marshalling embedding request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		e.baseURL+embeddingsPath,
+		bytes.NewReader(payload),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating embedding HTTP request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+e.apiKey)
+
+	resp, err := e.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("calling embeddings API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("embeddings API returned status %d", resp.StatusCode)
+	}
+
+	var result embeddingResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("decoding embeddings response: %w", err)
+	}
+
+	if len(result.Data) == 0 || len(result.Data[0].Embedding) == 0 {
+		return nil, fmt.Errorf("embeddings API returned empty vector for model %q", e.model)
+	}
+
+	return result.Data[0].Embedding, nil
+}
+
+// EmbedBatch generates embeddings for a slice of texts sequentially.
+// Returns vectors in the same order as the input texts.
+// Stops and returns an error with the failing index on any error.
+func (e *Embedder) EmbedBatch(ctx context.Context, texts []string) ([][]float32, error) {
+	vectors := make([][]float32, 0, len(texts))
+	for i, text := range texts {
+		vec, err := e.Embed(ctx, text)
+		if err != nil {
+			return nil, fmt.Errorf("embedding text at index %d: %w", i, err)
+		}
+		vectors = append(vectors, vec)
+	}
+	return vectors, nil
+}
+
+// Ping verifies that the embeddings API is reachable and the configured model
+// is available by generating an embedding for a short test string.
+// Returns nil on success.
+func (e *Embedder) Ping(ctx context.Context) error {
+	if _, err := e.Embed(ctx, "ping"); err != nil {
+		return fmt.Errorf("pinging embeddings API at %s with model %q: %w", e.baseURL, e.model, err)
+	}
+	return nil
+}
