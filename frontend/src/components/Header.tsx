@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
+import { useWishlist } from '../hooks/useWishlist'
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth()
   const { totalItems } = useCart()
+  const { items: wishlistItems } = useWishlist()
+  const wishlistCount = wishlistItems.length
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
@@ -153,6 +156,22 @@ const Header = () => {
               </svg>
               <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-red-500"></span>
             </button>
+
+            {/* Wishlist */}
+            <Link
+              to="/wishlist"
+              className="relative p-2 text-neutral-700 hover:bg-neutral-100 hover:text-red-500 rounded-full transition-colors"
+              title="Danh sách yêu thích"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             {/* Shopping Bag */}
             <Link

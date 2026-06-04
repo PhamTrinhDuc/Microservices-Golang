@@ -11,11 +11,12 @@ import AdminCatalogTab from '../components/admin/AdminCatalogTab'
 import AdminUsersTab from '../components/admin/AdminUsersTab'
 import AdminBannersTab from '../components/admin/AdminBannersTab'
 import AdminFlashSaleTab from '../components/admin/AdminFlashSaleTab'
+import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab'
 
-type ActiveTab = 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners' | 'flashsales'
+type ActiveTab = 'analytics' | 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners' | 'flashsales'
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('orders')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('analytics')
 
   // Global Lookups
   const [stores, setStores] = useState<Store[]>([])
@@ -51,6 +52,7 @@ export default function AdminDashboardPage() {
 
           <nav className="space-y-1.5 px-3">
             {[
+              { id: 'analytics', label: 'Báo cáo thống kê', desc: 'Doanh thu, tồn kho, sản phẩm bán chạy' },
               { id: 'orders', label: 'Đơn hàng', desc: 'Quản lý đơn đặt hàng' },
               { id: 'vouchers', label: 'Mã giảm giá (Vouchers)', desc: 'Mã giảm giá đơn hàng' },
               { id: 'flashsales', label: 'Quản lý Flash Sale', desc: 'Giảm giá sốc, đếm ngược' },
@@ -87,6 +89,7 @@ export default function AdminDashboardPage() {
 
       {/* Main Administrative Views Area */}
       <main className="flex-1 p-6 md:p-8 max-w-7xl overflow-hidden">
+        {activeTab === 'analytics' && <AdminAnalyticsTab stores={stores} />}
         {activeTab === 'orders' && <AdminOrdersTab stores={stores} />}
         {activeTab === 'vouchers' && <AdminVouchersTab />}
         {activeTab === 'flashsales' && <AdminFlashSaleTab />}

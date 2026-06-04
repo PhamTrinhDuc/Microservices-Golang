@@ -15,8 +15,10 @@ import CheckoutPage from './pages/CheckoutPage'
 import OrderSuccessPage from './pages/OrderSuccessPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import ProfilePage from './pages/ProfilePage'
+import WishlistPage from './pages/WishlistPage'
 import { useCart } from './hooks/useCart'
 import { useAuth } from './hooks/useAuth'
+import { useWishlist } from './hooks/useWishlist'
 import { tokenManager } from './utils/tokenManager'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -24,10 +26,17 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const App = () => {
   const { fetchCart } = useCart()
   const { isAuthenticated, user, fetchProfile, logout } = useAuth()
+  const { fetchWishlist } = useWishlist()
 
   useEffect(() => {
     void fetchCart()
   }, [fetchCart])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      void fetchWishlist()
+    }
+  }, [isAuthenticated, fetchWishlist])
 
   useEffect(() => {
     if (isAuthenticated && !user) {
@@ -108,6 +117,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/wishlist"
+              element={
+                <ProtectedRoute>
+                  <WishlistPage />
                 </ProtectedRoute>
               }
             />
