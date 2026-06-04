@@ -19,20 +19,21 @@
 package ingestion
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
-	"github.com/achetronic/memex/internal/chunker"
-	"github.com/achetronic/memex/internal/db"
-	"github.com/achetronic/memex/internal/embedder"
-	"github.com/achetronic/memex/internal/parser"
 	"github.com/google/uuid"
+
+	"indexing/chunker"
+	"indexing/db"
+	"indexing/embedder"
+	"indexing/parser"
 )
 
 const (
@@ -56,6 +57,7 @@ type Worker struct {
 	log      *slog.Logger
 	jobs     chan Job
 	maxRetry int
+	wg       sync.WaitGroup
 }
 
 // NewWorker creates a Worker and starts `poolSize` goroutines that process
@@ -79,6 +81,7 @@ func NewWorker(
 	}
 
 	for i := 0; i < poolSize; i++ {
+		w.wg.Add(1)
 		go w.run(i)
 	}
 
@@ -97,10 +100,18 @@ func (w *Worker) Enqueue(job Job) bool {
 }
 
 func (w *Worker) run(id int) {
+	defer w.wg.Done()
 	w.log.Info("ingestion worker started", "worker_id", id)
 	for job := range w.jobs {
 		w.processWithRetry(job)
 	}
+}
+
+// Stop signals the worker to stop accepting new jobs and wait for pending
+// ones to complete.
+func (w *Worker) Stop() {
+	close(w.jobs)
+	w.wg.Wait()
 }
 
 // processWithRetry separates the pipeline into two phases:
@@ -158,12 +169,17 @@ func (w *Worker) parseAndChunk(job Job) ([]chunker.Chunk, error) {
 		return nil, fmt.Errorf("selecting parser: %w", err)
 	}
 
-	data, err := os.ReadFile(job.FilePath)
+	// data, err := os.ReadFile(job.FilePath)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("reading file from disk: %w", err)
+	// }
+
+	f, err := os.Open(job.FilePath)
 	if err != nil {
 		return nil, fmt.Errorf("reading file from disk: %w", err)
 	}
 
-	text, err := p.Parse(bytes.NewReader(data))
+	text, err := p.Parse(f)
 	if err != nil {
 		return nil, fmt.Errorf("parsing document: %w", err)
 	}
