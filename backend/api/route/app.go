@@ -234,3 +234,25 @@ func SetupLocationRoutes(router *gin.RouterGroup, lc *controller.LocationControl
 	}
 }
 
+// SetupWishlistRoutes sets up wishlist endpoints
+func SetupWishlistRoutes(router *gin.RouterGroup, wc *controller.WishlistController, authMiddleware *middleware.AuthMiddleware) {
+	wishlist := router.Group("/wishlist")
+	wishlist.Use(authMiddleware.Handler())
+	{
+		wishlist.GET("", wc.GetWishlist)
+		wishlist.POST("", wc.AddToWishlist)
+		wishlist.DELETE("/:variant_id", wc.RemoveFromWishlist)
+	}
+}
+
+// SetupAnalyticsRoutes sets up analytics reporting endpoints
+func SetupAnalyticsRoutes(router *gin.RouterGroup, ac *controller.AnalyticsController, authMiddleware *middleware.AuthMiddleware) {
+	admin := router.Group("/admin/analytics")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		admin.GET("", ac.GetAnalytics)
+	}
+}
+
+
+
