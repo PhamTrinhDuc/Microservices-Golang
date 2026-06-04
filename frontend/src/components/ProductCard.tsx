@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type Product } from '../types'
 import { useCart } from '../hooks/useCart'
+import { useWishlist } from '../hooks/useWishlist'
 import { productAPI } from '../services/productAPI'
 
 interface ProductCardProps {
@@ -9,9 +10,14 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const [isLiked, setIsLiked] = useState(false)
   const { addToCart } = useCart()
+  const { items: wishlistItems, addToWishlist, removeFromWishlist } = useWishlist()
   const [loadingCart, setLoadingCart] = useState(false)
+  const [loadingWishlist, setLoadingWishlist] = useState(false)
+
+  const wishlistItem = wishlistItems.find(item => item.product_id === product.id)
+  const isLiked = !!wishlistItem
+
 
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -66,8 +72,34 @@ const ProductCard = ({ product }: ProductCardProps) => {
         {/* Heart Icon Overlay */}
         <button
           type="button"
-          onClick={() => setIsLiked(!isLiked)}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-450 hover:text-red-500 hover:scale-105 transition-all"
+          onClick={async (e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (loadingWishlist) return
+            try {
+              setLoadingWishlist(true)
+              if (isLiked && wishlistItem) {
+                await removeFromWishlist(wishlistItem.variant_id).unwrap()
+              } else {
+                let variantId = product.variants?.[0]?.id
+                if (!variantId) {
+                  const detailedProduct = await productAPI.getProductById(product.id)
+                  variantId = detailedProduct.variants?.[0]?.id
+                }
+                if (!variantId) {
+                  alert('Không tìm thấy phiên bản sản phẩm để thêm vào yêu thích.')
+                  return
+                }
+                await addToWishlist(variantId).unwrap()
+              }
+            } catch (err: any) {
+              alert(err || 'Không thể cập nhật danh sách yêu thích')
+            } finally {
+              setLoadingWishlist(false)
+            }
+          }}
+          disabled={loadingWishlist}
+          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-450 hover:text-red-500 hover:scale-105 transition-all disabled:opacity-50"
         >
           <svg
             className={`w-4 h-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-neutral-400'}`}

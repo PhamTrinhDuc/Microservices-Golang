@@ -450,6 +450,74 @@ export interface Banner {
   is_active: boolean
   created_at?: string
   updated_at?: string
+}export interface WishlistItemResponse {
+  id: number
+  variant_id: number
+  variant_name: string
+  sku: string
+  sell_price: number
+  compare_price?: number | null
+  product_id: string
+  product_name: string
+  image_url?: string | null
+  stock: number
+  discount_price?: number | null
+  rating: number
 }
 
+export interface InventorySummary {
+  total_sku: number
+  total_quantity: number
+  low_stock_count: number
+  out_of_stock_count: number
+}
+
+export interface TopCategoryReport {
+  category_name: string
+  sold_qty: number
+  revenue: number
+}
+
+export interface SalesOverTime {
+  date: string
+  revenue: number
+  orders_count: number
+}
+
+export interface TopProductReport {
+  product_name: string
+  sold_qty: number
+  revenue: number
+}
+
+export interface StoreReport {
+  store_id: number
+  store_name: string
+  orders_count: number
+  revenue: number
+}
+
+export interface StatusDistribution {
+  status_label: string
+  count: number
+}
+
+export interface AnalyticsSummary {
+  total_sales: number
+  total_orders: number
+  average_order_value: number
+  items_sold: number
+  prev_total_sales: number
+  prev_total_orders: number
+  prev_average_order_value: number
+  sales_growth: number
+  orders_growth: number
+  aov_growth: number
+  inventory: InventorySummary
+  sales_over_time: SalesOverTime[]
+  top_products: TopProductReport[]
+  top_categories: TopCategoryReport[]
+  store_sales: StoreReport[]
+  status_distribution: StatusDistribution[]
+}
 
