@@ -16,17 +16,28 @@ $$ SELECT public.unaccent($1) $$;
 -- ============================================================
 
 
-CREATE TABLE knowledge_base (
-    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title      VARCHAR(200) NOT NULL,
-    content    TEXT NOT NULL,
-    embedding  vector(1024),                   -- OpenAI / Anthropic embedding dim
-    metadata   JSONB,
-    category   VARCHAR(50),
-    is_active  BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS documents (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    namespace    TEXT        NOT NULL DEFAULT '',
+    filename     TEXT        NOT NULL,
+    format       TEXT        NOT NULL,
+    status       TEXT        NOT NULL DEFAULT 'pending',
+    error        TEXT,
+    chunk_count  INTEGER     NOT NULL DEFAULT 0,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS chunks (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id   UUID        NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+    namespace     TEXT        NOT NULL DEFAULT '',
+    chunk_index   INTEGER     NOT NULL,
+    content       TEXT        NOT NULL,
+    embedding     vector(1024),
+    metadata      JSONB       NOT NULL DEFAULT '{}',
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+)
 
 
 CREATE TABLE IF NOT EXISTS memory_entries (
@@ -408,6 +419,16 @@ CREATE TABLE banners (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 12. Wishlist
+CREATE TABLE wishlist_items (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    variant_id INTEGER NOT NULL REFERENCES product_variant(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, variant_id)
+);
+
+
 -- ============================================================
 -- INDEXES
 -- ============================================================
@@ -443,29 +464,34 @@ CREATE INDEX IF NOT EXISTS idx_order_details_order ON order_details(order_id);
 CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history(order_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_product ON reviews(product_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_order ON reviews(order_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user ON wishlist_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_variant ON wishlist_items(variant_id);
+
 
 -- ============================================================
 -- HYBRID SEARCH (BM25 + Vector)
 -- ============================================================
 
 -- Vector Index (HNSW)
-CREATE INDEX idx_kb_embedding 
-    ON knowledge_base 
+CREATE INDEX idx_chunk_embedding 
+    ON chunks 
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 128); -- Tăng lên 128 để RAG chính xác hơn
 
--- Filter Index
-CREATE INDEX idx_kb_filter ON knowledge_base (category) WHERE is_active = TRUE;
+-- Filter Index for chunks and documents
+CREATE INDEX IF NOT EXISTS chunks_namespace_idx ON chunks (namespace);
+CREATE INDEX IF NOT EXISTS idx_chunk_metadata ON chunks(metadata);
 
+CREATE INDEX IF NOT EXISTS documents_namespace_idx ON documents (namespace)
+CREATE INDEX IF NOT EXISTS documents_namespace_hash_idx ON documents (namespace, file_hash) WHERE file_hash IS NOT NULL;
 
 -- BM25 Index (ParadeDB)
-CREATE INDEX knowledge_base_search_bm25_index ON knowledge_base
-USING bm25 (id, title, content)
+CREATE INDEX chunk_search_bm25_index ON chunks
+USING bm25 (id, content)
 WITH (
     key_field = 'id',
     text_fields = '{
-        "title":   {"tokenizer": {"type": "icu"}},
-        "content": {"tokenizer": {"type": "icu"}}
+        "content": {"tokenizer": {"type": "icu"}},
     }'
 );
 

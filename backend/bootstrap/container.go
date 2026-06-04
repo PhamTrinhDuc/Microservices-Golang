@@ -24,6 +24,8 @@ type Container struct {
 	PromotionVoucherRepo *repository.PromotionVoucherRepository
 	OrderRepo            *repository.OrderRepository
 	BannerRepo           *repository.BannerRepository
+	WishlistRepo         *repository.WishlistRepository
+	AnalyticsRepo        *repository.AnalyticsRepository
 
 	// Usecases
 	UserUC             *usecase.UserUsecase
@@ -34,6 +36,8 @@ type Container struct {
 	PromotionVoucherUC *usecase.PromotionVoucherUsecase
 	OrderUC            *usecase.OrderUsecase
 	BannerUC           *usecase.BannerUsecase
+	WishlistUC         *usecase.WishlistUsecase
+	AnalyticsUC        *usecase.AnalyticsUsecase
 
 	// Controllers
 	UserCtl             *controller.UserController
@@ -45,6 +49,8 @@ type Container struct {
 	OrderCtl            *controller.OrderController
 	BannerCtl           *controller.BannerController
 	UploadCtl           *controller.UploadController
+	WishlistCtl         *controller.WishlistController
+	AnalyticsCtl        *controller.AnalyticsController
 }
 
 func NewContainer(pool *pgxpool.Pool) *Container {
@@ -61,6 +67,8 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	promotionVoucherRepo := repository.NewPromotionVoucherRepository(pool)
 	orderRepo := repository.NewOrderRepository(pool)
 	bannerRepo := repository.NewBannerRepository(pool)
+	wishlistRepo := repository.NewWishlistRepository(pool)
+	analyticsRepo := repository.NewAnalyticsRepository(pool)
 
 	// Usecases
 	userUC := usecase.NewUserUsecase(userRepo)
@@ -71,6 +79,10 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	promotionVoucherUC := usecase.NewPromotionVoucherUsecase(promotionVoucherRepo)
 	orderUC := usecase.NewOrderUsecase(orderRepo, cartRepo, addressRepo, payosClient, ghnClient)
 	bannerUC := usecase.NewBannerUsecase(bannerRepo)
+	wishlistUC := usecase.NewWishlistUsecase(wishlistRepo)
+	analyticsUC := usecase.NewAnalyticsUsecase(analyticsRepo)
+
+
 
 	// Initialize Storage Provider
 	storageType := utils.GetEnvString("STORAGE_PROVIDER", "local")
@@ -104,6 +116,8 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	orderCtl := controller.NewOrderController(orderUC, payosClient)
 	bannerCtl := controller.NewBannerController(bannerUC)
 	uploadCtl := controller.NewUploadController(storageProvider)
+	wishlistCtl := controller.NewWishlistController(wishlistUC)
+	analyticsCtl := controller.NewAnalyticsController(analyticsUC)
 
 	return &Container{
 		UserRepo:             userRepo,
@@ -114,6 +128,8 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		PromotionVoucherRepo: promotionVoucherRepo,
 		OrderRepo:            orderRepo,
 		BannerRepo:           bannerRepo,
+		WishlistRepo:         wishlistRepo,
+		AnalyticsRepo:        analyticsRepo,
 
 		UserUC:             userUC,
 		AddressUC:          addressUC,
@@ -123,6 +139,8 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		PromotionVoucherUC: promotionVoucherUC,
 		OrderUC:            orderUC,
 		BannerUC:           bannerUC,
+		WishlistUC:         wishlistUC,
+		AnalyticsUC:        analyticsUC,
 
 		UserCtl:             userCtl,
 		AddressCtl:          addressCtl,
@@ -133,5 +151,7 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 		OrderCtl:            orderCtl,
 		BannerCtl:           bannerCtl,
 		UploadCtl:           uploadCtl,
+		WishlistCtl:         wishlistCtl,
+		AnalyticsCtl:        analyticsCtl,
 	}
 }
