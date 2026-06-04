@@ -15,6 +15,7 @@ type Banner struct {
 	LinkURL     string    `json:"link_url" db:"link_url"`
 	SortOrder   int       `json:"sort_order" db:"sort_order"`
 	IsActive    bool      `json:"is_active" db:"is_active"`
+	CategoryID  *int      `json:"category_id" db:"category_id"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -28,6 +29,7 @@ type CreateBannerRequest struct {
 	LinkURL     string `json:"link_url"`
 	SortOrder   int    `json:"sort_order"`
 	IsActive    bool   `json:"is_active"`
+	CategoryID  *int   `json:"category_id"`
 }
 
 type UpdateBannerRequest struct {
@@ -39,12 +41,13 @@ type UpdateBannerRequest struct {
 	LinkURL     string `json:"link_url"`
 	SortOrder   int    `json:"sort_order"`
 	IsActive    bool   `json:"is_active"`
+	CategoryID  *int   `json:"category_id"`
 }
 
 type BannerRepository interface {
 	Create(ctx context.Context, b *Banner) (*Banner, error)
 	GetByID(ctx context.Context, id int) (*Banner, error)
-	List(ctx context.Context, onlyActive bool) ([]*Banner, error)
+	List(ctx context.Context, onlyActive bool, categoryID *int) ([]*Banner, error)
 	Update(ctx context.Context, b *Banner) (*Banner, error)
 	Delete(ctx context.Context, id int) error
 }
@@ -52,7 +55,7 @@ type BannerRepository interface {
 type BannerUsecase interface {
 	Create(ctx context.Context, req *CreateBannerRequest) (*Banner, error)
 	GetByID(ctx context.Context, id int) (*Banner, error)
-	List(ctx context.Context, onlyActive bool) ([]*Banner, error)
+	List(ctx context.Context, onlyActive bool, categoryID *int) ([]*Banner, error)
 	Update(ctx context.Context, id int, req *UpdateBannerRequest) (*Banner, error)
 	Delete(ctx context.Context, id int) error
 }

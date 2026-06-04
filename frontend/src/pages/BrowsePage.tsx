@@ -4,16 +4,39 @@ import ProductCard from '../components/ProductCard'
 import SearchSkeleton from '../components/SearchSkeleton'
 import { useCatalog } from '../hooks/useCatalog'
 import { productAPI } from '../services/productAPI'
+import { bannerAPI } from '../services/bannerAPI'
 import { useCart } from '../hooks/useCart'
-import type { Product } from '../types'
+import type { Product, Banner } from '../types'
+
+const brandLogos: { [key: string]: string } = {
+  apple: ' Apple',
+  samsung: 'SAMSUNG',
+  xiaomi: 'Xiaomi',
+  oppo: 'OPPO',
+  realme: 'realme',
+  vivo: 'vivo',
+  asus: 'ASUS',
+  hp: 'HP',
+  lenovo: 'Lenovo',
+  dell: 'DELL',
+  msi: 'msi',
+  acer: 'acer'
+}
+
+const priceOptions = [
+  { label: 'Dưới 2 triệu', min: 0, max: 2000000 },
+  { label: 'Từ 2 - 4 triệu', min: 2000000, max: 4000000 },
+  { label: 'Từ 4 - 7 triệu', min: 4000000, max: 7000000 },
+  { label: 'Từ 7 - 13 triệu', min: 7000000, max: 13000000 },
+  { label: 'Từ 13 - 20 triệu', min: 13000000, max: 20000000 },
+  { label: 'Trên 20 triệu', min: 20000000, max: 100000000 },
+]
 
 const BrowsePage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const { categories, brands, loading: catalogLoading } = useCatalog()
   const [, startTransition] = useTransition()
 
-  const [categorySearch, setCategorySearch] = useState('')
-  const [brandSearch, setBrandSearch] = useState('')
 
   // Extract query params
   const categoryIdParam = searchParams.get('category')
@@ -35,8 +58,56 @@ const BrowsePage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [inStockOnly, setInStockOnly] = useState(false)
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000])
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
   const [selectedSpecs, setSelectedSpecs] = useState<{ [specKey: string]: string[] }>({})
   
+  // Dropdown states for TGDĐ style filter bar
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [tempSelectedSpecs, setTempSelectedSpecs] = useState<{ [specKey: string]: string[] }>({})
+  const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 100000000])
+  const [tempSelectedPriceRanges, setTempSelectedPriceRanges] = useState<string[]>([])
+  
+  // Banners & Modal State
+  const [categoryBanners, setCategoryBanners] = useState<Banner[]>([])
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+
+  // Fetch category-specific banners when categoryParam changes
+  useEffect(() => {
+    const fetchCategoryBanners = async () => {
+      try {
+        const params: any = {}
+        if (categoryIdParam) {
+          params.category_id = parseInt(categoryIdParam)
+        }
+        const data = await bannerAPI.listBanners(params)
+        // If we are looking for a specific category, filter banners belonging to it
+        if (categoryIdParam) {
+          const catId = parseInt(categoryIdParam)
+          const filtered = data.filter(b => b.category_id === catId)
+          setCategoryBanners(filtered)
+        } else {
+          // If viewing "All Products", show general banners
+          const general = data.filter(b => !b.category_id)
+          setCategoryBanners(general)
+        }
+        setCurrentSlide(0)
+      } catch (err) {
+        console.error('Failed to load category banners', err)
+      }
+    }
+    void fetchCategoryBanners()
+  }, [categoryIdParam])
+
+  // Auto rotate banners
+  useEffect(() => {
+    if (categoryBanners.length <= 1) return
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % categoryBanners.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [categoryBanners])
+
   const { addToCart } = useCart()
   const [loadingCartMap, setLoadingCartMap] = useState<{ [key: string]: boolean }>({})
 
@@ -84,6 +155,7 @@ const BrowsePage = () => {
     // Reset client filters on route query updates
     setInStockOnly(false)
     setSelectedSpecs({})
+    setSelectedPriceRanges([])
   }, [categoryIdParam, brandIdParam, searchQuery, activeSort, activePage])
 
   const updateParam = (key: string, value: string | null) => {
@@ -110,18 +182,31 @@ const BrowsePage = () => {
     })
     setInStockOnly(false)
     setSelectedSpecs({})
+    setSelectedPriceRanges([])
+    setPriceRange([priceLimits.min, priceLimits.max])
+  }
+
+  // Dropdown open helper
+  const handleOpenDropdown = (dropdownKey: string) => {
+    setOpenDropdown(dropdownKey)
+    if (dropdownKey === 'price') {
+      setTempPriceRange([...priceRange] as [number, number])
+      setTempSelectedPriceRanges([...selectedPriceRanges])
+    } else {
+      setTempSelectedSpecs({ ...selectedSpecs })
+    }
+  }
+
+  const openFilterModal = () => {
+    setTempSelectedSpecs(JSON.parse(JSON.stringify(selectedSpecs)))
+    setTempSelectedPriceRanges([...selectedPriceRanges])
+    setTempPriceRange([...priceRange])
+    setIsFilterModalOpen(true)
   }
 
   const selectedCategory = categories.find(c => String(c.id) === categoryIdParam)
   const selectedBrand = brands.find(b => String(b.id) === brandIdParam)
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter(c => c.name.toLowerCase().includes(categorySearch.toLowerCase()))
-  }, [categories, categorySearch])
-
-  const filteredBrands = useMemo(() => {
-    return brands.filter(b => b.name.toLowerCase().includes(brandSearch.toLowerCase()))
-  }, [brands, brandSearch])
 
   // Extract specs-based dynamic filter options from loaded products
   const filterSpecsList = useMemo(() => {
@@ -208,21 +293,6 @@ const BrowsePage = () => {
     setPriceRange([priceLimits.min, priceLimits.max])
   }, [priceLimits])
 
-  // Dynamic Specs handler
-  const handleToggleSpecOption = (specKey: string, optionVal: string) => {
-    setSelectedSpecs((prev) => {
-      const currentList = prev[specKey] || []
-      const nextList = currentList.includes(optionVal)
-        ? currentList.filter((v) => v !== optionVal)
-        : [...currentList, optionVal]
-
-      const next = { ...prev, [specKey]: nextList }
-      if (nextList.length === 0) {
-        delete next[specKey]
-      }
-      return next
-    })
-  }
 
   // Client side filtration
   const filteredProducts = useMemo(() => {
@@ -230,7 +300,19 @@ const BrowsePage = () => {
       if (inStockOnly && product.stock <= 0) return false
 
       const displayPrice = product.discount_price || product.price || 0
-      if (displayPrice < priceRange[0] || displayPrice > priceRange[1]) return false
+      
+      // If we have selected price range pills, check if the price fits in any of them
+      if (selectedPriceRanges.length > 0) {
+        const matchesAnyRange = selectedPriceRanges.some(rangeLabel => {
+          const opt = priceOptions.find(o => o.label === rangeLabel)
+          if (!opt) return false
+          return displayPrice >= opt.min && displayPrice <= opt.max
+        })
+        if (!matchesAnyRange) return false
+      } else {
+        // Fallback to slider range
+        if (displayPrice < priceRange[0] || displayPrice > priceRange[1]) return false
+      }
 
       for (const [specKey, values] of Object.entries(selectedSpecs)) {
         if (!values || values.length === 0) continue
@@ -265,7 +347,62 @@ const BrowsePage = () => {
 
       return true
     })
-  }, [products, inStockOnly, priceRange, selectedSpecs])
+  }, [products, inStockOnly, priceRange, selectedSpecs, selectedPriceRanges])
+
+  // Memoized count of matching products based on temp filters inside the modal
+  const tempFilteredProductsCount = useMemo(() => {
+    return products.filter((product) => {
+      if (inStockOnly && product.stock <= 0) return false
+
+      const displayPrice = product.discount_price || product.price || 0
+      
+      // Price Check
+      if (tempSelectedPriceRanges.length > 0) {
+        const matchesAnyRange = tempSelectedPriceRanges.some(rangeLabel => {
+          const opt = priceOptions.find(o => o.label === rangeLabel)
+          if (!opt) return false
+          return displayPrice >= opt.min && displayPrice <= opt.max
+        })
+        if (!matchesAnyRange) return false
+      } else {
+        if (displayPrice < tempPriceRange[0] || displayPrice > tempPriceRange[1]) return false
+      }
+
+      // Specs Check
+      for (const [specKey, values] of Object.entries(tempSelectedSpecs)) {
+        if (!values || values.length === 0) continue
+
+        let specs: any = {}
+        if (product.specs_jsonb) {
+          try {
+            specs = typeof product.specs_jsonb === 'string'
+              ? JSON.parse(product.specs_jsonb)
+              : product.specs_jsonb
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        let productValue = ''
+        for (const groupName of Object.keys(specs)) {
+          const groupData = specs[groupName]
+          if (groupData && typeof groupData === 'object') {
+            const specInfo = groupData[specKey]
+            if (specInfo) {
+              productValue = String(specInfo.raw_value || specInfo.value || '').trim()
+              break
+            }
+          }
+        }
+
+        if (!productValue || !values.includes(productValue)) {
+          return false
+        }
+      }
+
+      return true
+    }).length
+  }, [products, inStockOnly, tempSelectedPriceRanges, tempPriceRange, tempSelectedSpecs])
 
   const handleQuickAddList = async (e: React.MouseEvent, product: Product) => {
     e.preventDefault()
@@ -320,7 +457,6 @@ const BrowsePage = () => {
       }
       pages.unshift(1)
     }
-
     if (right < total) {
       if (right < total - 1) {
         pages.push('...')
@@ -342,6 +478,114 @@ const BrowsePage = () => {
           <span>/</span>
           <span className="text-neutral-800 font-semibold">Tất cả sản phẩm</span>
         </nav>
+
+        {/* Category Quick Selector Strip */}
+        {!catalogLoading && categories.length > 0 && (
+          <div className="mb-6 bg-white border border-neutral-200/80 rounded-xl p-4 shadow-sm">
+            <h2 className="text-[10px] font-black uppercase text-neutral-400 tracking-wider mb-3">
+              Danh mục sản phẩm
+            </h2>
+            <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
+              {/* "Tất cả" Category Option */}
+              <button
+                onClick={() => updateParam('category', null)}
+                className={`flex-shrink-0 px-4.5 py-2.5 rounded-lg border text-xs font-black uppercase transition-all ${
+                  !categoryIdParam
+                    ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
+                }`}
+              >
+                🏢 Tất cả danh mục
+              </button>
+              {categories.map((c) => {
+                const isActive = categoryIdParam === String(c.id)
+                // Map category names to icons/emojis
+                const getCategoryIcon = (name: string) => {
+                  const lowercaseName = name.toLowerCase()
+                  if (lowercaseName.includes('điện thoại')) return '📱'
+                  if (lowercaseName.includes('laptop')) return '💻'
+                  if (lowercaseName.includes('tai nghe')) return '🎧'
+                  if (lowercaseName.includes('loa')) return '🔊'
+                  if (lowercaseName.includes('phụ kiện')) return '🔌'
+                  return '📦'
+                }
+                const icon = getCategoryIcon(c.name)
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => updateParam('category', isActive ? null : String(c.id))}
+                    className={`flex-shrink-0 px-5 py-2.5 rounded-lg border text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                      isActive
+                        ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                        : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 hover:-translate-y-0.5'
+                    }`}
+                  >
+                    {icon} {c.name}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Category Banner Slider */}
+        {categoryBanners.length > 0 && (
+          <div className="mb-6 relative rounded-2xl overflow-hidden shadow-md group h-[200px] sm:h-[300px] bg-neutral-200">
+            <Link to={categoryBanners[currentSlide]?.link_url || '/browse'} className="w-full h-full block">
+              <img
+                src={categoryBanners[currentSlide]?.image_url}
+                alt={categoryBanners[currentSlide]?.title}
+                className="w-full h-full object-cover transition-transform duration-500 hover:scale-101"
+              />
+            </Link>
+            
+            {/* Banner Content Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent flex flex-col justify-center px-8 sm:px-12 text-white pointer-events-none">
+              {categoryBanners[currentSlide]?.tag && (
+                <span className="bg-amber-500 text-black text-[9px] font-extrabold uppercase px-2.5 py-1 rounded w-fit tracking-wider mb-2.5">
+                  {categoryBanners[currentSlide].tag}
+                </span>
+              )}
+              <h2 className="text-lg sm:text-2xl font-black max-w-md leading-tight drop-shadow-md">
+                {categoryBanners[currentSlide]?.title}
+              </h2>
+              {categoryBanners[currentSlide]?.subtitle && (
+                <p className="text-xs sm:text-sm text-neutral-200 font-bold mt-1 max-w-sm drop-shadow">
+                  {categoryBanners[currentSlide].subtitle}
+                </p>
+              )}
+            </div>
+
+            {/* Slider Controls */}
+            {categoryBanners.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentSlide(prev => (prev - 1 + categoryBanners.length) % categoryBanners.length)}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/70 hover:bg-white text-black flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto"
+                >
+                  ❮
+                </button>
+                <button
+                  onClick={() => setCurrentSlide(prev => (prev + 1) % categoryBanners.length)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/70 hover:bg-white text-black flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto"
+                >
+                  ❯
+                </button>
+
+                {/* Indicators */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 pointer-events-auto">
+                  {categoryBanners.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${currentSlide === idx ? 'bg-white w-4' : 'bg-white/40'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Header Title with query results */}
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -394,223 +638,396 @@ const BrowsePage = () => {
           </div>
         </div>
 
-        {/* Layout Grid: Sidebar + Product Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
-          {/* Left Column: Sidebar Filters */}
-          <div className="space-y-6 lg:sticky lg:top-4">
-            
-            {/* Active Filters list */}
-            {(categoryIdParam || brandIdParam || searchQuery || inStockOnly || Object.keys(selectedSpecs).length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
-              <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-neutral-800 uppercase tracking-wider">Đang lọc</span>
+        {/* Backdrop for filter dropdowns */}
+        {openDropdown && (
+          <div className="fixed inset-0 z-35 bg-transparent" onClick={() => setOpenDropdown(null)} />
+        )}
+
+        {/* Brand Logo Row */}
+        {!catalogLoading && brands.length > 0 && (
+          <div className="mb-6 bg-white border border-neutral-200/80 rounded-xl p-4 shadow-sm">
+            <h2 className="text-[10px] font-black uppercase text-neutral-400 tracking-wider mb-3">
+              Thương hiệu nổi bật
+            </h2>
+            <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
+              {/* "Tất cả" Brand Option */}
+              <button
+                onClick={() => updateParam('brand', null)}
+                className={`flex-shrink-0 px-4.5 py-2.5 rounded-lg border text-xs font-black uppercase transition-all ${
+                  !brandIdParam
+                    ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
+                }`}
+              >
+                Tất cả
+              </button>
+              {brands.map((b) => {
+                const isActive = brandIdParam === String(b.id)
+                // Look up custom styled brand logo text
+                const logoText = brandLogos[b.name.toLowerCase()] || b.name
+                return (
                   <button
-                    onClick={clearAllFilters}
-                    className="text-[10px] font-bold text-red-500 hover:text-red-650 transition-colors uppercase"
+                    key={b.id}
+                    onClick={() => updateParam('brand', isActive ? null : String(b.id))}
+                    className={`flex-shrink-0 px-5 py-2.5 rounded-lg border text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                      isActive
+                        ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                        : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 hover:-translate-y-0.5'
+                    }`}
                   >
-                    Xóa tất cả
+                    {logoText}
                   </button>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {searchQuery && (
-                    <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded border border-neutral-200">
-                      Từ khóa: {searchQuery}
-                      <button onClick={() => updateParam('q', null)} className="hover:text-black text-xs">✕</button>
-                    </span>
-                  )}
-                  {selectedCategory && (
-                    <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded border border-neutral-200">
-                      {selectedCategory.name}
-                      <button onClick={() => updateParam('category', null)} className="hover:text-black text-xs">✕</button>
-                    </span>
-                  )}
-                  {selectedBrand && (
-                    <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded border border-neutral-200">
-                      {selectedBrand.name}
-                      <button onClick={() => updateParam('brand', null)} className="hover:text-black text-xs">✕</button>
-                    </span>
-                  )}
-                  {inStockOnly && (
-                    <span className="inline-flex items-center gap-1 bg-neutral-100 text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded border border-neutral-200">
-                      Còn hàng
-                      <button onClick={() => setInStockOnly(false)} className="hover:text-black text-xs">✕</button>
-                    </span>
-                  )}
-                </div>
-              </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Horizontal Dropdown Filter Bar */}
+        <div className="relative z-40 mb-6 flex flex-wrap items-center gap-2.5">
+          {/* Funnel Icon "Tất cả bộ lọc" Button */}
+          <button
+            onClick={openFilterModal}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+              Object.keys(selectedSpecs).length > 0 || selectedPriceRanges.length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max
+                ? 'border-brand-600 bg-brand-50/30 text-brand-700 font-extrabold ring-1 ring-brand-100'
+                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Bộ lọc</span>
+            {(Object.keys(selectedSpecs).length > 0 || selectedPriceRanges.length > 0) && (
+              <span className="bg-amber-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                {Object.keys(selectedSpecs).length + (selectedPriceRanges.length > 0 ? 1 : 0)}
+              </span>
             )}
+          </button>
 
-            {/* In Stock toggle */}
-            <div className="border border-neutral-200 bg-white rounded-lg p-5 shadow-sm">
-              <label className="flex items-center gap-2.5 text-xs text-neutral-700 font-bold cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={inStockOnly}
-                  onChange={(e) => setInStockOnly(e.target.checked)}
-                  className="w-4 h-4 rounded text-black border-neutral-300 focus:ring-black"
-                />
-                Chỉ hiển thị Còn hàng
-              </label>
-            </div>
-
-            {/* Price range filter */}
-            {priceLimits.max > priceLimits.min && (
-              <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3 shadow-sm">
-                <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Khoảng giá (đ)</h3>
-                <input
-                  type="range"
-                  min={priceLimits.min}
-                  max={priceLimits.max}
-                  value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                  className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-black"
-                />
-                <div className="flex items-center justify-between text-[10px] font-bold text-neutral-600">
-                  <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
-                  <span>{priceRange[1].toLocaleString('vi-VN')} đ</span>
-                </div>
-              </div>
-            )}
-
-            {/* Categories filter box */}
-            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
-              <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Danh Mục</h3>
-              
-              {!catalogLoading && categories.length > 8 && (
-                <input
-                  type="text"
-                  placeholder="Tìm danh mục..."
-                  value={categorySearch}
-                  onChange={(e) => setCategorySearch(e.target.value)}
-                  className="w-full text-xs border border-neutral-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-black placeholder-neutral-400 transition-colors focus:ring-1 focus:ring-black bg-neutral-50"
-                />
+          {/* Precio (Price) Dropdown Button */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                if (openDropdown === 'price') {
+                  setOpenDropdown(null)
+                } else {
+                  handleOpenDropdown('price')
+                }
+              }}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+                openDropdown === 'price'
+                  ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100'
+                  : selectedPriceRanges.length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max
+                  ? 'border-amber-500 bg-amber-50/20 text-amber-700 font-extrabold'
+                  : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+              }`}
+            >
+              <span>Giá</span>
+              {selectedPriceRanges.length > 0 && (
+                <span className="bg-amber-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                  {selectedPriceRanges.length}
+                </span>
               )}
+              <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === 'price' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-              {catalogLoading ? (
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-4 w-3/4 bg-neutral-100 animate-pulse rounded"></div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    onClick={() => updateParam('category', null)}
-                    className={`text-left text-xs py-1 font-bold transition-colors ${!categoryIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                  >
-                    Tất cả danh mục
-                  </button>
-                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
-                    {filteredCategories.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => updateParam('category', String(c.id))}
-                        className={`text-left text-xs py-1.5 font-bold transition-colors ${categoryIdParam === String(c.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                      >
-                        {c.name}
-                      </button>
-                    ))}
-                    {filteredCategories.length === 0 && (
-                      <span className="text-[10px] text-neutral-450 italic py-1">Không tìm thấy</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Brands filter box */}
-            <div className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
-              <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">Thương Hiệu</h3>
-
-              {!catalogLoading && brands.length > 8 && (
-                <input
-                  type="text"
-                  placeholder="Tìm thương hiệu..."
-                  value={brandSearch}
-                  onChange={(e) => setBrandSearch(e.target.value)}
-                  className="w-full text-xs border border-neutral-200 rounded px-2.5 py-1.5 focus:outline-none focus:border-black placeholder-neutral-400 transition-colors focus:ring-1 focus:ring-black bg-neutral-50"
-                />
-              )}
-
-              {catalogLoading ? (
-                <div className="space-y-2">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-4 w-3/4 bg-neutral-100 animate-pulse rounded"></div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-1.5">
-                  <button
-                    onClick={() => updateParam('brand', null)}
-                    className={`text-left text-xs py-1 font-bold transition-colors ${!brandIdParam ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                  >
-                    Tất cả thương hiệu
-                  </button>
-                  <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
-                    {filteredBrands.map((b) => (
-                      <button
-                        key={b.id}
-                        onClick={() => updateParam('brand', String(b.id))}
-                        className={`text-left text-xs py-1.5 font-bold transition-colors ${brandIdParam === String(b.id) ? 'text-black font-extrabold' : 'text-neutral-500 hover:text-black'}`}
-                      >
-                        {b.name}
-                      </button>
-                    ))}
-                    {filteredBrands.length === 0 && (
-                      <span className="text-[10px] text-neutral-450 italic py-1">Không tìm thấy</span>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Dynamic Specs filters */}
-            {filterSpecsList.map((spec) => (
-              <div key={spec.key} className="border border-neutral-200 bg-white rounded-lg p-5 space-y-3.5 shadow-sm">
-                <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider">
-                  {spec.key}
-                </h3>
-                <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1">
-                  {spec.options.map((opt) => {
-                    const isChecked = selectedSpecs[spec.key]?.includes(opt) || false
+            {/* Price Dropdown Panel */}
+            {openDropdown === 'price' && (
+              <div className="absolute left-0 mt-2 w-72 bg-white border border-neutral-200 rounded-xl shadow-glass p-5 z-50 animate-fade-in-up">
+                <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Chọn khoảng giá</h3>
+                
+                {/* Price Pills */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {priceOptions.map((opt) => {
+                    const isSelected = tempSelectedPriceRanges.includes(opt.label)
                     return (
-                      <label
-                        key={opt}
-                        className="flex items-center gap-2 text-xs text-neutral-600 hover:text-black cursor-pointer"
+                      <button
+                        key={opt.label}
+                        onClick={() => {
+                          setTempSelectedPriceRanges(prev =>
+                            prev.includes(opt.label)
+                              ? prev.filter(l => l !== opt.label)
+                              : [...prev, opt.label]
+                          )
+                        }}
+                        className={`px-2 py-2 text-[10px] font-bold rounded-md border text-center transition-all ${
+                          isSelected
+                            ? 'border-brand-600 bg-brand-50/50 text-brand-700'
+                            : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                        }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleToggleSpecOption(spec.key, opt)}
-                          className="w-3.5 h-3.5 rounded border-neutral-300 text-black focus:ring-black"
-                        />
-                        <span className="truncate">{opt}</span>
-                      </label>
+                        {opt.label}
+                      </button>
                     )
                   })}
                 </div>
-              </div>
-            ))}
 
+                {/* Range Slider (Fallback when no pills selected) */}
+                {tempSelectedPriceRanges.length === 0 && priceLimits.max > priceLimits.min && (
+                  <div className="space-y-2 pt-2 border-t border-neutral-100">
+                    <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider">Hoặc kéo khoảng giá</span>
+                    <input
+                      type="range"
+                      min={priceLimits.min}
+                      max={priceLimits.max}
+                      value={tempPriceRange[1]}
+                      onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
+                      className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                    />
+                    <div className="flex items-center justify-between text-[9px] font-black text-neutral-500">
+                      <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
+                      <span>{tempPriceRange[1].toLocaleString('vi-VN')} đ</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Controls */}
+                <div className="flex items-center justify-between mt-5 pt-3.5 border-t border-neutral-100">
+                  <button
+                    onClick={() => {
+                      setTempSelectedPriceRanges([])
+                      setTempPriceRange([priceLimits.min, priceLimits.max])
+                    }}
+                    className="text-[10px] font-bold text-neutral-455 hover:text-neutral-700 uppercase"
+                  >
+                    Mặc định
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPriceRange(tempPriceRange)
+                      setSelectedPriceRanges(tempSelectedPriceRanges)
+                      setOpenDropdown(null)
+                    }}
+                    className="bg-black hover:bg-neutral-850 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-md transition-all shadow-sm"
+                  >
+                    Xem kết quả
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Products List/Grid */}
-          <div className="lg:col-span-3 space-y-8">
+          {/* Dynamic Spec Filter Dropdowns - Render KEY SPEC dropdowns only */}
+          {filterSpecsList
+            .filter((spec) => ['ram', 'bộ nhớ trong', 'dung lượng pin', 'kích thước màn hình', 'độ phân giải'].includes(spec.key.toLowerCase()))
+            .map((spec) => {
+              const hasActiveFilter = selectedSpecs[spec.key]?.length > 0
+              const isActiveDropdown = openDropdown === spec.key
+
+              return (
+                <div key={spec.key} className="relative">
+                  <button
+                    onClick={() => {
+                      if (isActiveDropdown) {
+                        setOpenDropdown(null)
+                      } else {
+                        handleOpenDropdown(spec.key)
+                      }
+                    }}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+                      isActiveDropdown
+                        ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100'
+                        : hasActiveFilter
+                        ? 'border-amber-500 bg-amber-50/20 text-amber-700 font-extrabold'
+                        : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+                    }`}
+                  >
+                    <span>{spec.key}</span>
+                    {hasActiveFilter && (
+                      <span className="bg-amber-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                        {selectedSpecs[spec.key].length}
+                      </span>
+                    )}
+                    <svg className={`w-3 h-3 transition-transform duration-200 ${isActiveDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Panel */}
+                  {isActiveDropdown && (
+                    <div className="absolute left-0 mt-2 w-80 bg-white border border-neutral-200 rounded-xl shadow-glass p-5 z-50 animate-fade-in-up">
+                      <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Lọc theo {spec.key}</h3>
+                      
+                      {/* Options Pills */}
+                      <div className="flex flex-wrap gap-2 mb-4 max-h-48 overflow-y-auto pr-1">
+                        {spec.options.map((opt) => {
+                          const isSelected = tempSelectedSpecs[spec.key]?.includes(opt) || false
+                          return (
+                            <button
+                              key={opt}
+                              onClick={() => {
+                                setTempSelectedSpecs(prev => {
+                                  const currentList = prev[spec.key] || []
+                                  const nextList = currentList.includes(opt)
+                                    ? currentList.filter(v => v !== opt)
+                                    : [...currentList, opt]
+                                  const next = { ...prev, [spec.key]: nextList }
+                                  if (nextList.length === 0) {
+                                    delete next[spec.key]
+                                  }
+                                  return next
+                                })
+                              }}
+                              className={`px-3 py-1.5 text-[10px] font-bold rounded-md border transition-all ${
+                                isSelected
+                                  ? 'border-brand-600 bg-brand-50/50 text-brand-700'
+                                  : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-350'
+                              }`}
+                            >
+                              {opt}
+                            </button>
+                          )
+                        })}
+                      </div>
+
+                      {/* Footer Controls */}
+                      <div className="flex items-center justify-between pt-3.5 border-t border-neutral-100">
+                        <button
+                          onClick={() => {
+                            setTempSelectedSpecs(prev => {
+                              const next = { ...prev }
+                              delete next[spec.key]
+                              return next
+                            })
+                          }}
+                          className="text-[10px] font-bold text-neutral-455 hover:text-neutral-700 uppercase"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedSpecs(tempSelectedSpecs)
+                            setOpenDropdown(null)
+                          }}
+                          className="bg-black hover:bg-neutral-850 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-md transition-all shadow-sm"
+                        >
+                          Xem kết quả
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+          {/* Quick Toggle: Chỉ hiển thị Còn hàng */}
+          <button
+            onClick={() => setInStockOnly(!inStockOnly)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+              inStockOnly
+                ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100'
+                : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+            }`}
+          >
+            <span>Còn hàng</span>
+            {inStockOnly && (
+              <svg className="w-3 h-3 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {/* Active Filter Pills List */}
+        {(categoryIdParam || brandIdParam || searchQuery || inStockOnly || Object.keys(selectedSpecs).length > 0 || selectedPriceRanges.length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
+          <div className="mb-6 flex flex-wrap items-center gap-2 bg-neutral-100/50 border border-neutral-200/60 p-3 rounded-lg">
+            <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider mr-1">Đang lọc:</span>
             
-            {/* Loading state or products display */}
-            {loadingProducts ? (
-              <SearchSkeleton viewMode={viewMode} count={9} />
-            ) : (
-              <>
-                {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                    {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Từ khóa: {searchQuery}
+                <button onClick={() => updateParam('q', null)} className="hover:text-red-500 text-xs font-black">✕</button>
+              </span>
+            )}
+            {selectedCategory && (
+              <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Danh mục: {selectedCategory.name}
+                <button onClick={() => updateParam('category', null)} className="hover:text-red-500 text-xs font-black">✕</button>
+              </span>
+            )}
+            {selectedBrand && (
+              <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Hãng: {selectedBrand.name}
+                <button onClick={() => updateParam('brand', null)} className="hover:text-red-500 text-xs font-black">✕</button>
+              </span>
+            )}
+            {inStockOnly && (
+              <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Còn hàng
+                <button onClick={() => setInStockOnly(false)} className="hover:text-red-500 text-xs font-black">✕</button>
+              </span>
+            )}
+            {selectedPriceRanges.map((l) => (
+              <span key={l} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Giá: {l}
+                <button
+                  onClick={() => setSelectedPriceRanges(prev => prev.filter(v => v !== l))}
+                  className="hover:text-red-500 text-xs font-black"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+            {selectedPriceRanges.length === 0 && (priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
+              <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                Giá: {priceRange[0].toLocaleString('vi-VN')} - {priceRange[1].toLocaleString('vi-VN')} đ
+                <button
+                  onClick={() => setPriceRange([priceLimits.min, priceLimits.max])}
+                  className="hover:text-red-500 text-xs font-black"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
+            {Object.entries(selectedSpecs).map(([key, values]) =>
+              values.map((v) => (
+                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                  {key}: {v}
+                  <button
+                    onClick={() => {
+                      setSelectedSpecs(prev => {
+                        const list = prev[key].filter(item => item !== v)
+                        const next = { ...prev, [key]: list }
+                        if (list.length === 0) delete next[key]
+                        return next
+                      })
+                    }}
+                    className="hover:text-red-500 text-xs font-black"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))
+            )}
+
+            <button
+              onClick={clearAllFilters}
+              className="text-[10px] font-black text-red-500 hover:text-red-650 transition-colors uppercase ml-auto"
+            >
+              Xóa tất cả bộ lọc
+            </button>
+          </div>
+        )}
+
+        {/* Full-width Product Grid */}
+        <div className="w-full space-y-8">
+          
+          {/* Loading state or products display */}
+          {loadingProducts ? (
+            <SearchSkeleton viewMode={viewMode} count={10} />
+          ) : (
+            <>
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
+                  {filteredProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
                     {filteredProducts.map((product) => {
                       const isAddedLoading = loadingCartMap[product.id] || false
                       const displayPrice = product.discount_price || product.price || 0
@@ -800,7 +1217,141 @@ const BrowsePage = () => {
             )}
 
           </div>
-        </div>
+
+        {/* TGDĐ-Style Advanced Filter Modal */}
+        {isFilterModalOpen && (
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in-up">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-neutral-150">
+                <h2 className="text-sm font-black uppercase text-neutral-800 tracking-wider">Tất cả bộ lọc</h2>
+                <button
+                  onClick={() => setIsFilterModalOpen(false)}
+                  className="px-3.5 py-1.5 rounded-lg border border-neutral-250 hover:bg-neutral-100 font-bold text-xs transition-colors"
+                >
+                  ✕ Đóng
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs scrollbar-thin">
+                {/* 1. Price Section */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">Khoảng giá</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {priceOptions.map((opt) => {
+                      const isSelected = tempSelectedPriceRanges.includes(opt.label)
+                      return (
+                        <button
+                          key={opt.label}
+                          type="button"
+                          onClick={() => {
+                            setTempSelectedPriceRanges(prev =>
+                              prev.includes(opt.label)
+                                ? prev.filter(l => l !== opt.label)
+                                : [...prev, opt.label]
+                            )
+                          }}
+                          className={`px-3 py-2.5 rounded-lg border font-bold text-center transition-all ${
+                            isSelected
+                              ? 'border-brand-600 bg-brand-50/50 text-brand-700 shadow-sm'
+                              : 'border-neutral-250 bg-white text-neutral-600 hover:border-neutral-350'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {tempSelectedPriceRanges.length === 0 && priceLimits.max > priceLimits.min && (
+                    <div className="space-y-2 pt-2">
+                      <span className="text-[10px] font-black text-neutral-455 uppercase tracking-wider">Hoặc kéo khoảng giá</span>
+                      <input
+                        type="range"
+                        min={priceLimits.min}
+                        max={priceLimits.max}
+                        value={tempPriceRange[1]}
+                        onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
+                        className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                      />
+                      <div className="flex items-center justify-between text-[9px] font-black text-neutral-500">
+                        <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
+                        <span>{tempPriceRange[1].toLocaleString('vi-VN')} đ</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Specs Sections */}
+                {filterSpecsList.map((spec) => (
+                  <div key={spec.key} className="space-y-3 pt-4 border-t border-neutral-100">
+                    <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">{spec.key}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {spec.options.map((opt) => {
+                        const isSelected = tempSelectedSpecs[spec.key]?.includes(opt) || false
+                        return (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => {
+                              setTempSelectedSpecs(prev => {
+                                const currentList = prev[spec.key] || []
+                                const nextList = currentList.includes(opt)
+                                  ? currentList.filter(v => v !== opt)
+                                  : [...currentList, opt]
+                                const next = { ...prev, [spec.key]: nextList }
+                                if (nextList.length === 0) {
+                                  delete next[spec.key]
+                                }
+                                return next
+                              })
+                            }}
+                            className={`px-3.5 py-2 rounded-lg border font-bold transition-all ${
+                              isSelected
+                                ? 'border-brand-600 bg-brand-50/50 text-brand-700 shadow-sm'
+                                : 'border-neutral-250 bg-white text-neutral-600 hover:border-neutral-350'
+                            }`}
+                          >
+                            {opt}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-5 border-t border-neutral-150 bg-neutral-50 flex items-center justify-between rounded-b-2xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempSelectedSpecs({})
+                    setTempSelectedPriceRanges([])
+                    setTempPriceRange([priceLimits.min, priceLimits.max])
+                  }}
+                  className="text-xs font-bold text-red-500 hover:text-red-750 uppercase tracking-wider transition-colors"
+                >
+                  Bỏ chọn tất cả
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSpecs(tempSelectedSpecs)
+                    setSelectedPriceRanges(tempSelectedPriceRanges)
+                    setPriceRange(tempPriceRange)
+                    setIsFilterModalOpen(false)
+                  }}
+                  className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl transition-all shadow-md active:scale-95"
+                >
+                  Xem {tempFilteredProductsCount} kết quả
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

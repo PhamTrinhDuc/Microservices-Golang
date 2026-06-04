@@ -671,48 +671,78 @@ def seed_marketing_vouchers(cursor):
             """, (code, name, dtype, dval))
 
 def ingest_banners(cursor):
-    """Ingest homepage banners into the database."""
-    print("Ingesting homepage banners...")
+    """Ingest homepage and category banners into the database."""
+    print("Ingesting homepage and category-specific banners...")
+    
+    # Get category ID map
+    cursor.execute("SELECT id, name FROM category;")
+    cat_map = {name.lower().strip(): cid for cid, name in cursor.fetchall()}
+    
     banners = [
         (
             'LIMIT TIME OFFER', 
             'Sản phẩm công nghệ giảm giá tới 50%', 
             'Cơ hội sở hữu laptop, điện thoại cao cấp chính hãng với giá rẻ nhất thị trường.',
-            'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=600&q=80', 
+            'https://images.unsplash.com/photo-1496181130204-755241544e35?auto=format&fit=crop&w=1200&q=80', 
             'Điện tử & Công nghệ', 
             '/browse', 
             1, 
-            True
+            True,
+            None
         ),
         (
             'NEW FASHION ERA', 
             'Bộ sưu tập thời trang mùa hè cực hot', 
             'Phong cách tối giản thời thượng. Hoàn tiền 100% nếu không hài lòng.',
-            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80', 
+            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1200&q=80', 
             'Fashion & LifeStyle', 
             '/browse', 
             2, 
-            True
+            True,
+            None
         ),
         (
-            'PREMIUM LIVING', 
-            'Trang trí nhà cửa cùng BeliBeli Home', 
-            'Giảm giá cực sâu cho các dòng máy xay, nồi chiên không dầu và robot hút bụi.',
-            'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80', 
-            'Gia dụng & Đời sống', 
-            '/browse', 
-            3, 
-            True
+            'THẾ HỆ AI PHONE MỚI',
+            'Sở hữu iPhone 16 Pro & Galaxy S24 Ultra',
+            'Ưu đãi trả góp 0%, thu cũ đổi mới trợ giá lên tới 2 triệu đồng.',
+            'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80',
+            'Điện thoại',
+            '/browse?category=' + str(cat_map.get('điện thoại', '')),
+            1,
+            True,
+            cat_map.get('điện thoại')
+        ),
+        (
+            'LAPTOP GAMING & VĂN PHÒNG',
+            'Bứt phá hiệu năng, nhận ngàn quà tặng',
+            'Giảm thêm 10% cho học sinh sinh viên. Tặng balo cao cấp & chuột không dây.',
+            'https://images.unsplash.com/photo-1603302576837-37561b2e2302?auto=format&fit=crop&w=1200&q=80',
+            'Laptop',
+            '/browse?category=' + str(cat_map.get('laptop', '')),
+            2,
+            True,
+            cat_map.get('laptop')
+        ),
+        (
+            'THẾ GIỚI PHỤ KIỆN CHÍNH HÃNG',
+            'Tai nghe & Loa Bluetooth giảm tới 40%',
+            'Âm thanh cực đỉnh từ Sony, JBL, Marshall. Bảo hành chính hãng 12 tháng.',
+            'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=1200&q=80',
+            'Tai nghe',
+            '/browse?category=' + str(cat_map.get('tai nghe', '')),
+            3,
+            True,
+            cat_map.get('tai nghe')
         )
     ]
     
-    for title, subtitle, description, image_url, tag, link_url, sort_order, is_active in banners:
+    for title, subtitle, description, image_url, tag, link_url, sort_order, is_active, category_id in banners:
         cursor.execute("SELECT id FROM banners WHERE title = %s;", (title,))
         if not cursor.fetchone():
             cursor.execute("""
-                INSERT INTO banners (title, subtitle, description, image_url, tag, link_url, sort_order, is_active, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW());
-            """, (title, subtitle, description, image_url, tag, link_url, sort_order, is_active))
+                INSERT INTO banners (title, subtitle, description, image_url, tag, link_url, sort_order, is_active, category_id, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW());
+            """, (title, subtitle, description, image_url, tag, link_url, sort_order, is_active, category_id))
     print("Successfully processed banners table.")
 
 def seed_promotions(cursor):

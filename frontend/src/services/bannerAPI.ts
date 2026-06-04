@@ -2,8 +2,8 @@ import { api } from './api'
 import type { Banner } from '../types'
 
 export const bannerAPI = {
-  listBanners: async (): Promise<Banner[]> => {
-    const res = await api.get<Banner[]>('/banners')
+  listBanners: async (params?: { category_id?: number }): Promise<Banner[]> => {
+    const res = await api.get<Banner[]>('/banners', { params })
     return res.data || []
   },
 

@@ -24,6 +24,7 @@ func (u *BannerUsecase) Create(ctx context.Context, req *domain.CreateBannerRequ
 		LinkURL:     req.LinkURL,
 		SortOrder:   req.SortOrder,
 		IsActive:    req.IsActive,
+		CategoryID:  req.CategoryID,
 	}
 	return u.repo.Create(ctx, b)
 }
@@ -32,8 +33,8 @@ func (u *BannerUsecase) GetByID(ctx context.Context, id int) (*domain.Banner, er
 	return u.repo.GetByID(ctx, id)
 }
 
-func (u *BannerUsecase) List(ctx context.Context, onlyActive bool) ([]*domain.Banner, error) {
-	return u.repo.List(ctx, onlyActive)
+func (u *BannerUsecase) List(ctx context.Context, onlyActive bool, categoryID *int) ([]*domain.Banner, error) {
+	return u.repo.List(ctx, onlyActive, categoryID)
 }
 
 func (u *BannerUsecase) Update(ctx context.Context, id int, req *domain.UpdateBannerRequest) (*domain.Banner, error) {
@@ -50,6 +51,7 @@ func (u *BannerUsecase) Update(ctx context.Context, id int, req *domain.UpdateBa
 	b.LinkURL = req.LinkURL
 	b.SortOrder = req.SortOrder
 	b.IsActive = req.IsActive
+	b.CategoryID = req.CategoryID
 
 	return u.repo.Update(ctx, b)
 }

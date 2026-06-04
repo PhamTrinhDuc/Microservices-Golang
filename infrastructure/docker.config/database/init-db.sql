@@ -415,6 +415,7 @@ CREATE TABLE banners (
     link_url VARCHAR(255),
     sort_order INT DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    category_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

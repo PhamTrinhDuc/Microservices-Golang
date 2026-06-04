@@ -7,6 +7,16 @@ import { productAPI } from '../services/productAPI'
 import { useCart } from '../hooks/useCart'
 import type { Product } from '../types'
 
+
+const priceOptions = [
+  { label: 'Dưới 2 triệu', min: 0, max: 2000000 },
+  { label: 'Từ 2 - 4 triệu', min: 2000000, max: 4000000 },
+  { label: 'Từ 4 - 7 triệu', min: 4000000, max: 7000000 },
+  { label: 'Từ 7 - 13 triệu', min: 7000000, max: 13000000 },
+  { label: 'Từ 13 - 20 triệu', min: 13000000, max: 20000000 },
+  { label: 'Trên 20 triệu', min: 20000000, max: 100000000 },
+]
+
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const [, startTransition] = useTransition()
@@ -30,8 +40,14 @@ const SearchPage = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [inStockOnly, setInStockOnly] = useState(false)
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000])
+  const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
   const [selectedSpecs, setSelectedSpecs] = useState<{ [specKey: string]: string[] }>({})
-  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false)
+  
+  // Dropdown states for TGDĐ style filter bar
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [tempSelectedSpecs, setTempSelectedSpecs] = useState<{ [specKey: string]: string[] }>({})
+  const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 100000000])
+  const [tempSelectedPriceRanges, setTempSelectedPriceRanges] = useState<string[]>([])
 
   const { addToCart } = useCart()
   const [loadingCartMap, setLoadingCartMap] = useState<{ [key: string]: boolean }>({})
@@ -89,6 +105,7 @@ const SearchPage = () => {
     // Reset filters when a new search query is executed
     setInStockOnly(false)
     setSelectedSpecs({})
+    setSelectedPriceRanges([])
   }, [searchQuery, activeSort, activePage])
 
   // Extract specs-based dynamic filter options from loaded products
@@ -184,7 +201,19 @@ const SearchPage = () => {
 
       // 2. Price filter
       const displayPrice = product.discount_price || product.price || 0
-      if (displayPrice < priceRange[0] || displayPrice > priceRange[1]) return false
+      
+      // If we have selected price range pills, check if the price fits in any of them
+      if (selectedPriceRanges.length > 0) {
+        const matchesAnyRange = selectedPriceRanges.some(rangeLabel => {
+          const opt = priceOptions.find(o => o.label === rangeLabel)
+          if (!opt) return false
+          return displayPrice >= opt.min && displayPrice <= opt.max
+        })
+        if (!matchesAnyRange) return false
+      } else {
+        // Fallback to slider range
+        if (displayPrice < priceRange[0] || displayPrice > priceRange[1]) return false
+      }
 
       // 3. Facet specifications filter
       for (const [specKey, values] of Object.entries(selectedSpecs)) {
@@ -220,7 +249,7 @@ const SearchPage = () => {
 
       return true
     })
-  }, [products, inStockOnly, priceRange, selectedSpecs])
+  }, [products, inStockOnly, priceRange, selectedSpecs, selectedPriceRanges])
 
   const handleSearchSubmit = (newQuery: string) => {
     startTransition(() => {
@@ -245,21 +274,17 @@ const SearchPage = () => {
     })
   }
 
-  // Specifications select toggler
-  const handleToggleSpecOption = (specKey: string, optionVal: string) => {
-    setSelectedSpecs((prev) => {
-      const currentList = prev[specKey] || []
-      const nextList = currentList.includes(optionVal)
-        ? currentList.filter((v) => v !== optionVal)
-        : [...currentList, optionVal]
-
-      const next = { ...prev, [specKey]: nextList }
-      if (nextList.length === 0) {
-        delete next[specKey]
-      }
-      return next
-    })
+  // Dropdown open helper
+  const handleOpenDropdown = (dropdownKey: string) => {
+    setOpenDropdown(dropdownKey)
+    if (dropdownKey === 'price') {
+      setTempPriceRange([...priceRange] as [number, number])
+      setTempSelectedPriceRanges([...selectedPriceRanges])
+    } else {
+      setTempSelectedSpecs({ ...selectedSpecs })
+    }
   }
+
 
   const handleQuickAddList = async (e: React.MouseEvent, product: Product) => {
     e.preventDefault()
@@ -335,185 +360,387 @@ const SearchPage = () => {
 
         {/* Results Block */}
         {searchQuery ? (
-          <div className="border-t border-neutral-200 pt-6">
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-              
-              {/* Sidebar Filters Desktop (Drawer / Sticky Panel) */}
-              <aside className={`lg:w-64 w-full bg-white p-6 rounded-xl border border-neutral-200 shadow-sm space-y-6 shrink-0 lg:sticky lg:top-4 transition-all duration-300 ${isFilterDrawerOpen ? 'block' : 'hidden lg:block'}`}>
-                <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-2">
-                    <svg className="w-3.5 h-3.5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
-                    </svg>
-                    Bộ lọc tìm kiếm
-                  </h3>
-                  {(inStockOnly || Object.keys(selectedSpecs).length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
-                    <button
-                      onClick={() => {
-                        setInStockOnly(false)
-                        setPriceRange([priceLimits.min, priceLimits.max])
-                        setSelectedSpecs({})
-                      }}
-                      className="text-[10px] text-red-500 font-bold hover:underline"
-                    >
-                      Xóa tất cả
-                    </button>
+          <div className="border-t border-neutral-200 pt-6 space-y-6">
+            
+            {/* Backdrop for filter dropdowns */}
+            {openDropdown && (
+              <div className="fixed inset-0 z-35 bg-transparent" onClick={() => setOpenDropdown(null)} />
+            )}
+
+            {/* Horizontal Dropdown Filter Bar */}
+            <div className="relative z-45 flex flex-wrap items-center gap-2.5">
+              {/* Precio (Price) Dropdown Button */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    if (openDropdown === 'price') {
+                      setOpenDropdown(null)
+                    } else {
+                      handleOpenDropdown('price')
+                    }
+                  }}
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+                    openDropdown === 'price'
+                      ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100'
+                      : selectedPriceRanges.length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max
+                      ? 'border-amber-500 bg-amber-50/20 text-amber-700 font-extrabold'
+                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+                  }`}
+                >
+                  <span>Giá</span>
+                  {selectedPriceRanges.length > 0 && (
+                    <span className="bg-amber-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                      {selectedPriceRanges.length}
+                    </span>
                   )}
-                </div>
+                  <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === 'price' ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-                {/* Stock Toggle */}
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2.5 text-xs text-neutral-700 font-semibold cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={inStockOnly}
-                      onChange={(e) => setInStockOnly(e.target.checked)}
-                      className="w-4 h-4 rounded text-black border-neutral-300 focus:ring-black"
-                    />
-                    Chỉ hiển thị Còn hàng
-                  </label>
-                </div>
-
-                {/* Price Slider */}
-                {priceLimits.max > priceLimits.min && (
-                  <div className="space-y-3">
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">Khoảng giá (đ)</h4>
-                    <div className="space-y-2">
-                      <input
-                        type="range"
-                        min={priceLimits.min}
-                        max={priceLimits.max}
-                        value={priceRange[1]}
-                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                        className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-black"
-                      />
-                      <div className="flex items-center justify-between text-[11px] font-bold text-neutral-600">
-                        <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
-                        <span>{priceRange[1].toLocaleString('vi-VN')} đ</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Dynamic Specs Facet Filters */}
-                {filterSpecsList.map((spec) => (
-                  <div key={spec.key} className="space-y-2 pt-2 border-t border-neutral-100">
-                    <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500">
-                      {spec.key}
-                    </h4>
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-                      {spec.options.map((opt) => {
-                        const isChecked = selectedSpecs[spec.key]?.includes(opt) || false
+                {/* Price Dropdown Panel */}
+                {openDropdown === 'price' && (
+                  <div className="absolute left-0 mt-2 w-72 bg-white border border-neutral-200 rounded-xl shadow-glass p-5 z-50 animate-fade-in-up">
+                    <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Chọn khoảng giá</h3>
+                    
+                    {/* Price Pills */}
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {priceOptions.map((opt) => {
+                        const isSelected = tempSelectedPriceRanges.includes(opt.label)
                         return (
-                          <label
-                            key={opt}
-                            className="flex items-center gap-2 text-xs text-neutral-600 hover:text-black cursor-pointer"
+                          <button
+                            key={opt.label}
+                            onClick={() => {
+                              setTempSelectedPriceRanges(prev =>
+                                prev.includes(opt.label)
+                                  ? prev.filter(l => l !== opt.label)
+                                  : [...prev, opt.label]
+                              )
+                            }}
+                            className={`px-2 py-2 text-[10px] font-bold rounded-md border text-center transition-all ${
+                              isSelected
+                                ? 'border-brand-600 bg-brand-50/50 text-brand-700'
+                                : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                            }`}
                           >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={() => handleToggleSpecOption(spec.key, opt)}
-                              className="w-3.5 h-3.5 rounded border-neutral-300 text-black focus:ring-black"
-                            />
-                            <span className="truncate">{opt}</span>
-                          </label>
+                            {opt.label}
+                          </button>
                         )
                       })}
                     </div>
-                  </div>
-                ))}
-              </aside>
 
-              {/* Products Area */}
-              <div className="flex-1 w-full space-y-6">
-                
-                {/* Search result controls and quick layout toggles */}
-                <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
-                  <div>
-                    <h2 className="text-xs font-black uppercase tracking-wider text-neutral-800">
-                      Kết quả tìm kiếm cho: <span className="text-neutral-500 font-semibold">"{searchQuery}"</span>
-                    </h2>
-                    <p className="text-[10px] text-neutral-400 mt-0.5">
-                      Tìm thấy {filteredProducts.length} trên tổng số {pagination.total} sản phẩm
-                    </p>
-                  </div>
+                    {/* Range Slider (Fallback when no pills selected) */}
+                    {tempSelectedPriceRanges.length === 0 && priceLimits.max > priceLimits.min && (
+                      <div className="space-y-2 pt-2 border-t border-neutral-100">
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-wider">Hoặc kéo khoảng giá</span>
+                        <input
+                          type="range"
+                          min={priceLimits.min}
+                          max={priceLimits.max}
+                          value={tempPriceRange[1]}
+                          onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
+                          className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                        />
+                        <div className="flex items-center justify-between text-[9px] font-black text-neutral-500">
+                          <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
+                          <span>{tempPriceRange[1].toLocaleString('vi-VN')} đ</span>
+                        </div>
+                      </div>
+                    )}
 
-                  <div className="flex items-center gap-4">
-                    {/* Filter Toggle Mobile */}
+                    {/* Footer Controls */}
+                    <div className="flex items-center justify-between mt-5 pt-3.5 border-t border-neutral-100">
+                      <button
+                        onClick={() => {
+                          setTempSelectedPriceRanges([])
+                          setTempPriceRange([priceLimits.min, priceLimits.max])
+                        }}
+                        className="text-[10px] font-bold text-neutral-450 hover:text-neutral-700 uppercase"
+                      >
+                        Mặc định
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPriceRange(tempPriceRange)
+                          setSelectedPriceRanges(tempSelectedPriceRanges)
+                          setOpenDropdown(null)
+                        }}
+                        className="bg-black hover:bg-neutral-850 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-md transition-all shadow-sm"
+                      >
+                        Xem kết quả
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Spec Filter Dropdowns */}
+              {filterSpecsList.map((spec) => {
+                const hasActiveFilter = selectedSpecs[spec.key]?.length > 0
+                const isActiveDropdown = openDropdown === spec.key
+
+                return (
+                  <div key={spec.key} className="relative">
                     <button
-                      onClick={() => setIsFilterDrawerOpen(!isFilterDrawerOpen)}
-                      className="lg:hidden flex items-center gap-1.5 border border-neutral-250 px-3 py-1.5 rounded text-xs font-bold text-neutral-700 bg-white"
+                      onClick={() => {
+                        if (isActiveDropdown) {
+                          setOpenDropdown(null)
+                        } else {
+                          handleOpenDropdown(spec.key)
+                        }
+                      }}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+                        isActiveDropdown
+                          ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100'
+                          : hasActiveFilter
+                          ? 'border-amber-500 bg-amber-50/20 text-amber-700 font-extrabold'
+                          : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+                      }`}
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 8.293A1 1 0 013 7.586V4z" />
+                      <span>{spec.key}</span>
+                      {hasActiveFilter && (
+                        <span className="bg-amber-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">
+                          {selectedSpecs[spec.key].length}
+                        </span>
+                      )}
+                      <svg className={`w-3 h-3 transition-transform duration-200 ${isActiveDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                       </svg>
-                      Lọc
                     </button>
 
-                    {/* Layout Toggles */}
-                    <div className="flex items-center border border-neutral-200 rounded overflow-hidden">
-                      <button
-                        onClick={() => setViewMode('grid')}
-                        className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-100'}`}
-                        title="Dạng lưới"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-100'}`}
-                        title="Dạng danh sách"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                      </button>
-                    </div>
+                    {/* Dropdown Panel */}
+                    {isActiveDropdown && (
+                      <div className="absolute left-0 mt-2 w-80 bg-white border border-neutral-200 rounded-xl shadow-glass p-5 z-50 animate-fade-in-up">
+                        <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Lọc theo {spec.key}</h3>
+                        
+                        {/* Options Pills */}
+                        <div className="flex flex-wrap gap-2 mb-4 max-h-48 overflow-y-auto pr-1">
+                          {spec.options.map((opt) => {
+                            const isSelected = tempSelectedSpecs[spec.key]?.includes(opt) || false
+                            return (
+                              <button
+                                key={opt}
+                                onClick={() => {
+                                  setTempSelectedSpecs(prev => {
+                                    const currentList = prev[spec.key] || []
+                                    const nextList = currentList.includes(opt)
+                                      ? currentList.filter(v => v !== opt)
+                                      : [...currentList, opt]
+                                    const next = { ...prev, [spec.key]: nextList }
+                                    if (nextList.length === 0) {
+                                      delete next[spec.key]
+                                    }
+                                    return next
+                                  })
+                                }}
+                                className={`px-3 py-1.5 text-[10px] font-bold rounded-md border transition-all ${
+                                  isSelected
+                                    ? 'border-brand-600 bg-brand-50/50 text-brand-700'
+                                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-350'
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            )
+                          })}
+                        </div>
 
-                    {/* Sorting */}
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={activeSort}
-                        onChange={(e) => updateParam('sort', e.target.value)}
-                        className="bg-white border border-neutral-200 text-xs font-bold px-3 py-1.5 rounded focus:outline-none focus:border-black cursor-pointer shadow-sm"
-                      >
-                        <option value="newest">Mới nhất</option>
-                        <option value="popular">Bán chạy nhất</option>
-                        <option value="price_asc">Giá: Thấp đến Cao</option>
-                        <option value="price_desc">Giá: Cao đến Thấp</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Main Results Wrapper */}
-                <div className="min-h-[400px]">
-                  {loading ? (
-                    <SearchSkeleton viewMode={viewMode} count={8} />
-                  ) : (
-                    <>
-                      {/* Empty State Grid */}
-                      {filteredProducts.length === 0 && (
-                        <div className="bg-white border border-neutral-200 border-dashed rounded-xl p-12 text-center max-w-lg mx-auto space-y-4 my-10">
-                          <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto text-neutral-400">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-bold text-neutral-800 uppercase tracking-wider">Không tìm thấy sản phẩm</h3>
-                            <p className="text-xs text-neutral-450 mt-1 leading-relaxed">
-                              Không có sản phẩm nào khớp với các bộ lọc hiện tại của bạn. Thử xóa bớt bộ lọc hoặc tìm từ khóa khác.
-                            </p>
-                          </div>
+                        {/* Footer Controls */}
+                        <div className="flex items-center justify-between pt-3.5 border-t border-neutral-100">
                           <button
                             onClick={() => {
-                              setInStockOnly(false)
-                              setPriceRange([priceLimits.min, priceLimits.max])
-                              setSelectedSpecs({})
+                              setTempSelectedSpecs(prev => {
+                                const next = { ...prev }
+                                delete next[spec.key]
+                                return next
+                              })
                             }}
+                            className="text-[10px] font-bold text-neutral-455 hover:text-neutral-700 uppercase"
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSpecs(tempSelectedSpecs)
+                              setOpenDropdown(null)
+                            }}
+                            className="bg-black hover:bg-neutral-850 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-md transition-all shadow-sm"
+                          >
+                            Xem kết quả
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Quick Toggle: Chỉ hiển thị Còn hàng */}
+              <button
+                onClick={() => setInStockOnly(!inStockOnly)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-bold transition-all shadow-sm ${
+                  inStockOnly
+                    ? 'border-brand-600 bg-brand-50/30 text-brand-700 ring-1 ring-brand-100 font-extrabold'
+                    : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-350'
+                }`}
+              >
+                <span>Còn hàng</span>
+                {inStockOnly && (
+                  <svg className="w-3 h-3 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Active Filter Pills List */}
+            {(inStockOnly || Object.keys(selectedSpecs).length > 0 || selectedPriceRanges.length > 0 || priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
+              <div className="flex flex-wrap items-center gap-2 bg-neutral-100/50 border border-neutral-200/60 p-3 rounded-lg">
+                <span className="text-[10px] font-black text-neutral-500 uppercase tracking-wider mr-1">Đang lọc:</span>
+                
+                {inStockOnly && (
+                  <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                    Còn hàng
+                    <button onClick={() => setInStockOnly(false)} className="hover:text-red-500 text-xs font-black">✕</button>
+                  </span>
+                )}
+                {selectedPriceRanges.map((l) => (
+                  <span key={l} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                    Giá: {l}
+                    <button
+                      onClick={() => setSelectedPriceRanges(prev => prev.filter(v => v !== l))}
+                      className="hover:text-red-500 text-xs font-black"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                {selectedPriceRanges.length === 0 && (priceRange[0] !== priceLimits.min || priceRange[1] !== priceLimits.max) && (
+                  <span className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                    Giá: {priceRange[0].toLocaleString('vi-VN')} - {priceRange[1].toLocaleString('vi-VN')} đ
+                    <button
+                      onClick={() => setPriceRange([priceLimits.min, priceLimits.max])}
+                      className="hover:text-red-500 text-xs font-black"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+                {Object.entries(selectedSpecs).map(([key, values]) =>
+                  values.map((v) => (
+                    <span key={`${key}-${v}`} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                      {key}: {v}
+                      <button
+                        onClick={() => {
+                          setSelectedSpecs(prev => {
+                            const list = prev[key].filter(item => item !== v)
+                            const next = { ...prev, [key]: list }
+                            if (list.length === 0) delete next[key]
+                            return next
+                          })
+                        }}
+                        className="hover:text-red-500 text-xs font-black"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))
+                )}
+
+                <button
+                  onClick={() => {
+                    setInStockOnly(false)
+                    setSelectedSpecs({})
+                    setSelectedPriceRanges([])
+                    setPriceRange([priceLimits.min, priceLimits.max])
+                  }}
+                  className="text-[10px] font-black text-red-500 hover:text-red-650 transition-colors uppercase ml-auto"
+                >
+                  Xóa tất cả bộ lọc
+                </button>
+              </div>
+            )}
+
+            {/* Products Area */}
+            <div className="w-full space-y-6">
+              
+              {/* Search result controls and quick layout toggles */}
+              <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-4 rounded-xl border border-neutral-200 shadow-sm">
+                <div>
+                  <h2 className="text-xs font-black uppercase tracking-wider text-neutral-800">
+                    Kết quả tìm kiếm cho: <span className="text-neutral-500 font-semibold">"{searchQuery}"</span>
+                  </h2>
+                  <p className="text-[10px] text-neutral-400 mt-0.5">
+                    Tìm thấy {filteredProducts.length} trên tổng số {pagination.total} sản phẩm
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  {/* Layout Toggles */}
+                  <div className="flex items-center border border-neutral-200 rounded overflow-hidden">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-100'}`}
+                      title="Dạng lưới"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-600 hover:bg-neutral-100'}`}
+                      title="Dạng danh sách"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Sorting */}
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={activeSort}
+                      onChange={(e) => updateParam('sort', e.target.value)}
+                      className="bg-white border border-neutral-200 text-xs font-bold px-3 py-1.5 rounded focus:outline-none focus:border-black cursor-pointer shadow-sm"
+                    >
+                      <option value="newest">Mới nhất</option>
+                      <option value="popular">Bán chạy nhất</option>
+                      <option value="price_asc">Giá: Thấp đến Cao</option>
+                      <option value="price_desc">Giá: Cao đến Thấp</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Results Wrapper */}
+              <div className="min-h-[400px]">
+                {loading ? (
+                  <SearchSkeleton viewMode={viewMode} count={10} />
+                ) : (
+                  <>
+                    {/* Empty State Grid */}
+                    {filteredProducts.length === 0 && (
+                      <div className="bg-white border border-neutral-200 border-dashed rounded-xl p-12 text-center max-w-lg mx-auto space-y-4 my-10">
+                        <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto text-neutral-400">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-neutral-800 uppercase tracking-wider">Không tìm thấy sản phẩm</h3>
+                          <p className="text-xs text-neutral-450 mt-1 leading-relaxed">
+                            Không có sản phẩm nào khớp với các bộ lọc hiện tại của bạn. Thử xóa bớt bộ lọc hoặc tìm từ khóa khác.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setInStockOnly(false)
+                            setPriceRange([priceLimits.min, priceLimits.max])
+                            setSelectedSpecs({})
+                            setSelectedPriceRanges([])
+                          }}
                             className="bg-black hover:bg-neutral-800 text-white text-xs font-bold px-4 py-2 rounded transition-all active:scale-95"
                           >
                             Xóa bộ lọc để thử lại
@@ -523,7 +750,7 @@ const SearchPage = () => {
 
                       {/* Display Products */}
                       {viewMode === 'grid' ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
                           {filteredProducts.map((product) => (
                             <div key={product.id} className="transition-all duration-300 hover:-translate-y-1">
                               <ProductCard product={product} />
@@ -708,7 +935,6 @@ const SearchPage = () => {
                 </div>
               </div>
             </div>
-          </div>
         ) : (
           /* Pre-Search Engagement Layout */
           <div className="space-y-12">

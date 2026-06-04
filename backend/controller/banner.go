@@ -42,7 +42,14 @@ func (ctl *BannerController) Create(ctx *gin.Context) {
 }
 
 func (ctl *BannerController) ListPublic(ctx *gin.Context) {
-	res, err := ctl.usecase.List(ctx.Request.Context(), true)
+	var categoryID *int
+	if catIDStr := ctx.Query("category_id"); catIDStr != "" {
+		if catID, err := strconv.Atoi(catIDStr); err == nil {
+			categoryID = &catID
+		}
+	}
+
+	res, err := ctl.usecase.List(ctx.Request.Context(), true, categoryID)
 	if err != nil {
 		utils.RespondInternalError(ctx, err.Error())
 		return
@@ -51,7 +58,14 @@ func (ctl *BannerController) ListPublic(ctx *gin.Context) {
 }
 
 func (ctl *BannerController) ListAdmin(ctx *gin.Context) {
-	res, err := ctl.usecase.List(ctx.Request.Context(), false)
+	var categoryID *int
+	if catIDStr := ctx.Query("category_id"); catIDStr != "" {
+		if catID, err := strconv.Atoi(catIDStr); err == nil {
+			categoryID = &catID
+		}
+	}
+
+	res, err := ctl.usecase.List(ctx.Request.Context(), false, categoryID)
 	if err != nil {
 		utils.RespondInternalError(ctx, err.Error())
 		return

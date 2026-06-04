@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { bannerAPI } from '../../services/bannerAPI'
-import type { Banner } from '../../types'
+import { productAPI } from '../../services/productAPI'
+import type { Banner, Category } from '../../types'
 import ImageUploader from './ImageUploader'
 
 export default function AdminBannersTab() {
   const [banners, setBanners] = useState<Banner[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [bannerForm, setBannerForm] = useState({
@@ -16,7 +18,8 @@ export default function AdminBannersTab() {
     tag: '',
     link_url: '',
     sort_order: 0,
-    is_active: true
+    is_active: true,
+    category_id: null as number | null
   })
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -51,7 +54,8 @@ export default function AdminBannersTab() {
           tag: banner.tag || null,
           link_url: banner.link_url || null,
           sort_order: banner.sort_order,
-          is_active: banner.is_active
+          is_active: banner.is_active,
+          category_id: banner.category_id || null
         }
         await bannerAPI.adminUpdateBanner(banner.id, payload)
       }
@@ -77,8 +81,18 @@ export default function AdminBannersTab() {
     }
   }
 
+  const loadCategories = async () => {
+    try {
+      const data = await productAPI.getCategories()
+      setCategories(data || [])
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   useEffect(() => {
     void loadBanners()
+    void loadCategories()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -96,7 +110,8 @@ export default function AdminBannersTab() {
       tag: bannerForm.tag || null,
       link_url: bannerForm.link_url || null,
       sort_order: bannerForm.sort_order,
-      is_active: bannerForm.is_active
+      is_active: bannerForm.is_active,
+      category_id: bannerForm.category_id || null
     } as any
 
     try {
@@ -117,7 +132,8 @@ export default function AdminBannersTab() {
         tag: '',
         link_url: '',
         sort_order: 0,
-        is_active: true
+        is_active: true,
+        category_id: null
       })
       void loadBanners()
     } catch (err: any) {
@@ -137,7 +153,8 @@ export default function AdminBannersTab() {
       tag: b.tag || '',
       link_url: b.link_url || '',
       sort_order: b.sort_order,
-      is_active: b.is_active
+      is_active: b.is_active,
+      category_id: b.category_id || null
     })
   }
 
@@ -227,6 +244,22 @@ export default function AdminBannersTab() {
             />
           </div>
 
+          <div>
+            <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Danh mục hiển thị (Category liên kết)</label>
+            <select
+              className="w-full border border-neutral-300 rounded px-3 py-2 bg-white"
+              value={bannerForm.category_id || ''}
+              onChange={(e) => setBannerForm(p => ({ ...p, category_id: e.target.value ? Number(e.target.value) : null }))}
+            >
+              <option value="">Trang chủ (Không liên kết)</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Thứ tự hiển thị</label>
@@ -270,7 +303,8 @@ export default function AdminBannersTab() {
                   tag: '',
                   link_url: '',
                   sort_order: 0,
-                  is_active: true
+                  is_active: true,
+                  category_id: null
                 })}
                 className="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 text-[10px] font-bold uppercase py-2.5 px-4 rounded transition-colors"
               >
@@ -316,7 +350,7 @@ export default function AdminBannersTab() {
                       draggedIndex === index ? 'opacity-40 bg-neutral-100' : 'hover:bg-neutral-50'
                     }`}
                   >
-                    <td className="p-4 text-center cursor-grab active:cursor-grabbing text-neutral-450">
+                    <td className="p-4 text-center cursor-grab active:cursor-grabbing text-neutral-455">
                       <svg className="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8h16M4 16h16" />
                       </svg>
@@ -330,14 +364,20 @@ export default function AdminBannersTab() {
                     </td>
                     <td className="p-4">
                       <div>
-                        {b.tag && (
-                          <span className="bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">
-                            {b.tag}
-                          </span>
-                        )}
+                        <div className="flex gap-1.5 flex-wrap">
+                          {b.tag && (
+                            <span className="bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">
+                              {b.tag}
+                            </span>
+                          )}
+                          {b.category_id && (
+                            <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase">
+                              {categories.find(c => c.id === b.category_id)?.name || `Category #${b.category_id}`}
+                            </span>
+                          )}
+                        </div>
                         <h4 className="font-extrabold text-neutral-900 mt-1">{b.title}</h4>
                         {b.subtitle && <p className="text-neutral-500 text-[10px] mt-0.5">{b.subtitle}</p>}
-
                       </div>
                     </td>
                     <td className="p-4 text-center font-mono font-bold text-neutral-600">

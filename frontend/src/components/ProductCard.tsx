@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { type Product } from '../types'
 import { useCart } from '../hooks/useCart'
@@ -56,6 +56,81 @@ const ProductCard = ({ product }: ProductCardProps) => {
     : product.id
   const soldCount = (product.review_count || 0) * 4 + (idNum % 7) * 3 + 2
 
+  // Extract spec tags (e.g. Screen size, RAM, Storage) for TGDĐ spec pills
+  const specTags = useMemo(() => {
+    let specs: any = {}
+    if (product.specs_jsonb) {
+      try {
+        specs = typeof product.specs_jsonb === 'string'
+          ? JSON.parse(product.specs_jsonb)
+          : product.specs_jsonb
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const tags: string[] = []
+    
+    // Look for screen size, CPU/Chipset, RAM, Storage in specs
+    const findSpecValue = (targetKeys: string[]) => {
+      for (const groupName of Object.keys(specs)) {
+        const group = specs[groupName]
+        if (group && typeof group === 'object') {
+          for (const key of Object.keys(group)) {
+            if (targetKeys.some(tk => key.toLowerCase().includes(tk.toLowerCase()))) {
+              const info = group[key]
+              const val = info?.raw_value || info?.value
+              if (val && val !== '-' && val !== 'Không') {
+                return String(val).trim()
+              }
+            }
+          }
+        }
+      }
+      return null
+    }
+
+    // 1. Screen size
+    const screen = findSpecValue(['kích thước màn hình', 'màn hình rộng'])
+    if (screen) tags.push(screen.replace('inches', '"').replace('inch', '"'))
+
+    // 2. CPU/Chip
+    const cpu = findSpecValue(['chipset', 'cpu', 'bộ vi xử lý'])
+    if (cpu) {
+      const parts = cpu.split(' ')
+      const shortened = parts[0] + ' ' + (parts[1] || '')
+      tags.push(shortened.trim())
+    }
+
+    // 3. RAM/ROM (e.g. 8 GB / 256 GB)
+    const ram = findSpecValue(['ram', 'dung lượng ram'])
+    const storage = findSpecValue(['bộ nhớ trong', 'dung lượng lưu trữ'])
+    if (ram && storage) {
+      tags.push(`${ram.replace(/\s*gb/i, '')}/${storage.replace(/\s*gb/i, 'GB')}`)
+    } else if (storage) {
+      tags.push(storage)
+    }
+
+    return tags.slice(0, 3)
+  }, [product.specs_jsonb])
+
+  const marketingBadges = useMemo(() => {
+    const list = []
+    if (product.stock > 0 && product.stock <= 5) {
+      list.push({ text: 'Sắp hết hàng', css: 'bg-amber-500 text-white' })
+    }
+    if (discountPercent >= 20) {
+      list.push({ text: 'Giá rẻ quá', css: 'bg-orange-600 text-white' })
+    }
+    if (displayPrice >= 10000000) {
+      list.push({ text: 'Trả góp 0%', css: 'bg-emerald-600 text-white' })
+    }
+    if (product.review_count >= 15) {
+      list.push({ text: 'Bán chạy', css: 'bg-red-650 text-white' })
+    }
+    return list.slice(0, 2)
+  }, [product.stock, discountPercent, displayPrice, product.review_count])
+
   return (
     <div className="relative flex flex-col h-full bg-white rounded-lg border border-neutral-200 overflow-hidden hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group">
       
@@ -111,12 +186,19 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </svg>
         </button>
 
-        {/* Discount Tag */}
-        {hasDiscount && (
-          <div className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide">
-            -{discountPercent}%
-          </div>
-        )}
+        {/* TGDĐ Marketing Badges Overlay */}
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+          {hasDiscount && (
+            <div className="bg-red-505 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide w-fit shadow-sm">
+              -{discountPercent}%
+            </div>
+          )}
+          {marketingBadges.map((badge, idx) => (
+            <div key={idx} className={`${badge.css} text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide w-fit shadow-sm`}>
+              {badge.text}
+            </div>
+          ))}
+        </div>
 
         {/* Out of Stock Overlay */}
         {product.stock === 0 && (
@@ -144,6 +226,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.name}
           </h3>
         </Link>
+
+        {/* Specification Snippet Pills (TGDĐ style) */}
+        {specTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {specTags.map((tag, idx) => (
+              <span key={idx} className="bg-neutral-100 text-neutral-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border border-neutral-200/50 truncate max-w-[80px]" title={tag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Rating and Sold inline badge */}
         <div className="flex items-center gap-2 mb-3 text-[11px] text-neutral-500">
