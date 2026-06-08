@@ -79,6 +79,10 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
   const secondaryFileInputRef = useRef<HTMLInputElement>(null)
   const [uploadingSecondary, setUploadingSecondary] = useState(false)
 
+  // Category Icon upload helper refs
+  const categoryIconFileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingCategoryIcon, setUploadingCategoryIcon] = useState(false)
+
   // Category & Brand pagination
   const [editCategoryId, setEditCategoryId] = useState<number | null>(null)
   const [editBrandId, setEditBrandId] = useState<number | null>(null)
@@ -101,7 +105,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
     safeBrandPage * brandPageSize
   )
 
-  const [categoryForm, setCategoryForm] = useState({ name: '', parentId: '', sortOrder: 0 })
+  const [categoryForm, setCategoryForm] = useState({ name: '', parentId: '', sortOrder: 0, icon: '' })
   const [brandForm, setBrandForm] = useState({ name: '', logoUrl: '', isActive: true })
 
   // --------------------------------------------------
@@ -310,6 +314,21 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
       return
     }
     setVariantRows(prev => prev.map(row => ({ ...row, weight: val })))
+  }
+
+  const handleCategoryIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return
+    const file = e.target.files[0]
+    try {
+      setUploadingCategoryIcon(true)
+      const res = await uploadAPI.uploadImage(file)
+      setCategoryForm(prev => ({ ...prev, icon: res.url }))
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi tải ảnh lên')
+    } finally {
+      setUploadingCategoryIcon(false)
+      if (categoryIconFileInputRef.current) categoryIconFileInputRef.current.value = ''
+    }
   }
 
   // Variant Image trigger
@@ -591,12 +610,13 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
       name: c.name,
       parentId: c.parent_id ? String(c.parent_id) : '',
       sortOrder: c.sort_order,
+      icon: c.icon || '',
     })
   }
 
   const handleCancelEditCategory = () => {
     setEditCategoryId(null)
-    setCategoryForm({ name: '', parentId: '', sortOrder: 0 })
+    setCategoryForm({ name: '', parentId: '', sortOrder: 0, icon: '' })
   }
 
   const handleCreateOrUpdateCategory = async (e: React.FormEvent) => {
@@ -607,6 +627,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
       const payload = {
         name: categoryForm.name.trim(),
         parent_id: categoryForm.parentId ? Number(categoryForm.parentId) : null,
+        icon: categoryForm.icon.trim() || null,
         sort_order: Number(categoryForm.sortOrder),
       }
 
@@ -700,6 +721,15 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
 
   return (
     <div className="space-y-6">
+      {/* Hidden file input for category icon uploads */}
+      <input
+        type="file"
+        ref={categoryIconFileInputRef}
+        onChange={handleCategoryIconChange}
+        className="hidden"
+        accept="image/*,.svg"
+      />
+
       {/* Hidden file input for variant image uploads */}
       <input
         type="file"
@@ -1578,6 +1608,7 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                 <thead>
                   <tr className="bg-neutral-50 border-b border-neutral-200 text-neutral-450 uppercase font-black text-[9px] tracking-wider">
                     <th className="p-3">ID</th>
+                    <th className="p-3">Icon</th>
                     <th className="p-3">Tên danh mục</th>
                     <th className="p-3">Danh mục cha</th>
                     <th className="p-3 text-center">Sắp xếp</th>
@@ -1590,6 +1621,20 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                     return (
                       <tr key={c.id} className="hover:bg-neutral-50 transition-colors">
                         <td className="p-3 font-mono font-bold text-neutral-500">{c.id}</td>
+                        <td className="p-3">
+                          {c.icon ? (
+                            <img
+                              src={c.icon}
+                              alt={c.name}
+                              className="w-8 h-8 object-contain rounded bg-neutral-50 border border-neutral-200"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder-product.png'
+                              }}
+                            />
+                          ) : (
+                            <span className="text-[10px] text-neutral-400 italic">Không có</span>
+                          )}
+                        </td>
                         <td className="p-3 font-bold text-neutral-850">{c.name}</td>
                         <td className="p-3 text-neutral-500 font-medium">{parent ? parent.name : 'Không có'}</td>
                         <td className="p-3 text-center font-semibold text-neutral-600">{c.sort_order}</td>
@@ -1669,6 +1714,59 @@ export default function AdminCatalogTab({ categories, brands, reloadLookups }: A
                   onChange={(e) => setCategoryForm(p => ({ ...p, name: e.target.value }))}
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-neutral-450 mb-1">Ảnh Icon danh mục</label>
+                {uploadingCategoryIcon ? (
+                  <div className="border border-neutral-250 rounded-lg p-4 flex items-center justify-center gap-2 bg-neutral-50 text-neutral-500 font-bold text-[9px] tracking-wider uppercase">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                    Đang tải ảnh lên...
+                  </div>
+                ) : !categoryForm.icon ? (
+                  <div
+                    onClick={() => categoryIconFileInputRef.current?.click()}
+                    className="group relative cursor-pointer border border-dashed border-neutral-250 hover:border-black rounded-lg p-3 flex items-center gap-3 bg-neutral-50/50 hover:bg-neutral-50 transition-all"
+                  >
+                    <div className="w-8 h-8 rounded bg-neutral-150 flex items-center justify-center text-neutral-600 group-hover:bg-black group-hover:text-white transition-colors">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-neutral-700">Tải ảnh icon lên</p>
+                      <p className="text-[9px] font-semibold text-neutral-400 mt-0.5">Hỗ trợ mọi định dạng ảnh, bao gồm cả SVG</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 border border-neutral-200 rounded-lg p-2.5 bg-neutral-50/50">
+                    <div className="relative w-12 h-12 border border-neutral-250 rounded bg-white overflow-hidden flex items-center justify-center">
+                      <img src={categoryForm.icon} alt="Icon preview" className="w-full h-full object-contain" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-0.5">
+                      <p className="text-[9px] font-mono text-neutral-400 truncate max-w-[180px]">
+                        {categoryForm.icon.split('/').pop()}
+                      </p>
+                      <div className="flex gap-2 items-center mt-1">
+                        <button
+                          type="button"
+                          onClick={() => categoryIconFileInputRef.current?.click()}
+                          className="text-[9px] font-black uppercase tracking-wider text-neutral-700 hover:text-black transition-colors"
+                        >
+                          Thay đổi
+                        </button>
+                        <span className="text-neutral-350 text-[9px]">|</span>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryForm(p => ({ ...p, icon: '' }))}
+                          className="text-[9px] font-black uppercase tracking-wider text-red-500 hover:text-red-700 transition-colors"
+                        >
+                          Xóa ảnh
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

@@ -40,7 +40,7 @@ func (ctl *UploadController) UploadImage(ctx *gin.Context) {
 	}
 
 	ext := strings.ToLower(filepath.Ext(header.Filename))
-	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true}
+	allowed := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true, ".webp": true, ".svg": true}
 	if !allowed[ext] {
 		utils.RespondBadRequest(ctx, fmt.Sprintf("unsupported image format: %s", ext))
 		return

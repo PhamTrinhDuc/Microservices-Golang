@@ -213,7 +213,7 @@ export const productAPI = {
     return res.data
   },
 
-  adminUpdateCategory: async (id: number, payload: { name: string; parent_id?: number | null; sort_order?: number }): Promise<Category> => {
+  adminUpdateCategory: async (id: number, payload: { name: string; parent_id?: number | null; icon?: string | null; sort_order?: number }): Promise<Category> => {
     const res = await api.put<Category>(`/admin/categories/${id}`, payload)
     return res.data
   },

@@ -11,7 +11,7 @@ type Category struct {
 	ID        int     `json:"id" db:"id"`
 	Name      string  `json:"name" db:"name"`
 	ParentID  *int    `json:"parent_id" db:"parent_id"`
-	Icon      *string `json:"icon" db:"icon"`
+	Icon      *string `json:"icon" db:"icon_img_url"`
 	Slug      string  `json:"slug" db:"slug"`
 	SortOrder int     `json:"sort_order" db:"sort_order"`
 	IsDeleted bool    `json:"is_deleted" db:"is_deleted"`

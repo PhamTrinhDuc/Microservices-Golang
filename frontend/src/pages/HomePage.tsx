@@ -165,11 +165,11 @@ const HomePage = () => {
     : []
 
   return (
-    <div className="bg-neutral-50 min-h-screen pb-20 font-sans">
+    <div className="bg-neutral-50 min-h-screen pb-16 font-sans">
       
       {/* TGDĐ Split Hero Section */}
       {slides.length > 0 && (
-        <div className="w-full bg-neutral-100/60 py-6 border-b border-neutral-200/80">
+        <div className="w-full bg-neutral-100/60 py-4 border-b border-neutral-200/80">
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Left 2/3 for Main Banner Slider */}
@@ -228,27 +228,27 @@ const HomePage = () => {
               {/* Right 1/3 for Stacked Promos */}
               <div className="flex flex-col gap-3 h-full justify-between">
                 {/* Promo 1 */}
-                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-indigo-900 via-indigo-950 to-neutral-950 text-white p-5 flex flex-col justify-between group min-h-[145px]">
+                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-indigo-900 via-indigo-950 to-neutral-950 text-white p-4.5 flex flex-col justify-between group min-h-[135px]">
                   <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay group-hover:scale-102 transition-transform duration-500" style={{ backgroundImage: slides[1] ? `url(${slides[1].image_url})` : 'none' }}></div>
                   <div className="relative z-10 space-y-1">
                     <span className="text-[9px] font-black uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded text-indigo-200">Độc quyền online</span>
-                    <h3 className="text-sm font-black mt-2 leading-snug">{slides[1]?.title || 'Sản Phẩm Độc Quyền'}</h3>
+                    <h3 className="text-xs font-black mt-1.5 leading-snug">{slides[1]?.title || 'Sản Phẩm Độc Quyền'}</h3>
                     <p className="text-[10px] text-indigo-200/85 line-clamp-1">{slides[1]?.subtitle || 'Nhập mã giảm cực sâu hôm nay'}</p>
                   </div>
-                  <Link to={slides[1]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-amber-300 hover:text-amber-250 uppercase tracking-wider mt-4 flex items-center gap-1">
+                  <Link to={slides[1]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-amber-300 hover:text-amber-250 uppercase tracking-wider mt-3 flex items-center gap-1">
                     Mua ngay <span className="text-xs">→</span>
                   </Link>
                 </div>
 
                 {/* Promo 2 */}
-                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-amber-600 via-red-650 to-neutral-950 text-white p-5 flex flex-col justify-between group min-h-[145px]">
+                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-amber-600 via-red-650 to-neutral-950 text-white p-4.5 flex flex-col justify-between group min-h-[135px]">
                   <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay group-hover:scale-102 transition-transform duration-500" style={{ backgroundImage: slides[2] ? `url(${slides[2].image_url})` : 'none' }}></div>
                   <div className="relative z-10 space-y-1">
                     <span className="text-[9px] font-black uppercase tracking-wider bg-black/10 px-2 py-0.5 rounded text-amber-100">Hot deal</span>
-                    <h3 className="text-sm font-black mt-2 leading-snug">{slides[2]?.title || 'Deal Sốc Giờ Vàng'}</h3>
+                    <h3 className="text-xs font-black mt-1.5 leading-snug">{slides[2]?.title || 'Deal Sốc Giờ Vàng'}</h3>
                     <p className="text-[10px] text-amber-100/85 line-clamp-1">{slides[2]?.subtitle || 'Số lượng có hạn, săn ngay kẻo lỡ'}</p>
                   </div>
-                  <Link to={slides[2]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-white hover:underline uppercase tracking-wider mt-4 flex items-center gap-1">
+                  <Link to={slides[2]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-white hover:underline uppercase tracking-wider mt-3 flex items-center gap-1">
                     Khám phá <span className="text-xs">→</span>
                   </Link>
                 </div>
@@ -259,102 +259,62 @@ const HomePage = () => {
       )}
 
       {/* Main Grid Content */}
-      <div className="mx-auto max-w-7xl px-4 py-6 space-y-10">
+      <div className="mx-auto max-w-7xl px-4 py-4 space-y-6">
 
         {/* Brand Value & Trust Section (Moved to top below Hero slider) */}
-        <div className="py-2 border-b border-neutral-200/60 pb-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="py-1 border-b border-neutral-200/60 pb-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
                 </svg>
               </div>
               <div className="text-left">
-                <h5 className="text-[11px] font-black uppercase text-neutral-800">Miễn phí vận chuyển</h5>
-                <p className="text-[9px] text-neutral-450 mt-0.5">Mọi hóa đơn toàn quốc từ 299K</p>
+                <h5 className="text-[10px] font-black uppercase text-neutral-800">Miễn phí vận chuyển</h5>
+                <p className="text-[9px] text-neutral-400 mt-0.5">Mọi hóa đơn toàn quốc từ 299K</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
               <div className="text-left">
-                <h5 className="text-[11px] font-black uppercase text-neutral-800">100% Chính hãng</h5>
-                <p className="text-[9px] text-neutral-450 mt-0.5">Bồi hoàn gấp đôi nếu phát hiện giả</p>
+                <h5 className="text-[10px] font-black uppercase text-neutral-800">100% Chính hãng</h5>
+                <p className="text-[9px] text-neutral-400 mt-0.5">Bồi hoàn gấp đôi nếu phát hiện giả</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
               <div className="text-left">
-                <h5 className="text-[11px] font-black uppercase text-neutral-800">Bảo mật thanh toán</h5>
-                <p className="text-[9px] text-neutral-450 mt-0.5">Mã hóa thông tin 24/7 an toàn</p>
+                <h5 className="text-[10px] font-black uppercase text-neutral-800">Bảo mật thanh toán</h5>
+                <p className="text-[9px] text-neutral-400 mt-0.5">Mã hóa thông tin 24/7 an toàn</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
                 </svg>
               </div>
               <div className="text-left">
-                <h5 className="text-[11px] font-black uppercase text-neutral-800">7 ngày đổi trả</h5>
-                <p className="text-[9px] text-neutral-450 mt-0.5">Chính sách đổi trả dễ dàng nhanh chóng</p>
+                <h5 className="text-[10px] font-black uppercase text-neutral-800">7 ngày đổi trả</h5>
+                <p className="text-[9px] text-neutral-400 mt-0.5">Chính sách đổi trả dễ dàng nhanh chóng</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Categories Showcase Grid (TGDĐ style box grid) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[13px] font-black text-neutral-900 tracking-wider uppercase">Danh Mục Phổ Biến</h2>
-            <Link to="/browse" className="text-xs font-bold text-brand-600 hover:text-brand-885 transition-colors uppercase">Xem tất cả</Link>
-          </div>
-          
-          <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3">
-            {catalogLoading ? (
-              [...Array(8)].map((_, i) => (
-                <div key={i} className="flex flex-col items-center gap-2 bg-white border border-neutral-200 rounded-xl p-4 shrink-0 animate-pulse h-24">
-                  <div className="w-10 h-10 rounded-full bg-neutral-200"></div>
-                  <div className="w-12 h-3 bg-neutral-200 rounded mt-1"></div>
-                </div>
-              ))
-            ) : (
-              categories.map((category) => (
-                <Link
-                  key={category.id}
-                  to={`/browse?category=${category.id}`}
-                  className="flex flex-col items-center gap-2 text-center p-3 bg-white border border-neutral-200/80 rounded-xl hover:border-brand-500 hover:shadow-premium-soft hover:-translate-y-0.5 transition-all duration-300 group"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center group-hover:scale-108 transition-transform">
-                    {category.icon ? (
-                      <img
-                        src={category.icon}
-                        alt={category.name}
-                        className="w-full h-full object-contain mix-blend-multiply"
-                      />
-                    ) : (
-                      <span className="font-black text-sm text-neutral-400 group-hover:text-brand-500 transition-colors">{category.name[0]}</span>
-                    )}
-                  </div>
-                  <span className="text-[10px] font-black text-neutral-700 group-hover:text-black transition-colors leading-tight line-clamp-1">
-                    {category.name}
-                  </span>
-                </Link>
-              ))
-            )}
-          </div>
-        </div>
+
 
         {/* Flash Sale Countdown Section with Neon Highlight Bar */}
         {flashSaleProducts.length > 0 && (

@@ -118,7 +118,7 @@ CREATE TABLE category (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     parent_id INTEGER REFERENCES category(id) ON DELETE SET NULL,
-    icon VARCHAR(255),
+    icon_img_url TEXT,
     slug VARCHAR(255) UNIQUE NOT NULL,
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE

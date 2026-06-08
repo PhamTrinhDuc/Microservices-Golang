@@ -25,7 +25,7 @@ func NewCatalogRepository(db *pgxpool.Pool) *CatalogRepository {
 
 func (r *CatalogRepository) CreateCategory(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
-		INSERT INTO category (name, parent_id, icon, slug, sort_order, is_deleted)
+		INSERT INTO category (name, parent_id, icon_img_url, slug, sort_order, is_deleted)
 		VALUES ($1, $2, $3, $4, $5, false)
 		RETURNING id`
 
@@ -50,7 +50,7 @@ func (r *CatalogRepository) CreateCategory(ctx context.Context, cat *domain.Cate
 
 func (r *CatalogRepository) ListCategories(ctx context.Context) ([]*domain.Category, error) {
 	query := `
-		SELECT id, name, parent_id, icon, slug, sort_order, is_deleted
+		SELECT id, name, parent_id, icon_img_url, slug, sort_order, is_deleted
 		FROM category
 		WHERE is_deleted = false
 		ORDER BY sort_order ASC, name ASC`
@@ -89,7 +89,7 @@ func (r *CatalogRepository) ListCategories(ctx context.Context) ([]*domain.Categ
 func (r *CatalogRepository) GetCategoryByID(ctx context.Context, id int) (*domain.Category, error) {
 	cat := &domain.Category{}
 	query := `
-		SELECT id, name, parent_id, icon, slug, sort_order, is_deleted
+		SELECT id, name, parent_id, icon_img_url, slug, sort_order, is_deleted
 		FROM category
 		WHERE id = $1 AND is_deleted = false`
 
@@ -116,7 +116,7 @@ func (r *CatalogRepository) GetCategoryByID(ctx context.Context, id int) (*domai
 func (r *CatalogRepository) UpdateCategory(ctx context.Context, cat *domain.Category) (*domain.Category, error) {
 	query := `
 		UPDATE category
-		SET name = $1, parent_id = $2, icon = $3, slug = $4, sort_order = $5
+		SET name = $1, parent_id = $2, icon_img_url = $3, slug = $4, sort_order = $5
 		WHERE id = $6 AND is_deleted = false`
 
 	tag, err := r.db.Exec(ctx, query,

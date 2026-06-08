@@ -7,6 +7,7 @@ import { productAPI } from '../services/productAPI'
 import { bannerAPI } from '../services/bannerAPI'
 import { useCart } from '../hooks/useCart'
 import type { Product, Banner } from '../types'
+import CategoryNavStrip from '../components/CategoryNavStrip'
 
 const brandLogos: { [key: string]: string } = {
   apple: ' Apple',
@@ -171,6 +172,26 @@ const BrowsePage = () => {
         if (key !== 'page') {
           next.delete('page')
         }
+        return next
+      })
+    })
+  }
+
+  const updateCategoryAndBrand = (categoryId: string | null, brandId: string | null) => {
+    startTransition(() => {
+      setSearchParams(prev => {
+        const next = new URLSearchParams(prev)
+        if (categoryId === null) {
+          next.delete('category')
+        } else {
+          next.set('category', categoryId)
+        }
+        if (brandId === null) {
+          next.delete('brand')
+        } else {
+          next.set('brand', brandId)
+        }
+        next.delete('page')
         return next
       })
     })
@@ -468,10 +489,10 @@ const BrowsePage = () => {
   }, [pagination.total_pages, activePage])
 
   return (
-    <div className="bg-neutral-50 min-h-screen py-8 font-sans">
+    <div className="bg-neutral-50 min-h-screen py-4 font-sans">
       <div className="mx-auto max-w-7xl px-4">
         {/* Breadcrumbs */}
-        <nav className="mb-6 flex items-center gap-1.5 text-xs text-neutral-400 font-medium">
+        <nav className="mb-3 flex items-center gap-1.5 text-xs text-neutral-400 font-medium">
           <Link to="/" className="hover:text-black transition-colors">
             Trang chủ
           </Link>
@@ -479,58 +500,22 @@ const BrowsePage = () => {
           <span className="text-neutral-800 font-semibold">Tất cả sản phẩm</span>
         </nav>
 
-        {/* Category Quick Selector Strip */}
-        {!catalogLoading && categories.length > 0 && (
-          <div className="mb-6 bg-white border border-neutral-200/80 rounded-xl p-4 shadow-sm">
-            <h2 className="text-[10px] font-black uppercase text-neutral-400 tracking-wider mb-3">
-              Danh mục sản phẩm
-            </h2>
-            <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
-              {/* "Tất cả" Category Option */}
-              <button
-                onClick={() => updateParam('category', null)}
-                className={`flex-shrink-0 px-4.5 py-2.5 rounded-lg border text-xs font-black uppercase transition-all ${
-                  !categoryIdParam
-                    ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
-                    : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
-                }`}
-              >
-                🏢 Tất cả danh mục
-              </button>
-              {categories.map((c) => {
-                const isActive = categoryIdParam === String(c.id)
-                // Map category names to icons/emojis
-                const getCategoryIcon = (name: string) => {
-                  const lowercaseName = name.toLowerCase()
-                  if (lowercaseName.includes('điện thoại')) return '📱'
-                  if (lowercaseName.includes('laptop')) return '💻'
-                  if (lowercaseName.includes('tai nghe')) return '🎧'
-                  if (lowercaseName.includes('loa')) return '🔊'
-                  if (lowercaseName.includes('phụ kiện')) return '🔌'
-                  return '📦'
-                }
-                const icon = getCategoryIcon(c.name)
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => updateParam('category', isActive ? null : String(c.id))}
-                    className={`flex-shrink-0 px-5 py-2.5 rounded-lg border text-xs font-black uppercase tracking-wider transition-all duration-200 ${
-                      isActive
-                        ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
-                        : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 hover:-translate-y-0.5'
-                    }`}
-                  >
-                    {icon} {c.name}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        {/* Category Quick Selector Strip (TGDD Yellow Style) */}
+        <CategoryNavStrip
+          categories={categories}
+          brands={brands}
+          activeCategoryId={categoryIdParam}
+          activeBrandId={brandIdParam}
+          onSelectCategory={(catId) => updateParam('category', catId)}
+          onSelectBrand={(bId) => updateParam('brand', bId)}
+          onSelectCategoryAndBrand={updateCategoryAndBrand}
+          loading={catalogLoading}
+          className="mb-4"
+        />
 
         {/* Category Banner Slider */}
         {categoryBanners.length > 0 && (
-          <div className="mb-6 relative rounded-2xl overflow-hidden shadow-md group h-[200px] sm:h-[300px] bg-neutral-200">
+          <div className="mb-4 relative rounded-2xl overflow-hidden shadow-md group h-[200px] sm:h-[300px] bg-neutral-200">
             <Link to={categoryBanners[currentSlide]?.link_url || '/browse'} className="w-full h-full block">
               <img
                 src={categoryBanners[currentSlide]?.image_url}
@@ -588,7 +573,7 @@ const BrowsePage = () => {
         )}
 
         {/* Header Title with query results */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-black text-neutral-900 tracking-tight uppercase">
               {selectedCategory ? selectedCategory.name : 'Khám phá sản phẩm'}
@@ -645,21 +630,18 @@ const BrowsePage = () => {
 
         {/* Brand Logo Row */}
         {!catalogLoading && brands.length > 0 && (
-          <div className="mb-6 bg-white border border-neutral-200/80 rounded-xl p-4 shadow-sm">
-            <h2 className="text-[10px] font-black uppercase text-neutral-400 tracking-wider mb-3">
-              Thương hiệu nổi bật
-            </h2>
-            <div className="flex gap-2.5 overflow-x-auto pb-1.5 scrollbar-thin">
+          <div className="mb-4">
+            <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none">
               {/* "Tất cả" Brand Option */}
               <button
                 onClick={() => updateParam('brand', null)}
-                className={`flex-shrink-0 px-4.5 py-2.5 rounded-lg border text-xs font-black uppercase transition-all ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full border text-xs font-bold uppercase transition-all ${
                   !brandIdParam
-                    ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                    ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
                     : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
                 }`}
               >
-                Tất cả
+                Tất cả thương hiệu
               </button>
               {brands.map((b) => {
                 const isActive = brandIdParam === String(b.id)
@@ -669,9 +651,9 @@ const BrowsePage = () => {
                   <button
                     key={b.id}
                     onClick={() => updateParam('brand', isActive ? null : String(b.id))}
-                    className={`flex-shrink-0 px-5 py-2.5 rounded-lg border text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                    className={`flex-shrink-0 px-4 py-2 rounded-full border text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
                       isActive
-                        ? 'border-brand-600 bg-brand-50/40 text-brand-700 shadow-sm ring-1 ring-brand-100'
+                        ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
                         : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 hover:-translate-y-0.5'
                     }`}
                   >
@@ -684,7 +666,7 @@ const BrowsePage = () => {
         )}
 
         {/* Horizontal Dropdown Filter Bar */}
-        <div className="relative z-40 mb-6 flex flex-wrap items-center gap-2.5">
+        <div className="relative z-40 mb-4 flex flex-wrap items-center gap-2.5">
           {/* Funnel Icon "Tất cả bộ lọc" Button */}
           <button
             onClick={openFilterModal}

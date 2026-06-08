@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { useWishlist } from '../hooks/useWishlist'
+import { useCatalog } from '../hooks/useCatalog'
+import CategoryNavStrip from './CategoryNavStrip'
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth()
@@ -12,6 +14,29 @@ const Header = () => {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+
+  const { categories, brands, loading: catalogLoading } = useCatalog()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeCategoryId = searchParams.get('category')
+  const activeBrandId = searchParams.get('brand')
+
+  const updateCategoryAndBrand = (categoryId: string | null, brandId: string | null) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev)
+      if (categoryId === null) {
+        next.delete('category')
+      } else {
+        next.set('category', categoryId)
+      }
+      if (brandId === null) {
+        next.delete('brand')
+      } else {
+        next.set('brand', brandId)
+      }
+      next.delete('page')
+      return next
+    })
+  }
 
   const handleLogout = async () => {
     await logout()
@@ -199,19 +224,20 @@ const Header = () => {
       </div>
 
       {/* Sub-navbar / Category Sub-navigation */}
-      <div className="w-full bg-white border-b border-neutral-200 py-2">
-        <div className="mx-auto max-w-7xl px-4 flex items-center justify-between">
-          <nav className="flex items-center gap-6 text-xs font-semibold text-neutral-600">
-            <Link to="/" className="hover:text-black transition-colors relative py-1">Trang chủ</Link>
-            <Link to="/browse" className="hover:text-black transition-colors relative py-1">Tất cả sản phẩm</Link>
-            <Link to="/browse?sort=featured" className="hover:text-black transition-colors relative py-1 flex items-center gap-1">
-              <span>Nổi bật</span>
-              <span className="bg-red-100 text-red-650 text-[8px] font-extrabold px-1 rounded-sm uppercase tracking-wide">Hot</span>
-            </Link>
-            <Link to="/browse?sort=popular" className="hover:text-black transition-colors relative py-1">Phổ biến</Link>
-            <Link to="/browse?sort=sale" className="hover:text-black transition-colors relative py-1 text-red-500 hover:text-red-650 font-bold">Khuyến mãi cực sốc</Link>
-          </nav>
-          <div className="text-xs text-neutral-500 font-medium hidden md:block">
+      <div className="w-full bg-white border-b border-neutral-200 py-1.5">
+        <div className="mx-auto max-w-7xl px-4 flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <CategoryNavStrip
+              categories={categories}
+              brands={brands}
+              activeCategoryId={activeCategoryId}
+              activeBrandId={activeBrandId}
+              onSelectCategoryAndBrand={updateCategoryAndBrand}
+              loading={catalogLoading}
+              variant="header"
+            />
+          </div>
+          <div className="text-xs text-neutral-500 font-medium hidden md:block shrink-0">
             Miễn phí vận chuyển từ đơn hàng <span className="font-bold text-neutral-850">299kđ</span>
           </div>
         </div>
