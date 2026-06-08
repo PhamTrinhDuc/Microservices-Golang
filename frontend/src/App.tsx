@@ -16,6 +16,7 @@ import OrderSuccessPage from './pages/OrderSuccessPage'
 import AdminDashboardPage from './pages/AdminDashboardPage'
 import ProfilePage from './pages/ProfilePage'
 import WishlistPage from './pages/WishlistPage'
+import PolicyPage from './pages/PolicyPage'
 import { useCart } from './hooks/useCart'
 import { useAuth } from './hooks/useAuth'
 import { useWishlist } from './hooks/useWishlist'
@@ -133,6 +134,14 @@ const App = () => {
               element={
                 <ProtectedRoute adminOnly={true}>
                   <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/policies/:slug"
+              element={
+                <ProtectedRoute>
+                  <PolicyPage />
                 </ProtectedRoute>
               }
             />

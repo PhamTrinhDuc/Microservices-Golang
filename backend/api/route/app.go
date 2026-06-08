@@ -254,5 +254,23 @@ func SetupAnalyticsRoutes(router *gin.RouterGroup, ac *controller.AnalyticsContr
 	}
 }
 
+// SetupPolicyRoutes sets up public and admin policy management routing
+func SetupPolicyRoutes(router *gin.RouterGroup, pc *controller.PolicyController, authMiddleware *middleware.AuthMiddleware) {
+	// Public routes
+	router.GET("/policies", pc.List)
+	router.GET("/policies/:slug", pc.GetBySlug)
+	router.POST("/policies/chat", pc.ChatbotSearch)
+
+	// Admin routes
+	admin := router.Group("/admin")
+	admin.Use(authMiddleware.Handler(), authMiddleware.RequireRole("admin"))
+	{
+		admin.POST("/policies", pc.Create)
+		admin.PUT("/policies/:id", pc.Update)
+		admin.DELETE("/policies/:id", pc.Delete)
+	}
+}
+
+
 
 

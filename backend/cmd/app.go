@@ -94,6 +94,7 @@ func main() {
 	route.SetupLocationRoutes(v1, locationCtl)
 	route.SetupWishlistRoutes(v1, container.WishlistCtl, authMiddleware)
 	route.SetupAnalyticsRoutes(v1, container.AnalyticsCtl, authMiddleware)
+	route.SetupPolicyRoutes(v1, container.PolicyCtl, authMiddleware)
 
 	// 5. Start Server
 	serverPort := utils.GetEnvString("BACKEND_PORT", defaultPort)

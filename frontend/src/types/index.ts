@@ -522,3 +522,26 @@ export interface AnalyticsSummary {
   status_distribution: StatusDistribution[]
 }
 
+export interface Policy {
+  id: string
+  title: string
+  slug: string
+  content: string
+  category: string
+  is_active: boolean
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PolicySearchResult {
+  chunk_id: string
+  policy_id: string
+  policy_title: string
+  policy_slug: string
+  policy_category: string
+  chunk_index: number
+  content: string
+  score: number
+}
+
+

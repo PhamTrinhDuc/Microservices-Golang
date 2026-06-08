@@ -12,8 +12,9 @@ import AdminUsersTab from '../components/admin/AdminUsersTab'
 import AdminBannersTab from '../components/admin/AdminBannersTab'
 import AdminFlashSaleTab from '../components/admin/AdminFlashSaleTab'
 import AdminAnalyticsTab from '../components/admin/AdminAnalyticsTab'
+import AdminPoliciesTab from '../components/admin/AdminPoliciesTab'
 
-type ActiveTab = 'analytics' | 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners' | 'flashsales'
+type ActiveTab = 'analytics' | 'orders' | 'vouchers' | 'inventory' | 'catalog' | 'users' | 'banners' | 'flashsales' | 'policies'
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('analytics')
@@ -59,6 +60,7 @@ export default function AdminDashboardPage() {
               { id: 'inventory', label: 'Kho & Cửa hàng', desc: 'Kho hàng, nhập kho, nhà cc' },
               { id: 'catalog', label: 'Danh mục & Sản phẩm', desc: 'Thêm mới catalog sản phẩm' },
               { id: 'banners', label: 'Banners trang chủ', desc: 'Quản lý ảnh slider trang chủ' },
+              { id: 'policies', label: 'Chính sách & RAG KB', desc: 'Quản lý chính sách cửa hàng' },
               { id: 'users', label: 'Thành viên', desc: 'Khóa / mở khóa tài khoản' },
             ].map((tab) => (
               <button
@@ -99,6 +101,7 @@ export default function AdminDashboardPage() {
         )}
         {activeTab === 'banners' && <AdminBannersTab />}
         {activeTab === 'users' && <AdminUsersTab />}
+        {activeTab === 'policies' && <AdminPoliciesTab />}
       </main>
     </div>
   )
