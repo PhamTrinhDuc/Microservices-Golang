@@ -16,28 +16,25 @@ $$ SELECT public.unaccent($1) $$;
 -- ============================================================
 
 
-CREATE TABLE IF NOT EXISTS documents (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    namespace    TEXT        NOT NULL DEFAULT '',
-    filename     TEXT        NOT NULL,
-    format       TEXT        NOT NULL,
-    status       TEXT        NOT NULL DEFAULT 'pending',
-    error        TEXT,
-    chunk_count  INTEGER     NOT NULL DEFAULT 0,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS policies (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title       TEXT        NOT NULL,
+    slug        TEXT        NOT NULL UNIQUE,
+    content     TEXT        NOT NULL,
+    category    TEXT        NOT NULL,
+    is_active   BOOLEAN     NOT NULL DEFAULT true,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS chunks (
+CREATE TABLE IF NOT EXISTS policy_chunks (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    document_id   UUID        NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    namespace     TEXT        NOT NULL DEFAULT '',
+    policy_id     UUID        NOT NULL REFERENCES policies(id) ON DELETE CASCADE,
     chunk_index   INTEGER     NOT NULL,
     content       TEXT        NOT NULL,
     embedding     vector(1024),
-    metadata      JSONB       NOT NULL DEFAULT '{}',
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-)
+);
 
 
 CREATE TABLE IF NOT EXISTS memory_entries (
@@ -474,25 +471,18 @@ CREATE INDEX IF NOT EXISTS idx_wishlist_variant ON wishlist_items(variant_id);
 -- ============================================================
 
 -- Vector Index (HNSW)
-CREATE INDEX idx_chunk_embedding 
-    ON chunks 
+CREATE INDEX idx_policy_chunk_embedding 
+    ON policy_chunks 
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 128); -- Tăng lên 128 để RAG chính xác hơn
 
--- Filter Index for chunks and documents
-CREATE INDEX IF NOT EXISTS chunks_namespace_idx ON chunks (namespace);
-CREATE INDEX IF NOT EXISTS idx_chunk_metadata ON chunks(metadata);
-
-CREATE INDEX IF NOT EXISTS documents_namespace_idx ON documents (namespace)
-CREATE INDEX IF NOT EXISTS documents_namespace_hash_idx ON documents (namespace, file_hash) WHERE file_hash IS NOT NULL;
-
 -- BM25 Index (ParadeDB)
-CREATE INDEX chunk_search_bm25_index ON chunks
+CREATE INDEX policy_chunk_search_bm25_index ON policy_chunks
 USING bm25 (id, content)
 WITH (
     key_field = 'id',
     text_fields = '{
-        "content": {"tokenizer": {"type": "icu"}},
+        "content": {"tokenizer": {"type": "icu"}}
     }'
 );
 

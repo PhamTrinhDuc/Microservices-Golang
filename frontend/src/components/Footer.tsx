@@ -85,10 +85,10 @@ const Footer = () => {
                 <a href="#" className="hover:text-white transition-colors">Liên hệ chúng tôi</a>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">Chính sách vận chuyển</a>
+                <Link to="/policies/chinh-sach-van-chuyen" className="hover:text-white transition-colors">Chính sách vận chuyển</Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">Đổi trả & hoàn tiền</a>
+                <Link to="/policies/chinh-sach-doi-tra" className="hover:text-white transition-colors">Đổi trả & hoàn tiền</Link>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition-colors">Câu hỏi thường gặp</a>
@@ -120,8 +120,8 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-4 text-[11px] text-neutral-550">
           <p>© {new Date().getFullYear()} BeliBeli.com. Tất cả quyền được bảo lưu.</p>
           <div className="flex gap-6 uppercase font-bold tracking-wider">
-            <a href="#" className="hover:text-white transition-colors">Điều khoản dịch vụ</a>
-            <a href="#" className="hover:text-white transition-colors">Chính sách bảo mật</a>
+            <Link to="/policies/dieu-khoan-dich-vu" className="hover:text-white transition-colors">Điều khoản dịch vụ</Link>
+            <Link to="/policies/chinh-sach-bao-mat" className="hover:text-white transition-colors">Chính sách bảo mật</Link>
           </div>
         </div>
       </div>
