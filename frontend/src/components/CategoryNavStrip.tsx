@@ -307,12 +307,12 @@ const CategoryNavStrip = ({
 
   const isHeader = variant === 'header'
   return (
-    <div className={`w-full relative z-40 ${
+    <div className={`w-full ${
       isHeader 
-        ? 'bg-transparent py-1' 
+        ? 'bg-transparent' 
         : 'bg-white border border-neutral-200/75 rounded-xl px-3 sm:px-4 py-2 shadow-sm'
     } ${className}`}>
-      <div className="flex gap-2 sm:gap-2.5 md:gap-3 overflow-x-auto pb-1.5 pt-0.5 scrollbar-none items-center justify-start">
+      <div className="flex gap-1 sm:gap-1.5 md:gap-2 overflow-x-auto scrollbar-none items-center justify-start py-1" style={{overflowY: 'visible'}}>
         {/* "Tất cả" option (only visible on browse page or customizable) */}
         {isBrowsePage && (
           <button

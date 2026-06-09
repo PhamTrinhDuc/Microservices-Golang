@@ -7,7 +7,7 @@ import { productAPI } from '../services/productAPI'
 import { bannerAPI } from '../services/bannerAPI'
 import { useCart } from '../hooks/useCart'
 import type { Product, Banner } from '../types'
-import CategoryNavStrip from '../components/CategoryNavStrip'
+
 
 const brandLogos: { [key: string]: string } = {
   apple: ' Apple',
@@ -314,6 +314,14 @@ const BrowsePage = () => {
     setPriceRange([priceLimits.min, priceLimits.max])
   }, [priceLimits])
 
+  // Derive brands that actually appear in the loaded products for this category
+  const availableBrands = useMemo(() => {
+    if (!products.length) return []
+    const brandIdSet = new Set<number>()
+    products.forEach(p => { if (p.brand?.id) brandIdSet.add(p.brand.id) })
+    return brands.filter(b => brandIdSet.has(b.id))
+  }, [products, brands])
+
 
   // Client side filtration
   const filteredProducts = useMemo(() => {
@@ -337,6 +345,12 @@ const BrowsePage = () => {
 
       for (const [specKey, values] of Object.entries(selectedSpecs)) {
         if (!values || values.length === 0) continue
+
+        // Special key for brand filtering from the modal
+        if (specKey === '__brand__') {
+          if (!values.includes(String(product.brand?.id))) return false
+          continue
+        }
 
         let specs: any = {}
         if (product.specs_jsonb) {
@@ -392,6 +406,12 @@ const BrowsePage = () => {
       // Specs Check
       for (const [specKey, values] of Object.entries(tempSelectedSpecs)) {
         if (!values || values.length === 0) continue
+
+        // Special key for brand filtering
+        if (specKey === '__brand__') {
+          if (!values.includes(String(product.brand?.id))) return false
+          continue
+        }
 
         let specs: any = {}
         if (product.specs_jsonb) {
@@ -500,18 +520,7 @@ const BrowsePage = () => {
           <span className="text-neutral-800 font-semibold">Tất cả sản phẩm</span>
         </nav>
 
-        {/* Category Quick Selector Strip (TGDD Yellow Style) */}
-        <CategoryNavStrip
-          categories={categories}
-          brands={brands}
-          activeCategoryId={categoryIdParam}
-          activeBrandId={brandIdParam}
-          onSelectCategory={(catId) => updateParam('category', catId)}
-          onSelectBrand={(bId) => updateParam('brand', bId)}
-          onSelectCategoryAndBrand={updateCategoryAndBrand}
-          loading={catalogLoading}
-          className="mb-4"
-        />
+
 
         {/* Category Banner Slider */}
         {categoryBanners.length > 0 && (
@@ -628,8 +637,8 @@ const BrowsePage = () => {
           <div className="fixed inset-0 z-35 bg-transparent" onClick={() => setOpenDropdown(null)} />
         )}
 
-        {/* Brand Logo Row */}
-        {!catalogLoading && brands.length > 0 && (
+        {/* Brand Logo Row — only shows brands present in current product listing */}
+        {!catalogLoading && availableBrands.length > 1 && (
           <div className="mb-4">
             <div className="flex gap-2 overflow-x-auto pb-1.5 scrollbar-none">
               {/* "Tất cả" Brand Option */}
@@ -641,11 +650,10 @@ const BrowsePage = () => {
                     : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-black'
                 }`}
               >
-                Tất cả thương hiệu
+                Tất cả
               </button>
-              {brands.map((b) => {
+              {availableBrands.map((b) => {
                 const isActive = brandIdParam === String(b.id)
-                // Look up custom styled brand logo text
                 const logoText = brandLogos[b.name.toLowerCase()] || b.name
                 return (
                   <button
@@ -965,24 +973,47 @@ const BrowsePage = () => {
               </span>
             )}
             {Object.entries(selectedSpecs).map(([key, values]) =>
-              values.map((v) => (
-                <span key={`${key}-${v}`} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
-                  {key}: {v}
-                  <button
-                    onClick={() => {
-                      setSelectedSpecs(prev => {
-                        const list = prev[key].filter(item => item !== v)
-                        const next = { ...prev, [key]: list }
-                        if (list.length === 0) delete next[key]
-                        return next
-                      })
-                    }}
-                    className="hover:text-red-500 text-xs font-black"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))
+              values.map((v) => {
+                if (key === '__brand__') {
+                  const brand = brands.find(b => String(b.id) === v)
+                  return (
+                    <span key={`${key}-${v}`} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                      Hãng: {brand?.name || v}
+                      <button
+                        onClick={() => {
+                          setSelectedSpecs(prev => {
+                            const list = prev[key].filter(item => item !== v)
+                            const next = { ...prev, [key]: list }
+                            if (list.length === 0) delete next[key]
+                            return next
+                          })
+                        }}
+                        className="hover:text-red-500 text-xs font-black"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  )
+                }
+                return (
+                  <span key={`${key}-${v}`} className="inline-flex items-center gap-1 bg-white text-neutral-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-neutral-200 shadow-sm">
+                    {key}: {v}
+                    <button
+                      onClick={() => {
+                        setSelectedSpecs(prev => {
+                          const list = prev[key].filter(item => item !== v)
+                          const next = { ...prev, [key]: list }
+                          if (list.length === 0) delete next[key]
+                          return next
+                        })
+                      }}
+                      className="hover:text-red-500 text-xs font-black"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )
+              })
             )}
 
             <button
@@ -1200,27 +1231,34 @@ const BrowsePage = () => {
 
           </div>
 
-        {/* TGDĐ-Style Advanced Filter Modal */}
+        {/* Redesigned Clean Filter Modal */}
         {isFilterModalOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl animate-fade-in-up">
+          <div
+            className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-[2px] flex items-end sm:items-center justify-center"
+            onClick={(e) => { if (e.target === e.currentTarget) setIsFilterModalOpen(false) }}
+          >
+            <div className="bg-white w-full sm:w-[480px] sm:rounded-2xl rounded-t-2xl max-h-[90vh] flex flex-col shadow-2xl animate-fade-in-up">
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-5 border-b border-neutral-150">
-                <h2 className="text-sm font-black uppercase text-neutral-800 tracking-wider">Tất cả bộ lọc</h2>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-150">
+                <div>
+                  <h2 className="text-base font-black text-neutral-900">Bộ lọc</h2>
+                  <p className="text-[11px] text-neutral-400 mt-0.5">{tempFilteredProductsCount} sản phẩm phù hợp</p>
+                </div>
                 <button
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-lg border border-neutral-250 hover:bg-neutral-100 font-bold text-xs transition-colors"
+                  className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 flex items-center justify-center font-bold text-neutral-600 transition-colors text-sm"
                 >
-                  ✕ Đóng
+                  ✕
                 </button>
               </div>
 
-              {/* Modal Body */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-xs scrollbar-thin">
+              {/* Modal Body — scrollable */}
+              <div className="flex-1 overflow-y-auto divide-y divide-neutral-100">
+
                 {/* 1. Price Section */}
-                <div className="space-y-3">
-                  <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">Khoảng giá</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="px-5 py-4">
+                  <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Khoảng giá</h3>
+                  <div className="grid grid-cols-2 gap-2">
                     {priceOptions.map((opt) => {
                       const isSelected = tempSelectedPriceRanges.includes(opt.label)
                       return (
@@ -1234,10 +1272,10 @@ const BrowsePage = () => {
                                 : [...prev, opt.label]
                             )
                           }}
-                          className={`px-3 py-2.5 rounded-lg border font-bold text-center transition-all ${
+                          className={`px-3 py-2.5 rounded-xl border text-xs font-bold text-center transition-all ${
                             isSelected
-                              ? 'border-brand-600 bg-brand-50/50 text-brand-700 shadow-sm'
-                              : 'border-neutral-250 bg-white text-neutral-600 hover:border-neutral-350'
+                              ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
+                              : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-350 hover:bg-white'
                           }`}
                         >
                           {opt.label}
@@ -1245,32 +1283,53 @@ const BrowsePage = () => {
                       )
                     })}
                   </div>
-
-                  {tempSelectedPriceRanges.length === 0 && priceLimits.max > priceLimits.min && (
-                    <div className="space-y-2 pt-2">
-                      <span className="text-[10px] font-black text-neutral-455 uppercase tracking-wider">Hoặc kéo khoảng giá</span>
-                      <input
-                        type="range"
-                        min={priceLimits.min}
-                        max={priceLimits.max}
-                        value={tempPriceRange[1]}
-                        onChange={(e) => setTempPriceRange([tempPriceRange[0], parseInt(e.target.value)])}
-                        className="w-full h-1 bg-neutral-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
-                      />
-                      <div className="flex items-center justify-between text-[9px] font-black text-neutral-500">
-                        <span>{priceLimits.min.toLocaleString('vi-VN')} đ</span>
-                        <span>{tempPriceRange[1].toLocaleString('vi-VN')} đ</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                {/* 2. Specs Sections */}
-                {filterSpecsList.map((spec) => (
-                  <div key={spec.key} className="space-y-3 pt-4 border-t border-neutral-100">
-                    <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">{spec.key}</h3>
+                {/* 2. Brand Section (from available brands only) */}
+                {availableBrands.length > 1 && (
+                  <div className="px-5 py-4">
+                    <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">Thương hiệu</h3>
                     <div className="flex flex-wrap gap-2">
-                      {spec.options.map((opt) => {
+                      {availableBrands.map((b) => {
+                        const isSelected = tempSelectedSpecs['__brand__']?.includes(String(b.id)) || false
+                        return (
+                          <button
+                            key={b.id}
+                            type="button"
+                            onClick={() => {
+                              setTempSelectedSpecs(prev => {
+                                const currentList = prev['__brand__'] || []
+                                const nextList = currentList.includes(String(b.id))
+                                  ? currentList.filter(v => v !== String(b.id))
+                                  : [...currentList, String(b.id)]
+                                const next = { ...prev, ['__brand__']: nextList }
+                                if (nextList.length === 0) delete next['__brand__']
+                                return next
+                              })
+                            }}
+                            className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
+                                : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-350 hover:bg-white'
+                            }`}
+                          >
+                            {b.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Spec Sections — only key specs with short, meaningful values */}
+                {filterSpecsList
+                  .filter(spec => spec.options.every(o => o.length <= 30))
+                  .slice(0, 5)
+                  .map((spec) => (
+                  <div key={spec.key} className="px-5 py-4">
+                    <h3 className="text-xs font-black text-neutral-800 uppercase tracking-wider mb-3">{spec.key}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {spec.options.slice(0, 8).map((opt) => {
                         const isSelected = tempSelectedSpecs[spec.key]?.includes(opt) || false
                         return (
                           <button
@@ -1283,16 +1342,14 @@ const BrowsePage = () => {
                                   ? currentList.filter(v => v !== opt)
                                   : [...currentList, opt]
                                 const next = { ...prev, [spec.key]: nextList }
-                                if (nextList.length === 0) {
-                                  delete next[spec.key]
-                                }
+                                if (nextList.length === 0) delete next[spec.key]
                                 return next
                               })
                             }}
-                            className={`px-3.5 py-2 rounded-lg border font-bold transition-all ${
+                            className={`px-3.5 py-2 rounded-xl border text-xs font-bold transition-all ${
                               isSelected
-                                ? 'border-brand-600 bg-brand-50/50 text-brand-700 shadow-sm'
-                                : 'border-neutral-250 bg-white text-neutral-600 hover:border-neutral-350'
+                                ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
+                                : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:border-neutral-350 hover:bg-white'
                             }`}
                           >
                             {opt}
@@ -1302,22 +1359,45 @@ const BrowsePage = () => {
                     </div>
                   </div>
                 ))}
+
+                {/* 4. Stock toggle */}
+                <div className="px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => setInStockOnly(v => !v)}
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-xs font-bold transition-all ${
+                      inStockOnly
+                        ? 'border-brand-600 bg-brand-600 text-white'
+                        : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-white'
+                    }`}
+                  >
+                    <span>Chỉ hiển thị còn hàng</span>
+                    <span className={`w-10 h-6 rounded-full relative transition-colors ${
+                      inStockOnly ? 'bg-white/30' : 'bg-neutral-300'
+                    }`}>
+                      <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                        inStockOnly ? 'left-5' : 'left-1'
+                      }`} />
+                    </span>
+                  </button>
+                </div>
+
               </div>
 
               {/* Modal Footer */}
-              <div className="p-5 border-t border-neutral-150 bg-neutral-50 flex items-center justify-between rounded-b-2xl">
+              <div className="px-5 py-4 border-t border-neutral-150 flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setTempSelectedSpecs({})
                     setTempSelectedPriceRanges([])
                     setTempPriceRange([priceLimits.min, priceLimits.max])
+                    setInStockOnly(false)
                   }}
-                  className="text-xs font-bold text-red-500 hover:text-red-750 uppercase tracking-wider transition-colors"
+                  className="flex-1 py-3 rounded-xl border border-neutral-300 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors"
                 >
-                  Bỏ chọn tất cả
+                  Xóa bộ lọc
                 </button>
-                
                 <button
                   type="button"
                   onClick={() => {
@@ -1326,7 +1406,7 @@ const BrowsePage = () => {
                     setPriceRange(tempPriceRange)
                     setIsFilterModalOpen(false)
                   }}
-                  className="bg-brand-600 hover:bg-brand-700 text-white text-xs font-black uppercase tracking-wider px-6 py-3 rounded-xl transition-all shadow-md active:scale-95"
+                  className="flex-2 flex-grow-[2] py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
                 >
                   Xem {tempFilteredProductsCount} kết quả
                 </button>

@@ -224,22 +224,17 @@ const Header = () => {
       </div>
 
       {/* Sub-navbar / Category Sub-navigation */}
-      <div className="w-full bg-white border-b border-neutral-200 py-1.5">
-        <div className="mx-auto max-w-7xl px-4 flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <CategoryNavStrip
-              categories={categories}
-              brands={brands}
-              activeCategoryId={activeCategoryId}
-              activeBrandId={activeBrandId}
-              onSelectCategoryAndBrand={updateCategoryAndBrand}
-              loading={catalogLoading}
-              variant="header"
-            />
-          </div>
-          <div className="text-xs text-neutral-500 font-medium hidden md:block shrink-0">
-            Miễn phí vận chuyển từ đơn hàng <span className="font-bold text-neutral-850">299kđ</span>
-          </div>
+      <div className="w-full bg-white border-b border-neutral-200 relative z-40">
+        <div className="mx-auto max-w-7xl px-4 py-1 overflow-visible">
+          <CategoryNavStrip
+            categories={categories}
+            brands={brands}
+            activeCategoryId={activeCategoryId}
+            activeBrandId={activeBrandId}
+            onSelectCategoryAndBrand={updateCategoryAndBrand}
+            loading={catalogLoading}
+            variant="header"
+          />
         </div>
       </div>
     </header>

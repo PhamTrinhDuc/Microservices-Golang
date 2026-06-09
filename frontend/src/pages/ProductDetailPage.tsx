@@ -233,14 +233,6 @@ const ProductDetailPage = () => {
             Trang chủ
           </Link>
           <span>/</span>
-          {product.category && (
-            <>
-              <Link to={`/browse?category=${product.category.id}`} className="hover:text-black transition-colors">
-                {product.category.name}
-              </Link>
-              <span>/</span>
-            </>
-          )}
           <span className="text-neutral-800 font-semibold max-w-[200px] truncate">{product.name}</span>
         </nav>
 
