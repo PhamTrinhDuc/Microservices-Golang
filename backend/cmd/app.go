@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,10 +28,10 @@ const (
 	defaultDBPort = 5433
 )
 
-func main() {
+func run(log *slog.Logger) error {
 	// Load godotenv first
 	if err := godotenv.Load(); err != nil {
-		log.Println("Warning: failed to load .env file, reading system environment variables")
+		slog.Warn("Warning: failed to load .env file, reading system environment variables")
 	}
 
 	// Create listener context for operating system shutdown signals
@@ -40,21 +41,22 @@ func main() {
 	// 1. Initialize database
 	db, err := bootstrap.NewDB(ctx)
 	if err != nil {
-		log.Fatalf("Database connection failed: %v", err)
+		log.Error("Database connection failed", "error", err.Error())
+		return err
 	}
 	defer db.Close()
-	log.Println("Database connection pool initialized successfully")
+	log.Info("Database connection pool initialized successfully")
 
 	// 2. Initialize RSA keys for tokens
 	keysDir := utils.GetEnvString("DEMO_KEYS_DIR", filepath.Join("tmp", "demo-keys"))
 	if err := auth.EnsureKeysExist(keysDir); err != nil {
-		log.Printf("Warning: Failed to ensure token key files: %v", err)
+		log.Warn("Warning: Failed to ensure token key files", "error", err.Error())
 	} else {
-		log.Printf("RSA keys initialized in %s", keysDir)
+		log.Info("RSA keys initialized in", "keysDir", keysDir)
 		// Generate a test token for debugging
 		testToken, err := auth.GenerateTokenWithPrivateKey("1", "admin@example.com", "admin")
 		if err == nil {
-			log.Printf("\n--- TEST TOKEN ---\n%s\n--- END TOKEN ---\n\n", testToken)
+			log.Info("\n--- TEST TOKEN ---", "token", testToken, "--- END TOKEN ---\n\n")
 		}
 	}
 
@@ -71,8 +73,11 @@ func main() {
 	r.Use(func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
-		log.Printf("[%s] %s -> Status: %d, Duration: %s",
-			c.Request.Method, c.Request.URL.Path, c.Writer.Status(), time.Since(start),
+		log.Info("Request",
+			"method", c.Request.Method,
+			"url", c.Request.URL.Path,
+			"status", c.Writer.Status(),
+			"duration", time.Since(start),
 		)
 	})
 
@@ -98,7 +103,7 @@ func main() {
 
 	// 5. Start Server
 	serverPort := utils.GetEnvString("BACKEND_PORT", defaultPort)
-	log.Printf("Starting HTTP server on port %s...", serverPort)
+	log.Info("Starting HTTP server on port", "port", serverPort)
 
 	// Convert port string to int to pass to Run
 	portInt, err := strconv.Atoi(serverPort)
@@ -106,5 +111,43 @@ func main() {
 		portInt = 8082
 	}
 
-	r.Run(":" + strconv.Itoa(portInt))
+	server := &http.Server{
+		Addr:         ":" + strconv.Itoa(portInt),
+		Handler:      r,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 120 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		log.Info("Listening on port", "port", portInt)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errCh <- err
+		}
+	}()
+
+	select {
+	case err := <-errCh:
+		log.Error("Server error", "err", err.Error())
+		return err
+	case <-ctx.Done():
+		log.Info("Shutting down gracefully...")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			log.Error("Graceful shutdown failed", "error", err.Error())
+			return err
+		}
+		log.Info("Server stopped")
+		return nil
+	}
+}
+
+func main() {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	if err := run(log); err != nil {
+		log.Error("fatal", "err", err)
+		os.Exit(1)
+	}
 }
