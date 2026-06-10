@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"backend/domain"
 	"os"
 	"strconv"
 )
@@ -52,4 +53,20 @@ func GetEnvFloat(key string, defaultValue float64) float64 {
 		return defaultValue
 	}
 	return value
+}
+
+func CloneQuery(query *domain.ProductSearchQuery) *domain.ProductSearchQuery {
+	return &domain.ProductSearchQuery{
+		CategoryID:  query.CategoryID,
+		BrandID:     query.BrandID,
+		MinPrice:    query.MinPrice,
+		MaxPrice:    query.MaxPrice,
+		Query:       query.Query,
+		Sort:        query.Sort,
+		Page:        query.Page,
+		Limit:       query.Limit,
+		InStockOnly: query.InStockOnly,
+		MinRating:   query.MinRating,
+		SpecFilter:  query.SpecFilter,
+	}
 }

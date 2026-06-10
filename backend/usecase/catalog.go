@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"backend/domain"
+	"backend/internal/utils"
 )
 
 type CatalogUsecase struct {
@@ -71,6 +72,54 @@ func getBaseProductName(name string) string {
 		return parts[0]
 	}
 	return strings.Join(baseParts, " ")
+}
+
+// return the list of filters used to search for products and suspected to be the culprit
+func diagnoseEmptyResult(query *domain.ProductSearchQuery) []string {
+	var culprits []string
+	if query.BrandID != nil {
+		culprits = append(culprits, "brand_id")
+	}
+	if query.CategoryID != nil {
+		culprits = append(culprits, "category_id")
+	}
+	if query.MinPrice != nil || query.MaxPrice != nil {
+		culprits = append(culprits, "price_range")
+	}
+	if query.MinRating != nil {
+		culprits = append(culprits, "min_rating")
+	}
+	if query.InStockOnly {
+		culprits = append(culprits, "in_stock_only")
+	}
+	if query.SpecFilter != nil {
+		culprits = append(culprits, "spec_filter")
+	}
+	if query.Query != "" {
+		culprits = append(culprits, "query")
+	}
+	return culprits
+}
+
+func buildRelexHint(culprint string, count int) string {
+	switch culprint {
+	case "brand_id":
+		return fmt.Sprintf("Bao gồm hết tất cả các hãng sẽ có %d kết quả", count)
+	case "category_id":
+		return fmt.Sprintf("Bao gồm hết tất cả các danh mục sẽ có %d kết quả", count)
+	case "in_stock_only":
+		return fmt.Sprintf("Bao gồm hết hàng sẽ có %d kết quả", count)
+	case "price_range":
+		return fmt.Sprintf("Bỏ khoảng giá sẽ có %d kết quả", count)
+	case "min_rating":
+		return fmt.Sprintf("Bỏ đánh giá tối thiểu sẽ có %d kết quả", count)
+	case "spec_filter":
+		return fmt.Sprintf("Bỏ lọc thông số sẽ có %d kết quả", count)
+	case "query":
+		return fmt.Sprintf("Tìm kiếm rộng hơn trong danh mục sẽ có %d kết quả", count)
+	default:
+		return fmt.Sprintf("Nới lỏng bộ lọc sẽ có %d kết quả", count)
+	}
 }
 
 // --- Category ---
@@ -288,12 +337,12 @@ func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateP
 		}
 
 		variants = append(variants, &domain.ProductVariant{
-			ProductID: req.ID,
-			Name:      vDTO.Name,
-			SKU:       vDTO.SKU,
-			SellPrice: vDTO.SellPrice,
+			ProductID:    req.ID,
+			Name:         vDTO.Name,
+			SKU:          vDTO.SKU,
+			SellPrice:    vDTO.SellPrice,
 			ComparePrice: vDTO.ComparePrice,
-			Weight:    vDTO.Weight,
+			Weight:       vDTO.Weight,
 			Options: []domain.VariantOption{
 				{
 					OptionTypeName: optTypeName,
@@ -335,8 +384,82 @@ func (uc *CatalogUsecase) CreateProduct(ctx context.Context, req *domain.CreateP
 	return uc.repo.CreateProduct(ctx, input)
 }
 
+func (uc *CatalogUsecase) buildSuggestions(ctx context.Context, query *domain.ProductSearchQuery, culprints []string) map[string]any {
+	suggestions := map[string]any{}
+	// try remove suspicious filters one by one
+	relexHints := []map[string]any{}
+
+	for _, culprint := range culprints {
+		relexedQuery := utils.CloneQuery(query)
+		switch culprint {
+		case "brand_id":
+			relexedQuery.BrandID = nil
+		case "category_id":
+			relexedQuery.CategoryID = nil
+		case "min_price":
+			relexedQuery.MinPrice = nil
+		case "max_price":
+			relexedQuery.MaxPrice = nil
+		case "min_rating":
+			relexedQuery.MinRating = nil
+		case "in_stock_only":
+			relexedQuery.InStockOnly = false
+		case "spec_filter":
+			relexedQuery.SpecFilter = nil
+		case "query":
+			relexedQuery.Query = ""
+		default:
+			continue
+		}
+		relexedRes, err := uc.repo.SearchProducts(ctx, relexedQuery)
+		if err == nil && len(relexedRes.Products) > 0 {
+			relexHints = append(relexHints, map[string]any{
+				"remove_filter": culprint,
+				"result_count":  relexedRes.TotalCount,
+				"hint":          buildRelexHint(culprint, relexedRes.TotalCount),
+			})
+		}
+	}
+
+	if len(relexHints) > 0 {
+		suggestions["relex_filters"] = relexHints
+	}
+
+	if len(relexHints) == 0 && query.CategoryID != nil {
+		porpularQuery := &domain.ProductSearchQuery{
+			CategoryID:  query.CategoryID,
+			BrandID:     query.BrandID,
+			Limit:       5,
+			Page:        1,
+			InStockOnly: true,
+			Sort:        "rating_desc",
+		}
+		products, err := uc.repo.SearchProducts(ctx, porpularQuery)
+		if err == nil && len(products.Products) > 0 {
+			suggestions["popular_products"] = products.Products
+		}
+	}
+	return suggestions
+}
+
 func (uc *CatalogUsecase) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
-	return uc.repo.SearchProducts(ctx, query)
+	products, err := uc.repo.SearchProducts(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	
+	hasMore := query.Page*query.Limit < products.TotalCount
+	appliedFilter := diagnoseEmptyResult(query) // get filters apply to search
+	suggestions := make(map[string]any)
+	if len(products.Products) == 0 {
+		suggestions = uc.buildSuggestions(ctx, query, appliedFilter)
+	}
+
+	products.AppliedFilters = appliedFilter
+	products.HasMore = hasMore
+	products.Suggestions = suggestions
+
+	return products, nil
 }
 
 func (uc *CatalogUsecase) GetProductDetails(ctx context.Context, id string) (*domain.ProductDetailsResponse, error) {
@@ -480,12 +603,12 @@ func (uc *CatalogUsecase) GenerateVariant(ctx context.Context, productID string,
 	}
 
 	variant := &domain.ProductVariant{
-		ProductID: productID,
-		Name:      req.Name,
-		SKU:       req.SKU,
-		SellPrice: req.SellPrice,
+		ProductID:    productID,
+		Name:         req.Name,
+		SKU:          req.SKU,
+		SellPrice:    req.SellPrice,
 		ComparePrice: req.ComparePrice,
-		Weight:    req.Weight,
+		Weight:       req.Weight,
 	}
 
 	return uc.repo.CreateVariant(ctx, variant, req.OptionValueIDs)
@@ -501,4 +624,3 @@ func (uc *CatalogUsecase) UpdateVariant(ctx context.Context, id int, req *domain
 func (uc *CatalogUsecase) DeleteVariant(ctx context.Context, id int) error {
 	return uc.repo.DeleteVariant(ctx, id)
 }
-
