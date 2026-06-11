@@ -109,17 +109,17 @@ type ProductImage struct {
 }
 
 type Review struct {
-	ID           int       `json:"id" db:"id"`
-	UserID       int       `json:"user_id" db:"user_id"`
-	UserFullName string    `json:"user_full_name" db:"user_full_name"`
-	ProductID    string    `json:"product_id" db:"product_id"`
-	OrderID      int       `json:"order_id" db:"order_id"`
-	Rating       int       `json:"rating" db:"rating"`
-	Comment      *string   `json:"comment" db:"comment"`
+	ID           int         `json:"id" db:"id"`
+	UserID       int         `json:"user_id" db:"user_id"`
+	UserFullName string      `json:"user_full_name" db:"user_full_name"`
+	ProductID    string      `json:"product_id" db:"product_id"`
+	OrderID      int         `json:"order_id" db:"order_id"`
+	Rating       int         `json:"rating" db:"rating"`
+	Comment      *string     `json:"comment" db:"comment"`
 	Images       interface{} `json:"images" db:"images"` // JSONB
-	Status       string    `json:"status" db:"status"`
-	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
+	Status       string      `json:"status" db:"status"`
+	CreatedAt    time.Time   `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time   `json:"updated_at" db:"updated_at"`
 }
 
 // --- request & response dtos ---
@@ -251,6 +251,13 @@ type ProductSearchQuery struct {
 	Page       int    `form:"page"`
 	Limit      int    `form:"limit"`
 	Sort       string `form:"sort"`
+
+	// For AI Agent
+	SpecFilter  map[string]interface{} `json:"spec_filter"`
+	MinPrice    *float64               `json:"min_price"`
+	MaxPrice    *float64               `json:"max_price"`
+	MinRating   *float64               `json:"min_rating"`
+	InStockOnly bool                   `json:"in_stock_only"`
 }
 
 type ProductSearchResult struct {
@@ -258,6 +265,11 @@ type ProductSearchResult struct {
 	TotalCount int        `json:"total_count"`
 	Page       int        `json:"page"`
 	Limit      int        `json:"limit"`
+
+	// For AI Agent
+	HasMore        bool                   `json:"has_more"`              // Inform the agent that the product is still in stock, to avoid letting the agent calculate the price themselves.
+	AppliedFilters []string               `json:"applied_filters"`       // How did the system search for products using the filter?
+	Suggestions    map[string]interface{} `json:"suggestions,omitempty"` // suggest an alternative if result None
 }
 
 type ProductDetailsResponse struct {
@@ -307,7 +319,7 @@ type CatalogRepository interface {
 
 	// Options
 	AddOptionValues(ctx context.Context, productID string, optionName string, values []*ProductOptionValue) ([]*ProductOptionValue, error)
-	
+
 	// Variant
 	CreateVariant(ctx context.Context, variant *ProductVariant, optionValueIDs []int) (*ProductVariant, error)
 	UpdateVariant(ctx context.Context, id int, name, sku string, sellPrice float64, comparePrice, weight *float64) (*ProductVariant, error)

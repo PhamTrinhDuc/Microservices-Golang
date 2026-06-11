@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -504,22 +505,48 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 	var args []interface{}
 	placeholderIdx := 1
 
+	// category filter
 	if query.CategoryID != nil {
 		conditions = append(conditions, fmt.Sprintf("category_id = $%d", placeholderIdx))
 		args = append(args, *query.CategoryID)
 		placeholderIdx++
 	}
 
+	// branch filter
 	if query.BrandID != nil {
 		conditions = append(conditions, fmt.Sprintf("brand_id = $%d", placeholderIdx))
 		args = append(args, *query.BrandID)
 		placeholderIdx++
 	}
 
+	// search query
 	if query.Query != "" {
 		conditions = append(conditions, fmt.Sprintf("(p.name ILIKE $%d OR p.slug ILIKE $%d OR p.id ILIKE $%d OR EXISTS (SELECT 1 FROM product_variant pv WHERE pv.product_id = p.id AND pv.sku ILIKE $%d AND pv.is_deleted = false))", placeholderIdx, placeholderIdx, placeholderIdx, placeholderIdx))
 		args = append(args, "%"+query.Query+"%")
 		placeholderIdx++
+	}
+
+	// filter apply
+	if query.SpecFilter != nil {
+		for key, val := range query.SpecFilter {
+			filterJson, _ := json.Marshal(map[string]interface{}{key: val})
+			conditions = append(conditions, fmt.Sprintf("p.specs_jsonb @> $%d", placeholderIdx))
+			args = append(args, filterJson)
+			placeholderIdx++
+		}
+	}
+
+	// min/max price filter
+	if query.MinPrice != nil && query.MaxPrice != nil {
+		conditions = append(conditions, fmt.Sprintf("COALESCE(min_var.sell_price, 0) BETWEEN $%d AND $%d", placeholderIdx, placeholderIdx+1))
+		args = append(args, *query.MinPrice)
+		args = append(args, *query.MaxPrice)
+		placeholderIdx += 2
+	}
+
+	// out of stock filter
+	if query.InStockOnly {
+		conditions = append(conditions, "inv.total_qty > 0")
 	}
 
 	whereClause := ""
@@ -1162,4 +1189,3 @@ func (r *CatalogRepository) DeleteVariant(ctx context.Context, id int) error {
 	}
 	return nil
 }
-
