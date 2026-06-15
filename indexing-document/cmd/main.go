@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -28,12 +29,25 @@ import (
 	"indexing/embedder"
 	"indexing/ingestion"
 	"indexing/server"
+	// "github.com/rs/zerolog/log"
 )
 
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	if err := run(log); err != nil {
-		log.Error("fatal", "err", err)
+	// log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(
+		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			AddSource: true,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				if a.Key == slog.SourceKey {
+					src := a.Value.Any().(*slog.Source)
+					a.Value = slog.StringValue(fmt.Sprintf("%s:%d", filepath.Base(src.File), src.Line))
+				}
+				return a
+			},
+		}),
+	)
+	if err := run(logger); err != nil {
+		logger.Error("fatal", "err", err)
 		os.Exit(1)
 	}
 }
@@ -44,14 +58,14 @@ func run(log *slog.Logger) error {
 
 	// Config
 	port := utils.GetEnvString("SERVER_PORT", "8081")
-	dsn := utils.GetEnvString("DATABASE_URL", "")
+	dsn := utils.GetEnvString("DATABASE_URL", "postgres://jiyuu_user:jiyuu_password@localhost:5433/ecommerce_db")
 	if dsn == "" {
 		return fmt.Errorf("DATABASE_URL is required")
 	}
 	embBaseURL := utils.GetEnvString("EMBEDDING_BASE_URL", "http://localhost:11434")
 	embAPIKey := utils.GetEnvString("EMBEDDING_API_KEY", "ollama")
-	embModel := utils.GetEnvString("EMBEDDING_MODEL", "nomic-embed-text")
-	embDim := utils.GetEnvInt("EMBEDDING_DIM", 768)
+	embModel := utils.GetEnvString("EMBEDDING_MODEL", "qwen3-embedding:0.6b")
+	embDim := utils.GetEnvInt("EMBEDDING_DIM", 1024)
 	chunkSize := utils.GetEnvInt("CHUNK_SIZE", 512)
 	chunkOverlap := utils.GetEnvInt("CHUNK_OVERLAP", 64)
 

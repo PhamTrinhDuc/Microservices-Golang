@@ -86,22 +86,23 @@ func NewSSEHandler(db database.Store, telemetry *observability.Telemetry, backen
 	// Add receiving middleware for incoming responses
 	s.AddReceivingMiddleware(tracingMiddleware(telemetry))
 
-	searchTool := tools.NewSearchTool(db)
 	hybridTool := tools.NewHybridSearchTool(db)
-	stylistTool := tools.NewStylistTool(backendURL)
-	branchTool := tools.NewBranchTool(backendURL)
+	categoryTool := tools.NewCategoryTool(backendURL)
+	brandTool := tools.NewBrandTool(backendURL)
+	productTool := tools.NewProductTool(backendURL)
 
 	// Search document
-	mcp.AddTool(s, searchTool.Definition(), searchTool.Handler)
 	mcp.AddTool(s, hybridTool.Definition(), hybridTool.Handler)
 
-	// API Stylist
-	mcp.AddTool(s, stylistTool.ListStylistDefinition(), stylistTool.ListStylistHandler)
-	mcp.AddTool(s, stylistTool.GetStylistDefinition(), stylistTool.GetStylistHandler)
+	// API Category
+	mcp.AddTool(s, categoryTool.ListCategoryDefinition(), categoryTool.ListCategoryHandler)
 
-	// API Branch
-	mcp.AddTool(s, branchTool.ListBranchDefinition(), branchTool.ListBranchHandler)
-	mcp.AddTool(s, branchTool.GetBranchDefinition(), branchTool.GetBranchHandler)
+	// API Brand
+	mcp.AddTool(s, brandTool.ListBrandDefinition(), brandTool.ListBrandHandler)
+
+	// API Product
+	mcp.AddTool(s, productTool.ListProductDefinition(), productTool.ListProductHandler)
+	mcp.AddTool(s, productTool.GetProductDefinition(), productTool.GetProductHandler)
 
 	sseHandler := mcp.NewSSEHandler(func(r *http.Request) *mcp.Server {
 		return s

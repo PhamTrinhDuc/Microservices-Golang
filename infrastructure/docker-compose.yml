@@ -19,6 +19,26 @@ services:
       retries: 5
     networks:
       - mcp-network
+
+  keycloak: # docker exec -it <postgres-container> psql -U jiyuu_user -d postgres để tạo db
+    image: quay.io/keycloak/keycloak:26.0
+    command: start-dev
+    environment:
+      KC_DB: postgres # vendor name
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak  # port inside container, not host port
+      KC_DB_USERNAME: jiyuu_user
+      KC_DB_PASSWORD: jiyuu_password
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8090
+      KC_HTTP_ENABLED: "true"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8090:8080"
+    depends_on:
+      - postgres
+    networks:
+      - mcp-network
       
   # Redis for rate limiting and caching
   redis:
@@ -198,3 +218,12 @@ volumes:
 networks:
   mcp-network:
     driver: bridge
+
+
+
+# curl.exe -s -X POST http://localhost:8090/realms/multi-agent/protocol/openid-connect/token `
+#   -H "Content-Type: application/x-www-form-urlencoded" `
+#   -d "grant_type=password" `
+#   -d "client_id=ecommerce-system-12345" `
+#   -d "username=duc.phamtrinh" `
+#   -d "password=duc8504@@"

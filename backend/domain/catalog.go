@@ -253,11 +253,11 @@ type ProductSearchQuery struct {
 	Sort       string `form:"sort"`
 
 	// For AI Agent
-	SpecFilter  map[string]interface{} `json:"spec_filter"`
-	MinPrice    *float64               `json:"min_price"`
-	MaxPrice    *float64               `json:"max_price"`
-	MinRating   *float64               `json:"min_rating"`
-	InStockOnly bool                   `json:"in_stock_only"`
+	SpecFilter  map[string]interface{} `json:"spec_filter" form:"spec_filter"`
+	MinPrice    *float64               `json:"min_price" form:"min_price"`
+	MaxPrice    *float64               `json:"max_price" form:"max_price"`
+	MinRating   *float64               `json:"min_rating" form:"min_rating"`
+	InStockOnly bool                   `json:"in_stock_only" form:"in_stock_only"`
 }
 
 type ProductSearchResult struct {

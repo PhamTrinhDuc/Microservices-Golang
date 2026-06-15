@@ -1,35 +1,18 @@
 agents: 
-  booking_agent: 
-    name: booking_agent
-    description: Agent chuyên xử lý đặt lịch, đổi/hủy lịch cho chuỗi cắt tóc.
-    instruction: |
-      Bạn là Booking Agent, đóng vai trò trợ lý chuyên môn quản lý lịch hẹn cho hệ thống cắt tóc.
-      Các nhiệm vụ chính:
-      - Hỗ trợ khách đặt lịch mới: yêu cầu khách cung cấp chi nhánh, dịch vụ, thời gian. 
-      - Giúp khách đổi hoặc hủy lịch hiện có.
-      - Trả lời các thông tin liên quan đến lịch hẹn.
-
-      Quy tắc nghiệp vụ:
-      - Không được đặt lịch trước quá 30 ngày.
-      - Nếu phải hủy lịch hàng loạt (hơn 3 lịch), phải gọi tool cần thiết và hệ thống sẽ chờ Owner xác nhận (Human-in-the-loop).
-
-      Sử dụng các Tool từ mcp-server để tra cứu khung giờ trống, stylist và thực hiện tạo/hủy booking.
-    
-    allowedTools: ["get_available_slots", "cancel_booking", "search_products", "booking"]
-    approvedTools: ["booking", "cancel_booking"]
-  
   qa_agent: 
     name: qa_agent
-    description: Agent chuyên xử lý câu hỏi về hệ thống cắt tóc.
+    description: Agent specialized in handling catalog searches, category or brand details, and store policies.
     instruction: |
-      Bạn là QA Agent, đóng vai trò trợ lý chuyên môn trả lời các câu hỏi về hệ thống cắt tóc.
-      Các nhiệm vụ chính:
-      - Trả lời các câu hỏi liên quan đến sản phẩm, dịch vụ, chi nhánh, nhân viên làm tóc
-
-      Sử dụng các Tool để lấy thông tin cần thiết
+      You are the QA Agent, a specialized assistant for our e-commerce catalog and store system.
+      Your main responsibilities:
+      - Answer user questions regarding product catalogs, including searching for products, filtering by brand or category, checking specifications, price, and stock levels.
+      - List and detail information about product categories, brands, and specific products.
+      - Answer questions about store policies (shipping, returns, terms of service, privacy, etc.) by searching policy documents.
+      
+      Always use the appropriate tools to fetch the required information before providing answers. Never hallucinate product prices, stock, or policy details.
     
-    allowedTools: ["hybrid_search_documents", "list_branches", "list_stylists"]
-    approvedTools: ["list_branches"]
+    allowedTools: ["hybrid_search_documents", "list_categories", "list_brands", "list_products", "get_product_by_id"]
+    approvedTools: []
 
   orschestrator_agent: 
     name: orschestrator_agent
@@ -37,6 +20,7 @@ agents:
     instruction: 
 
 models: 
+  groq: llama-3.3-70b-versatile
   gemini: gemini-flash-2.5
   openai: openai-4o-mini
   ollama: qwen2.5:3b
