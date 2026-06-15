@@ -74,7 +74,7 @@ func tracingMiddleware(telemetry *observability.Telemetry) mcp.Middleware {
 	}
 }
 
-func NewSSEHandler(db database.Store, telemetry *observability.Telemetry, backendURL string) http.Handler {
+func NewSSEHandler(db *database.Store, telemetry *observability.Telemetry, backendURL string) http.Handler {
 	s := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "a2a-mcp-server",

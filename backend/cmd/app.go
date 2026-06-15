@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"backend/api/route"
 	"backend/bootstrap"
 	"backend/controller"
-	"backend/internal/auth"
 	"backend/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -47,19 +45,6 @@ func run(log *slog.Logger) error {
 	defer db.Close()
 	log.Info("Database connection pool initialized successfully")
 
-	// 2. Initialize RSA keys for tokens
-	keysDir := utils.GetEnvString("DEMO_KEYS_DIR", filepath.Join("tmp", "demo-keys"))
-	if err := auth.EnsureKeysExist(keysDir); err != nil {
-		log.Warn("Warning: Failed to ensure token key files", "error", err.Error())
-	} else {
-		log.Info("RSA keys initialized in", "keysDir", keysDir)
-		// Generate a test token for debugging
-		testToken, err := auth.GenerateTokenWithPrivateKey("1", "admin@example.com", "admin")
-		if err == nil {
-			log.Info("\n--- TEST TOKEN ---", "token", testToken, "--- END TOKEN ---\n\n")
-		}
-	}
-
 	// 3. Setup Gin Engine
 	r := gin.Default()
 
@@ -83,7 +68,7 @@ func run(log *slog.Logger) error {
 
 	// 4. Initialize Dependency Container & Router wiring
 	container := bootstrap.NewContainer(db.GetPool())
-	authMiddleware := middleware.NewAuthMiddleware()
+	authMiddleware := middleware.NewAuthMiddleware(db.GetPool())
 	locationCtl := controller.NewLocationController()
 
 	v1 := r.Group("/api/v1")

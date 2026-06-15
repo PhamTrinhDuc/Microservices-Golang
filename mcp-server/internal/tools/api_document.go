@@ -9,10 +9,10 @@ import (
 )
 
 type HybridSearchTool struct {
-	db database.Store
+	db *database.Store
 }
 
-func NewHybridSearchTool(db database.Store) *HybridSearchTool {
+func NewHybridSearchTool(db *database.Store) *HybridSearchTool {
 	return &HybridSearchTool{db: db}
 }
 
@@ -49,7 +49,7 @@ func (t *HybridSearchTool) Handler(ctx context.Context, req *mcp.CallToolRequest
 		limit = 10
 	}
 
-	documents, err := t.db.SearchDocuments(ctx, args.Query, limit)
+	documents, err := (*t.db).SearchDocuments(ctx, args.Query, limit)
 	if err != nil {
 		res := &mcp.CallToolResult{IsError: true}
 		return res, mcp.TextContent{Text: fmt.Sprintf("hybrid search failed: %v", err)}, nil

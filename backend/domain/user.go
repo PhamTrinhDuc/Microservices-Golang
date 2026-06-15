@@ -6,19 +6,20 @@ import (
 )
 
 type User struct {
-	ID         int       `json:"id" db:"id"`
-	FullName   string    `json:"full_name" db:"full_name"`
-	Email      string    `json:"email" db:"email"`
-	Password   string    `json:"-" db:"password"`
-	Phone      *string   `json:"phone" db:"phone"`
-	Gender     *string   `json:"gender" db:"gender"`
+	ID         int        `json:"id" db:"id"`
+	KeycloakID *string    `json:"keycloak_id,omitempty" db:"keycloak_id"`
+	FullName   string     `json:"full_name" db:"full_name"`
+	Email      string     `json:"email" db:"email"`
+	Password   string     `json:"-" db:"password"`
+	Phone      *string    `json:"phone" db:"phone"`
+	Gender     *string    `json:"gender" db:"gender"`
 	DOB        *time.Time `json:"dob,omitempty" db:"dob"`
-	Role       string    `json:"role" db:"role"`
-	Avatar     *string   `json:"avatar,omitempty" db:"avatar"`
-	IsLock     bool      `json:"is_lock" db:"is_lock"`
-	IsVerified bool      `json:"is_verified" db:"is_verified"`
-	CreatedAt  time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
+	Role       string     `json:"role" db:"role"`
+	Avatar     *string    `json:"avatar,omitempty" db:"avatar"`
+	IsLock     bool       `json:"is_lock" db:"is_lock"`
+	IsVerified bool       `json:"is_verified" db:"is_verified"`
+	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type LoginRequest struct {

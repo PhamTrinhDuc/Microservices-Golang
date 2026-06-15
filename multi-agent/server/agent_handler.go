@@ -66,6 +66,10 @@ type AgentServer struct {
 	Telemetry      *observability.Telemetry
 }
 
+type contextKey string
+
+const contextKeyAuthToken contextKey = "auth_token"
+
 // headerTransport là một RoundTripper tùy chỉnh để chèn thêm header vào mọi request
 // Agent (Start Span) -> RoundTrip (Inject) -> [Network] -> MCP Server (Extract) -> Tool Handler (Inject) -> [Network] -> Backend (Extract)
 type headerTransport struct {
@@ -77,7 +81,17 @@ type headerTransport struct {
 func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Clone request để không làm ảnh hưởng đến bản gốc
 	newReq := req.Clone(req.Context())
-	newReq.Header.Set(t.header, t.value)
+	
+	// Check if token is propagated in context
+	if tokenVal := req.Context().Value(contextKeyAuthToken); tokenVal != nil {
+		if tokenStr, ok := tokenVal.(string); ok && tokenStr != "" {
+			newReq.Header.Set(t.header, tokenStr)
+		} else {
+			newReq.Header.Set(t.header, t.value)
+		}
+	} else {
+		newReq.Header.Set(t.header, t.value)
+	}
 
 	propagator := otel.GetTextMapPropagator()
 	propagator.Inject(req.Context(), propagation.HeaderCarrier(newReq.Header))
@@ -261,7 +275,12 @@ func (s *AgentServer) HandlerChat(c *gin.Context) {
 
 	userMsg := genai.NewContentFromText(r.Message, genai.RoleUser)
 
-	ctxOtel, span := s.Telemetry.Tracer.Start(c.Request.Context(), "agent.request")
+	ctx := c.Request.Context()
+	if authToken := c.GetHeader("Authorization"); authToken != "" {
+		ctx = context.WithValue(ctx, contextKeyAuthToken, authToken)
+	}
+
+	ctxOtel, span := s.Telemetry.Tracer.Start(ctx, "agent.request")
 	defer span.End()
 
 	// Turn 1: chạy bình thường, capture confirmation event
@@ -328,7 +347,12 @@ func (s *AgentServer) HandlerConfirm(c *gin.Context) {
 		return
 	}
 
-	ctxOtel, span := s.Telemetry.Tracer.Start(c.Request.Context(), "agent.confirm")
+	ctx := c.Request.Context()
+	if authToken := c.GetHeader("Authorization"); authToken != "" {
+		ctx = context.WithValue(ctx, contextKeyAuthToken, authToken)
+	}
+
+	ctxOtel, span := s.Telemetry.Tracer.Start(ctx, "agent.confirm")
 	defer span.End()
 	confirmationCallID := r.ConfirmationID
 	var parts []*genai.Part

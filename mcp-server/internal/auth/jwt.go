@@ -1,16 +1,13 @@
 package auth
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
+	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
-	"time"
+	"sync"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -33,64 +30,7 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-// EnsureKeysExist creates RSA keys if they don't exist
-func EnsureKeysExist(dir string) error {
-	privPath := filepath.Join(dir, "private_key.pem")
-	pubPath := filepath.Join(dir, "public_key.pem")
 
-	// If keys already exist, do nothing
-	if _, err := os.Stat(privPath); err == nil {
-		return nil
-	}
-
-	// Ensure directory exists
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	// Generate RSA key pair
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return err
-	}
-
-	// Save Private Key
-	privFile, err := os.Create(privPath)
-	if err != nil {
-		return err
-	}
-	defer privFile.Close()
-
-	privBlock := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	}
-	if err := pem.Encode(privFile, privBlock); err != nil {
-		return err
-	}
-
-	// Save Public Key
-	pubFile, err := os.Create(pubPath)
-	if err != nil {
-		return err
-	}
-	defer pubFile.Close()
-
-	pubASN1, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return err
-	}
-
-	pubBlock := &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: pubASN1,
-	}
-	if err := pem.Encode(pubFile, pubBlock); err != nil {
-		return err
-	}
-
-	return nil
-}
 
 // ExtractTokenFromHeader extracts JWT token from Authorization header
 func ExtractTokenFromHeader(authHeader string) (string, error) {
@@ -99,93 +39,87 @@ func ExtractTokenFromHeader(authHeader string) (string, error) {
 	}
 
 	parts := strings.SplitN(authHeader, " ", 2)
-	if len(parts) != 2 || parts[0] != "Bearer" {
+	if len(parts) != 2 || parts[0] != "Bearer" || parts[1] == "" {
 		return "", fmt.Errorf("invalid authorization header format, expected: Bearer <token>")
 	}
 
 	return parts[1], nil
 }
 
-// ValidateToken validates a JWT token string using RSA or HMAC fallback
-func ValidateToken(tokenString string) (*JWTClaims, error) {
-	pubKeyPath := "tmp/demo-keys/public_key.pem"
+var (
+	oidcOnce     sync.Once
+	oidcVerifier *oidc.IDTokenVerifier
+	oidcErr      error
+)
 
-	claims := &JWTClaims{}
+func getOIDCVerifier() (*oidc.IDTokenVerifier, error) {
+	issuer := os.Getenv("KEYCLOAK_ISSUER_URL")
+	if issuer == "" {
+		return nil, fmt.Errorf("KEYCLOAK_ISSUER_URL is not set")
+	}
 
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		data, readErr := os.ReadFile(pubKeyPath)
-
-		// Nhánh RSA: chỉ vào khi file tồn tại VÀ đọc được
-		if readErr == nil {
-			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-
-			block, _ := pem.Decode(data)
-			if block == nil {
-				return nil, fmt.Errorf("failed to decode PEM block from public key file")
-			}
-
-			pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse public key: %w", err)
-			}
-
-			rsaPub, ok := pub.(*rsa.PublicKey)
-			if !ok {
-				return nil, fmt.Errorf("key is not an RSA public key")
-			}
-
-			return rsaPub, nil
+	oidcOnce.Do(func() {
+		ctx := context.Background()
+		var provider *oidc.Provider
+		provider, oidcErr = oidc.NewProvider(ctx, issuer)
+		if oidcErr == nil {
+			oidcVerifier = provider.Verifier(&oidc.Config{
+				SkipClientIDCheck: true,
+			})
 		}
-
-		// Nhánh HMAC: chỉ vào khi file KHÔNG tồn tại
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-
-		secret := os.Getenv("JWT_SECRET")
-		if secret == "" {
-			secret = "your-secret-key-change-this-in-production"
-		}
-		return []byte(secret), nil
 	})
 
-	if err != nil || !token.Valid {
-		return nil, fmt.Errorf("invalid token: %v", err)
+	if oidcErr != nil {
+		oidcOnce = sync.Once{} // Allow retry if Keycloak was down
+		return nil, oidcErr
 	}
 
-	return claims, nil
+	return oidcVerifier, nil
 }
 
-// GenerateTokenWithPrivateKey signs a token using the RSA private key
-func GenerateTokenWithPrivateKey(userID, email, role string) (string, error) {
-	privKeyPath := "tmp/demo-keys/private_key.pem"
-	privKeyData, err := os.ReadFile(privKeyPath)
+// ValidateToken validates a JWT token string using Keycloak OIDC.
+func ValidateToken(tokenString string) (*JWTClaims, error) {
+	verifier, err := getOIDCVerifier()
 	if err != nil {
-		return "", fmt.Errorf("failed to read private key: %w", err)
+		return nil, fmt.Errorf("OIDC verifier not initialized: %w", err)
 	}
 
-	block, _ := pem.Decode(privKeyData)
-	if block == nil {
-		return "", fmt.Errorf("failed to decode private key PEM")
+	ctx := context.Background()
+	idToken, verifyErr := verifier.Verify(ctx, tokenString)
+	if verifyErr != nil {
+		return nil, fmt.Errorf("invalid token: %w", verifyErr)
 	}
 
-	privKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse private key: %w", err)
+	var kcClaims struct {
+		Sub         string   `json:"sub"`
+		Email       string   `json:"email"`
+		Name        string   `json:"name"`
+		RealmAccess struct {
+			Roles []string `json:"roles"`
+		} `json:"realm_access"`
+	}
+	if err := idToken.Claims(&kcClaims); err == nil {
+		role := "customer"
+		for _, r := range kcClaims.RealmAccess.Roles {
+			if r == "admin" {
+				role = "admin"
+				break
+			}
+		}
+
+		return &JWTClaims{
+			UserID: kcClaims.Sub,
+			Email:  kcClaims.Email,
+			Role:   role,
+			RegisteredClaims: jwt.RegisteredClaims{
+				Subject:   kcClaims.Sub,
+				ExpiresAt: jwt.NewNumericDate(idToken.Expiry),
+				IssuedAt:  jwt.NewNumericDate(idToken.IssuedAt),
+			},
+		}, nil
 	}
 
-	claims := &JWTClaims{
-		UserID: userID,
-		Email:  email,
-		Role:   role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	return token.SignedString(privKey)
+	return nil, fmt.Errorf("failed to parse Keycloak token claims")
 }
+
+

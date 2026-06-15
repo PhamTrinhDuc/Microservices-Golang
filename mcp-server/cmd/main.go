@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"mcp-server/internal/auth"
 	"mcp-server/internal/database"
 	"mcp-server/internal/middleware"
 	"mcp-server/internal/observability"
@@ -13,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
@@ -113,21 +111,6 @@ func main() {
 	authMid := middleware.NewAuthMiddleware()
 	rateLimiter := middleware.NewFixedWindowLimiter(redis.Client, 100, time.Minute)
 	tracingMiddleware := middleware.NewTracingMiddleware(telemetry)
-
-	// e. Init RSA keys for testing
-	keyDir := filepath.Join("tmp", "demo-keys")
-	if err := auth.EnsureKeysExist(keyDir); err != nil {
-		log.Printf("Warning: Failed to ensure keys: %v", err)
-	} else {
-		log.Printf("RSA keys ensured in %s", keyDir)
-		// Generate a test token for debugging
-		testToken, err := auth.GenerateTokenWithPrivateKey("admin-123", "admin@example.com", "admin")
-		if err == nil {
-			log.Printf("\n--- TEST TOKEN (COPY EVERYTHING BETWEEN LINES) ---\n%s\n--- END TOKEN ---\n\n", testToken)
-		} else {
-			log.Printf("Warning: failed to generate token: %v", err)
-		}
-	}
 
 	r := gin.Default()
 

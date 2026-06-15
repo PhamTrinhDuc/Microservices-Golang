@@ -4,43 +4,14 @@ import (
 	"mcp-server/internal/auth"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuthMiddleware_Handler(t *testing.T) {
-	os.Setenv("JWT_SECRET", "test-secret")
-	defer os.Unsetenv("JWT_SECRET")
-
 	gin.SetMode(gin.TestMode)
-
-	t.Run("Valid Token", func(t *testing.T) {
-		r := gin.New()
-		middleware := NewAuthMiddleware()
-		r.Use(middleware.Handler())
-
-		r.GET("/test", func(c *gin.Context) {
-			userID, _ := c.Get(string(auth.ContextKeyUserID))
-			assert.Equal(t, "user123", userID)
-			c.String(http.StatusOK, "success")
-		})
-
-		token, err := auth.GenerateTokenWithPrivateKey("user123", "test@test.com", "admin")
-		require.NoError(t, err)
-
-		req, _ := http.NewRequest("GET", "/test", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
-		w := httptest.NewRecorder()
-
-		r.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-		assert.Equal(t, "success", w.Body.String())
-	})
 
 	t.Run("Missing Token", func(t *testing.T) {
 		r := gin.New()
@@ -79,34 +50,7 @@ func TestAuthMiddleware_Handler(t *testing.T) {
 }
 
 func TestAuthMiddleware_OptionalHandler(t *testing.T) {
-	os.Setenv("JWT_SECRET", "test-secret")
-	defer os.Unsetenv("JWT_SECRET")
-
 	gin.SetMode(gin.TestMode)
-
-	t.Run("Valid Token - Passes Claims", func(t *testing.T) {
-		r := gin.New()
-		middleware := NewAuthMiddleware()
-		r.Use(middleware.OptionalHandler())
-
-		r.GET("/test", func(c *gin.Context) {
-			userID, exists := c.Get(string(auth.ContextKeyUserID))
-			assert.True(t, exists)
-			assert.Equal(t, "user123", userID)
-			c.String(http.StatusOK, "success")
-		})
-
-		token, err := auth.GenerateTokenWithPrivateKey("user123", "test@test.com", "admin")
-		require.NoError(t, err)
-
-		req, _ := http.NewRequest("GET", "/test", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
-		w := httptest.NewRecorder()
-
-		r.ServeHTTP(w, req)
-
-		assert.Equal(t, http.StatusOK, w.Code)
-	})
 
 	t.Run("Missing Token - Proceeds Without Claims", func(t *testing.T) {
 		r := gin.New()

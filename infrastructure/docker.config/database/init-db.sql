@@ -61,9 +61,10 @@ CREATE TABLE IF NOT EXISTS memory_entries (
 -- 1. Users & Address
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
+    keycloak_id VARCHAR(255) UNIQUE,
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password VARCHAR(255),
     phone VARCHAR(50),
     gender VARCHAR(20),
     dob DATE,

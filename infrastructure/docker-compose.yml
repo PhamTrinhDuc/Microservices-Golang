@@ -22,7 +22,7 @@ services:
 
   keycloak: # docker exec -it <postgres-container> psql -U jiyuu_user -d postgres để tạo db
     image: quay.io/keycloak/keycloak:26.0
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_DB: postgres # vendor name
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak  # port inside container, not host port
@@ -35,6 +35,8 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
       - "8090:8080"
+    volumes:
+      - ./docker.config/keycloak/realm-export.json:/opt/keycloak/data/import/realm.json:ro
     depends_on:
       - postgres
     networks:
