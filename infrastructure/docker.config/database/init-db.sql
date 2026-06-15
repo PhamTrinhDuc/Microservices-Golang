@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS policy_chunks (
     content       TEXT        NOT NULL,
     embedding     vector(1024),
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 

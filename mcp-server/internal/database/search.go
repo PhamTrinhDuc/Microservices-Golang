@@ -11,13 +11,13 @@ import (
 
 // VectorSearchResult holds params for vector search
 type VectorSearchResult struct {
-	Document KnowledgeBase
+	Document PolicyChunk
 	Score    float64
 }
 
 // FullTextSearchResult holds params for full text search
 type FullTextSearchResult struct {
-	Document  KnowledgeBase
+	Document  PolicyChunk
 	BM25Score float64
 }
 
@@ -35,7 +35,7 @@ type HybridSearchParams struct {
 
 // HybridSearchResult represents a result from hybrid search
 type HybridSearchResult struct {
-	Document      KnowledgeBase
+	Document      PolicyChunk
 	BM25Score     float64
 	VectorScore   float64
 	CombinedScore float64
@@ -60,17 +60,16 @@ func (db *DB) VectorSearch(ctx context.Context, embedding []float32, limit int) 
 
 	var results []*VectorSearchResult
 	for rows.Next() {
-		doc := &KnowledgeBase{}
+		doc := &PolicyChunk{}
 		var score float64
 		var dbEmbedding pgvector.Vector
 
 		err := rows.Scan(
 			&doc.ID,
-			&doc.BranchId,
-			&doc.Title,
+			&doc.PolicyId,
+			&doc.Chunkindex,
 			&doc.Content,
-			&doc.Metadata,
-			&dbEmbedding,
+			&doc.Embedding,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
 			&score,
@@ -113,15 +112,15 @@ func (db *DB) FullTextSearch(ctx context.Context, query string, limit int) ([]*F
 
 	var results []*FullTextSearchResult
 	for rows.Next() {
-		doc := &KnowledgeBase{}
+		doc := &PolicyChunk{}
 		var score float64
 
 		err := rows.Scan(
 			&doc.ID,
-			&doc.BranchId,
-			&doc.Title,
+			&doc.PolicyId,
+			&doc.Chunkindex,
 			&doc.Content,
-			&doc.Metadata,
+			&doc.Embedding,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
 			&score,
@@ -237,16 +236,15 @@ func (db *DB) HybridSearch(ctx context.Context, params HybridSearchParams) ([]Hy
 
 	var results []HybridSearchResult
 	for rows.Next() {
-		var doc KnowledgeBase
+		var doc PolicyChunk
 		var bm25Score, vectorScore, combinedScore float64
 		var dbEmbedding *pgvector.Vector
 
 		err := rows.Scan(
 			&doc.ID,
-			&doc.BranchId,
-			&doc.Title,
+			&doc.PolicyId,
+			&doc.Chunkindex,
 			&doc.Content,
-			&doc.Metadata,
 			&dbEmbedding,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
