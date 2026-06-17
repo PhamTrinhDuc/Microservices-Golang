@@ -30,8 +30,6 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-
-
 // ExtractTokenFromHeader extracts JWT token from Authorization header
 func ExtractTokenFromHeader(authHeader string) (string, error) {
 	if authHeader == "" {
@@ -79,21 +77,24 @@ func getOIDCVerifier() (*oidc.IDTokenVerifier, error) {
 
 // ValidateToken validates a JWT token string using Keycloak OIDC.
 func ValidateToken(tokenString string) (*JWTClaims, error) {
+	// fmt.Printf("[DEBUG] KEYCLOAK_ISSUER_URL = %q\n", os.Getenv("KEYCLOAK_ISSUER_URL"))
 	verifier, err := getOIDCVerifier()
 	if err != nil {
+		// fmt.Printf("[DEBUG] OIDC verifier initialization error: %v\n", err)
 		return nil, fmt.Errorf("OIDC verifier not initialized: %w", err)
 	}
 
 	ctx := context.Background()
 	idToken, verifyErr := verifier.Verify(ctx, tokenString)
 	if verifyErr != nil {
+		// fmt.Printf("[DEBUG] Token verification error: %v\n", verifyErr)
 		return nil, fmt.Errorf("invalid token: %w", verifyErr)
 	}
 
 	var kcClaims struct {
-		Sub         string   `json:"sub"`
-		Email       string   `json:"email"`
-		Name        string   `json:"name"`
+		Sub         string `json:"sub"`
+		Email       string `json:"email"`
+		Name        string `json:"name"`
 		RealmAccess struct {
 			Roles []string `json:"roles"`
 		} `json:"realm_access"`
@@ -121,5 +122,3 @@ func ValidateToken(tokenString string) (*JWTClaims, error) {
 
 	return nil, fmt.Errorf("failed to parse Keycloak token claims")
 }
-
-

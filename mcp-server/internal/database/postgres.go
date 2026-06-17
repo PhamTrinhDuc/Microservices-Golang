@@ -265,11 +265,13 @@ func NewDBConfig() DBConfig {
 	return DBConfig{
 		Host:     utils.GetEnvString("DB_HOST", "localhost"),
 		Port:     utils.GetEnvInt("DB_PORT", 5433),
-		User:     utils.GetEnvString("DB_USER", "mcp_user"),
-		Password: utils.GetEnvString("DB_PASSWORD", "mcp_password"),
-		DBName:   utils.GetEnvString("DB_NAME", "salon_chain"),
+		User:     utils.GetEnvString("DB_USER", "jiyuu_user"),
+		Password: utils.GetEnvString("DB_PASSWORD", "jiyuu_password"),
+		DBName:   utils.GetEnvString("DB_NAME", "ecommerce_db"),
 		SSLMode:  utils.GetEnvString("DB_SSLMODE", "disable"),
 		MaxConns: int32(utils.GetEnvInt("DB_MAX_CONNS", 10)),
 		MinConns: int32(utils.GetEnvInt("DB_MIN_CONNS", 2)),
 	}
 }
+
+var _ Store = (*DB)(nil)

@@ -43,9 +43,9 @@ func loadConfig() Config {
 		Database: database.DBConfig{
 			Host:     utils.GetEnvString("DB_HOST", defaultDBHost),
 			Port:     utils.GetEnvInt("DB_PORT", defaultDBPort),
-			User:     utils.GetEnvString("DB_USER", "mcp_user"),
-			Password: utils.GetEnvString("DB_PASSWORD", "mcp_password"),
-			DBName:   utils.GetEnvString("DB_NAME", "salon_chain"),
+			User:     utils.GetEnvString("DB_USER", "jiyuu_user"),
+			Password: utils.GetEnvString("DB_PASSWORD", "jiyuu_password"),
+			DBName:   utils.GetEnvString("DB_NAME", "ecommerce_db"),
 			SSLMode:  utils.GetEnvString("DB_SSLMODE", "disable"),
 			MaxConns: int32(utils.GetEnvInt("DB_MAX_CONNS", 25)),
 			MinConns: int32(utils.GetEnvInt("DB_MIN_CONNS", 5)),
