@@ -96,7 +96,7 @@ func (rl *FixedWindowLimiter) Handler() gin.HandlerFunc {
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"error": "Rate limit exceeded",
 			})
-			c.Abort()
+			// c.Abort()
 			return
 		}
 
@@ -127,7 +127,7 @@ func (rl *TokenBucketLimiter) Handler() gin.HandlerFunc {
 			c.JSON(http.StatusTooManyRequests, gin.H{
 				"error": "Rate limit exceeded",
 			})
-			c.Abort()
+			// c.Abort()
 			return
 		}
 

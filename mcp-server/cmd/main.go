@@ -68,7 +68,7 @@ func loadConfig() Config {
 			EnableTracing:  utils.GetEnvBool("OTEL_ENABLE_TRACING", true),
 			EnableMetrics:  utils.GetEnvBool("OTEL_ENABLE_METRICS", true),
 		},
-		BackendURL: utils.GetEnvString("BACKEND_URL", "http://localhost:8080/api/v1"),
+		BackendURL: utils.GetEnvString("BACKEND_URL", "http://localhost:8082/api/v1"),
 	}
 }
 

@@ -31,7 +31,6 @@ func main() {
 	}
 
 	userMsg := genai.NewContentFromText("Bên bạn có những loại sản phẩm gì thế?", genai.RoleUser)
-	fmt.Printf("User: Tell me about our services\n")
 
 	fmt.Printf("Agent: ")
 	for event, err := range agents.Runner.Run(ctx, "demo_user", sessionID, userMsg, agent.RunConfig{}) {

@@ -13,9 +13,9 @@ import (
 	mymcp "multi-agent/mcp"
 
 	"multi-agent/observability"
-	"multi-agent/provider/gemini"
+	// "multi-agent/provider/gemini"
 
-	// "multi-agent/provider/openai"
+	"multi-agent/provider/openai"
 	"multi-agent/utils"
 
 	"github.com/gin-gonic/gin"
@@ -141,12 +141,12 @@ func NewAgentsServer(ctx context.Context, cfgPath string) (*AgentServer, error) 
 
 	// 2. Init Shared Resources
 	// Shared LLM model
-	llm, err := gemini.NewGeminiLLM(ctx, "gemini-3-flash-preview") // Gemini 2.0 Flash is stable
-	// llm := openai.New(openai.Config{
-	// 	APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
-	// 	BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
-	// 	ModelName: "llama-3.3-70b-versatile",
-	// })
+	// llm, err := gemini.NewGeminiLLM(ctx, "gemini-3-flash-preview") // Gemini 2.0 Flash is stable
+	llm := openai.New(openai.Config{
+		APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
+		BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
+		ModelName: utils.GetEnvString("GROQ_LLM", "llama-3.3-70b-versatile"),
+	})
 	if err != nil {
 		log.Printf("Failed to create LLM model: %v", err)
 	}

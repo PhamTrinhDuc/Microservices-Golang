@@ -3,7 +3,9 @@ package server
 // https://zread.ai/modelcontextprotocol/go-sdk/11-middleware-and-request-handling
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"mcp-server/internal/database"
 	"mcp-server/internal/observability"
 	"mcp-server/internal/tools"
@@ -34,7 +36,6 @@ func tracingMiddleware(telemetry *observability.Telemetry) mcp.Middleware {
 				trace.WithAttributes(
 					attribute.String("rpc.method", method),
 					attribute.String("session.id", req.GetSession().ID()),
-					// Link tới http trace bằng cách dùng baggage
 				),
 			)
 			defer span.End()
@@ -52,15 +53,38 @@ func tracingMiddleware(telemetry *observability.Telemetry) mcp.Middleware {
 			duration := time.Since(startTime)
 			status := "success"
 
+			// Marshal request sang JSON để log và trace
+			reqBytes, _ := json.Marshal(req)
+			reqStr := string(reqBytes)
+
 			if err != nil {
 				status = "error"
 				span.SetStatus(codes.Error, err.Error())
 				span.RecordError(err)
+				log.Printf("[MCP ERROR] Method: %s | Req: %s | Error: %v\n", method, reqStr, err)
 			} else {
 				// Kiểm tra application-level error trong CallToolResult
-				if r, ok := result.(*mcp.CallToolResult); ok && r != nil && r.IsError {
-					status = "error"
-					span.SetStatus(codes.Error, fmt.Sprintf("tool error in method %s", method))
+				if r, ok := result.(*mcp.CallToolResult); ok && r != nil {
+					if r.IsError {
+						status = "error"
+						// Lấy chi tiết nội dung lỗi từ content của tool
+						errText := "unknown tool error"
+						if len(r.Content) > 0 {
+							contentBytes, errMarshal := json.Marshal(r.Content)
+							if errMarshal == nil {
+								errText = string(contentBytes)
+							}
+						}
+						span.SetStatus(codes.Error, fmt.Sprintf("tool error: %s", errText))
+						span.SetAttributes(
+							attribute.Bool("tool.error", true),
+							attribute.String("tool.error_message", errText),
+						)
+						log.Printf("[MCP TOOL ERROR] Method: %s | Req: %s | Result Error: %s\n", method, reqStr, errText)
+					} else {
+						span.SetStatus(codes.Ok, "success")
+						log.Printf("[MCP SUCCESS] Method: %s | Req: %s | Duration: %v\n", method, reqStr, duration)
+					}
 				} else {
 					span.SetStatus(codes.Ok, "success")
 				}
