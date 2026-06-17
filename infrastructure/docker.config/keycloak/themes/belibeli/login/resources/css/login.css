@@ -1,0 +1,311 @@
+/* Import Google Fonts - Plus Jakarta Sans */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    background-color: #FAF9F5;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #18181B;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Subtle print layout grid lines */
+body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 25%;
+    width: 0.5px;
+    background-color: #E4E4E7;
+    z-index: 1;
+    pointer-events: none;
+}
+
+body::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 25%;
+    width: 0.5px;
+    background-color: #E4E4E7;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Hide default Keycloak header and logo */
+#kc-header, .login-pf-brand {
+    display: none !important;
+}
+
+/* Main Card Container - Reduced padding and maximum width for tighter structure */
+.login-pf-page .card-pf, 
+#kc-content-wrapper,
+#kc-form-card {
+    background: #FAF9F5 !important;
+    border: 1px solid #E4E4E7 !important;
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    padding: 24px 36px !important;
+    width: 100% !important;
+    max-width: 440px !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    z-index: 10;
+    position: relative;
+}
+
+/* Page Title - Bolder & less margin */
+#kc-page-title {
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    color: #18181B !important;
+    text-align: left !important;
+    margin-top: 5px !important;
+    margin-bottom: 16px !important;
+    letter-spacing: -0.5px !important;
+    line-height: 1.1 !important;
+}
+
+/* Form Controls & Labels - Reduced margin */
+.form-group {
+    margin-bottom: 12px !important;
+}
+
+/* Labels inline with asterisk to prevent wrapping line break */
+label, 
+.control-label {
+    display: inline-block !important;
+    font-size: 10px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.15em !important;
+    color: #8C8273 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Force required asterisk inline with the label */
+.required {
+    display: inline-block !important;
+    float: none !important;
+    color: #991b1b !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    margin-left: 3px !important;
+    margin-bottom: 0 !important;
+}
+
+input.form-control, 
+input[type="text"], 
+input[type="password"] {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    color: #18181B !important;
+    background-color: #FAF9F5 !important;
+    border: 1px solid #E4E4E7 !important;
+    border-radius: 0px !important;
+    box-sizing: border-box !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
+}
+
+input.form-control:focus, 
+input[type="text"]:focus, 
+input[type="password"]:focus {
+    border-color: #18181B !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+}
+
+/* Password Eye Icons styling */
+.form-group .pf-c-button {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 10px !important;
+    color: #18181B !important;
+}
+
+/* Primary Action Buttons - Bolder text */
+.btn-primary, 
+input[type="submit"], 
+button[type="submit"] {
+    width: 100% !important;
+    background: #18181B !important;
+    color: #FAF9F5 !important;
+    border: 1px solid #18181B !important;
+    border-radius: 0px !important;
+    padding: 12px 20px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+    display: block !important;
+    text-align: center !important;
+    margin-top: 14px !important;
+}
+
+.btn-primary:hover, 
+input[type="submit"]:hover, 
+button[type="submit"]:hover {
+    background: #FAF9F5 !important;
+    color: #18181B !important;
+    border-color: #18181B !important;
+}
+
+.btn-primary:active, 
+input[type="submit"]:active, 
+button[type="submit"]:active {
+    transform: scale(0.99) !important;
+}
+
+/* Links & Navigation */
+a {
+    color: #18181B !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    border-bottom: 1px solid transparent;
+}
+
+a:hover {
+    border-bottom: 1px solid #18181B !important;
+}
+
+#kc-registration, #kc-info {
+    text-align: center !important;
+    margin-top: 20px !important;
+    font-size: 11px !important;
+    color: #71717A !important;
+    font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+#kc-registration a {
+    margin-left: 4px !important;
+    font-weight: 700 !important;
+}
+
+/* Checkboxes and Helper Layouts */
+.login-pf-settings {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    font-size: 11px !important;
+    margin: 12px 0 !important;
+}
+
+.checkbox label {
+    display: inline-flex !important;
+    align-items: center !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-weight: 500 !important;
+    font-size: 11px !important;
+    color: #71717A !important;
+    cursor: pointer !important;
+    margin: 0 !important;
+}
+
+.checkbox input[type="checkbox"] {
+    margin-right: 6px !important;
+    accent-color: #18181B !important;
+    width: 12px;
+    height: 12px;
+}
+
+/* Feedback/Alert Messages */
+.alert {
+    padding: 10px 14px !important;
+    margin-bottom: 16px !important;
+    border-radius: 0px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.alert-error {
+    background-color: #FAF9F5 !important;
+    color: #991b1b !important;
+    border: 1px solid #fecaca !important;
+}
+
+.alert-warning {
+    background-color: #FAF9F5 !important;
+    color: #92400e !important;
+    border: 1px solid #fef3c7 !important;
+}
+
+.alert-success {
+    background-color: #FAF9F5 !important;
+    color: #166534 !important;
+    border: 1px solid #bbf7d0 !important;
+}
+
+/* Social Login Providers */
+#kc-social-providers {
+    margin-top: 20px !important;
+}
+
+#kc-social-providers ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+#kc-social-providers a.zocial {
+    background: #FAF9F5 !important;
+    border: 1px solid #E4E4E7 !important;
+    border-radius: 0px !important;
+    color: #18181B !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    padding: 10px 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    transition: all 0.3s ease !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+}
+
+#kc-social-providers a.zocial:hover {
+    border-color: #18181B !important;
+    background: #ffffff !important;
+    text-decoration: none !important;
+}
+
+#kc-social-providers a.zocial::before {
+    content: "" !important;
+    display: inline-block !important;
+    width: 14px !important;
+    height: 14px !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+}
+
+#kc-social-providers a.zocial.google::before {
+    background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.14 3.01-.97 4.29l3.11 2.42c1.82-1.68 2.91-4.17 2.91-6.56z" fill="%234285F4"/><path d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.11-2.42c-.9.6-2.01.99-3.23.99-3.11 0-5.74-2.11-6.68-4.96L3.74 17.65C5.71 21.6 9.81 24 12 24z" fill="%2334A853"/><path d="M5.32 14.7c-.24-.7-.38-1.4-.38-2.2s.14-1.5.38-2.2L1.58 7.38C.57 9.41 0 11.66 0 14s.57 4.59 1.58 6.62l3.74-2.92z" fill="%23FBBC05"/><path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 9.81 0 5.71 2.4 3.74 6.35L7.48 9.3c.94-2.85 3.57-4.55 6.52-4.55z" fill="%23EA4335"/></svg>') !important;
+}
