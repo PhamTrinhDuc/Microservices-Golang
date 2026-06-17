@@ -57,7 +57,7 @@ type PostgresMemoryServiceConfig struct {
 
 func GetConfigPGMem() PostgresMemoryServiceConfig {
 	return PostgresMemoryServiceConfig{
-		ConnString: utils.GetEnvString("POSTGRES_URL", "postgres://mcp_user:mcp_password@localhost:5433/salon_chain"),
+		ConnString: utils.GetEnvString("POSTGRES_URL", "postgres://jiyuu_user:jiyuu_password@localhost:5433/ecommerce_db"),
 		EmbeddingModel: NewOpenAICompatibleEmbedding(
 			OpenAICompatibleEmbeddingConfig{
 				// BaseURL:   utils.GetEnvString("BASE_URL_OLLAMA", "http://localhost:11434/v1"),

@@ -43,7 +43,7 @@ func main() {
 	// log.Println("OpenTelemetry initialized successfully")
 
 	// 2. Khởi tạo Agent Server (Nó sẽ tự lo liệu từ Config, LLM đến MCP)
-	agentServer, err := server.NewAgentServer(ctx, "../config.yaml")
+	agentServer, err := server.NewAgentsServer(ctx, "../config.yaml")
 	if err != nil {
 		log.Fatalf("Failed to initialize Agent Server: %v", err)
 	}

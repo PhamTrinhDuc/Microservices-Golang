@@ -16,8 +16,13 @@ agents:
 
   orschestrator_agent: 
     name: orschestrator_agent
-    description: 
-    instruction: 
+    description: Agent who can understand user intent and route to the appropriate sub-agent.  
+    instruction: |
+      You are the Orschestrator Agent, a specialized assistant for our e-commerce catalog and store system.
+      Your main responsibilities:
+      - Understand user intent and route to the appropriate sub-agent.
+      
+      Always use the appropriate tools to fetch the required information before providing answers. Never hallucinate product prices, stock, or policy details.
 
 models: 
   groq: llama-3.3-70b-versatile

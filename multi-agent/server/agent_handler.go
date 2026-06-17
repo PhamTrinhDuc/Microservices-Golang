@@ -11,11 +11,11 @@ import (
 	"multi-agent/agents"
 	config "multi-agent/config"
 	mymcp "multi-agent/mcp"
-	mySvc "multi-agent/memory/postgres"
-	mySess "multi-agent/memory/redis"
 
 	"multi-agent/observability"
 	"multi-agent/provider/gemini"
+
+	// "multi-agent/provider/openai"
 	"multi-agent/utils"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +25,7 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/adk/agent"
+	"google.golang.org/adk/memory"
 	"google.golang.org/adk/runner"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool/toolconfirmation"
@@ -32,7 +33,7 @@ import (
 )
 
 const (
-	appName = "salon_chain"
+	appName = "ecommerce"
 	userID  = "demo_user"
 )
 
@@ -81,7 +82,7 @@ type headerTransport struct {
 func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Clone request để không làm ảnh hưởng đến bản gốc
 	newReq := req.Clone(req.Context())
-	
+
 	// Check if token is propagated in context
 	if tokenVal := req.Context().Value(contextKeyAuthToken); tokenVal != nil {
 		if tokenStr, ok := tokenVal.(string); ok && tokenStr != "" {
@@ -131,7 +132,7 @@ func loadConfig() observability.Config {
 	}
 }
 
-func NewAgentServer(ctx context.Context, cfgPath string) (*AgentServer, error) {
+func NewAgentsServer(ctx context.Context, cfgPath string) (*AgentServer, error) {
 	// 1. Load App Config (contains all agent definitions)
 	appCfg, err := config.LoadAppConfig(cfgPath)
 	if err != nil {
@@ -140,7 +141,12 @@ func NewAgentServer(ctx context.Context, cfgPath string) (*AgentServer, error) {
 
 	// 2. Init Shared Resources
 	// Shared LLM model
-	llm, err := gemini.NewGeminiLLM(ctx, "gemini-2.5-flash") // Gemini 2.0 Flash is stable
+	llm, err := gemini.NewGeminiLLM(ctx, "gemini-3-flash-preview") // Gemini 2.0 Flash is stable
+	// llm := openai.New(openai.Config{
+	// 	APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
+	// 	BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
+	// 	ModelName: "llama-3.3-70b-versatile",
+	// })
 	if err != nil {
 		log.Printf("Failed to create LLM model: %v", err)
 	}
@@ -210,10 +216,10 @@ func NewAgentServer(ctx context.Context, cfgPath string) (*AgentServer, error) {
 	}
 
 	// 5. Create session and memory
-	// sessionService := session.InMemoryService()
-	sessionService, err := mySess.NewRedisService(mySess.GetConfigRedis())
-	// memoryService := memory.InMemoryService()
-	memoryService, err := mySvc.NewPostgresMemoryService(ctx, mySvc.GetConfigPGMem())
+	sessionService := session.InMemoryService()
+	// sessionService, err := mySess.NewRedisService(mySess.GetConfigRedis())
+	memoryService := memory.InMemoryService()
+	// memoryService, err := mySvc.NewPostgresMemoryService(ctx, mySvc.GetConfigPGMem())
 
 	if err != nil {
 		log.Printf("Failed to init session service for agent: %s", err.Error())
