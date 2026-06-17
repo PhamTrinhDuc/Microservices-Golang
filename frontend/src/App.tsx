@@ -40,7 +40,7 @@ const App = () => {
   }, [isAuthenticated, fetchWishlist])
 
   useEffect(() => {
-    if (isAuthenticated && !user) {
+    if (isAuthenticated && (!user || user.id === 0)) {
       void fetchProfile()
     }
   }, [isAuthenticated, user, fetchProfile])
@@ -60,41 +60,31 @@ const App = () => {
             <Route
               path="/cart"
               element={
-                <ProtectedRoute>
-                  <CartPage />
-                </ProtectedRoute>
+                <CartPage />
               }
             />
             <Route
               path="/"
               element={
-                <ProtectedRoute>
-                  <HomePage />
-                </ProtectedRoute>
+                <HomePage />
               }
             />
             <Route
               path="/browse"
               element={
-                <ProtectedRoute>
-                  <BrowsePage />
-                </ProtectedRoute>
+                <BrowsePage />
               }
             />
             <Route
               path="/search"
               element={
-                <ProtectedRoute>
-                  <SearchPage />
-                </ProtectedRoute>
+                <SearchPage />
               }
             />
             <Route
               path="/products/:id"
               element={
-                <ProtectedRoute>
-                  <ProductDetailPage />
-                </ProtectedRoute>
+                <ProductDetailPage />
               }
             />
             <Route

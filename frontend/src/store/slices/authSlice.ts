@@ -3,6 +3,7 @@ import { authAPI } from '../../services/authAPI'
 import type { LoginRequest, LoginResponse, RegisterRequest, User, GoogleLoginRequest } from '../../types'
 import { tokenManager } from '../../utils/tokenManager'
 import { fetchCart, mergeCart, clearCartState } from './cartSlice'
+import { keycloak } from '../../utils/keycloak'
 
 interface AuthState {
   user: User | null
@@ -13,8 +14,39 @@ interface AuthState {
   error: string | null
 }
 
+const getInitialUser = (): User | null => {
+  const token = tokenManager.getToken()
+  if (!token || tokenManager.isTokenExpired(token)) {
+    return null
+  }
+  try {
+    const payload = token.split('.')[1]
+    if (!payload) return null
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join(''),
+    )
+    const claims = JSON.parse(jsonPayload)
+    return {
+      id: 0, // placeholder, will be updated by fetchProfile
+      full_name: claims.name || claims.preferred_username || claims.email || '',
+      email: claims.email || '',
+      role: claims.realm_access?.roles?.includes('admin') ? 'admin' : 'customer',
+      is_lock: false,
+      is_verified: true,
+      created_at: '',
+      updated_at: '',
+    }
+  } catch {
+    return null
+  }
+}
+
 const initialState: AuthState = {
-  user: null,
+  user: getInitialUser(),
   token: tokenManager.getToken(),
   isAuthenticated: tokenManager.isAuthenticated(),
   loading: false,
@@ -82,6 +114,7 @@ export const googleAuth = createAsyncThunk<LoginResponse, GoogleLoginRequest, { 
 export const logout = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   tokenManager.removeToken()
   dispatch(clearCartState())
+  void keycloak.logout({ redirectUri: window.location.origin })
 })
 
 export const fetchProfile = createAsyncThunk<User, void, { rejectValue: string }>(

@@ -177,25 +177,7 @@ const BrowsePage = () => {
     })
   }
 
-  const updateCategoryAndBrand = (categoryId: string | null, brandId: string | null) => {
-    startTransition(() => {
-      setSearchParams(prev => {
-        const next = new URLSearchParams(prev)
-        if (categoryId === null) {
-          next.delete('category')
-        } else {
-          next.set('category', categoryId)
-        }
-        if (brandId === null) {
-          next.delete('brand')
-        } else {
-          next.set('brand', brandId)
-        }
-        next.delete('page')
-        return next
-      })
-    })
-  }
+
 
   const clearAllFilters = () => {
     startTransition(() => {
@@ -984,7 +966,7 @@ const BrowsePage = () => {
                           setSelectedSpecs(prev => {
                             const list = prev[key].filter(item => item !== v)
                             const next = { ...prev, [key]: list }
-                            if (list.length === 0) delete next[key]
+                            if (list.length === 0) delete (next as any)[key]
                             return next
                           })
                         }}
@@ -1303,7 +1285,7 @@ const BrowsePage = () => {
                                   ? currentList.filter(v => v !== String(b.id))
                                   : [...currentList, String(b.id)]
                                 const next = { ...prev, ['__brand__']: nextList }
-                                if (nextList.length === 0) delete next['__brand__']
+                                if (nextList.length === 0) delete (next as any)['__brand__']
                                 return next
                               })
                             }}

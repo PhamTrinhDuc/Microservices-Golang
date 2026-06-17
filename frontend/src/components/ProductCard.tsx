@@ -18,7 +18,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const wishlistItem = wishlistItems.find(item => item.product_id === product.id)
   const isLiked = !!wishlistItem
 
-
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -50,13 +49,12 @@ const ProductCard = ({ product }: ProductCardProps) => {
     ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
     : 0
 
-  // Calculate a realistic sold count for premium aesthetics
   const idNum = typeof product.id === 'string' 
     ? product.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) 
     : product.id
   const soldCount = (product.review_count || 0) * 4 + (idNum % 7) * 3 + 2
 
-  // Extract spec tags (e.g. Screen size, RAM, Storage) for TGDĐ spec pills
+  // Extract spec tags
   const specTags = useMemo(() => {
     let specs: any = {}
     if (product.specs_jsonb) {
@@ -70,8 +68,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
 
     const tags: string[] = []
-    
-    // Look for screen size, CPU/Chipset, RAM, Storage in specs
     const findSpecValue = (targetKeys: string[]) => {
       for (const groupName of Object.keys(specs)) {
         const group = specs[groupName]
@@ -90,11 +86,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
       return null
     }
 
-    // 1. Screen size
     const screen = findSpecValue(['kích thước màn hình', 'màn hình rộng'])
     if (screen) tags.push(screen.replace('inches', '"').replace('inch', '"'))
 
-    // 2. CPU/Chip
     const cpu = findSpecValue(['chipset', 'cpu', 'bộ vi xử lý'])
     if (cpu) {
       const parts = cpu.split(' ')
@@ -102,7 +96,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
       tags.push(shortened.trim())
     }
 
-    // 3. RAM/ROM (e.g. 8 GB / 256 GB)
     const ram = findSpecValue(['ram', 'dung lượng ram'])
     const storage = findSpecValue(['bộ nhớ trong', 'dung lượng lưu trữ'])
     if (ram && storage) {
@@ -111,36 +104,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
       tags.push(storage)
     }
 
-    return tags.slice(0, 3)
+    return tags.slice(0, 2)
   }, [product.specs_jsonb])
 
-  const marketingBadges = useMemo(() => {
-    const list = []
-    if (product.stock > 0 && product.stock <= 5) {
-      list.push({ text: 'Sắp hết hàng', css: 'bg-amber-500 text-white' })
-    }
-    if (discountPercent >= 20) {
-      list.push({ text: 'Giá rẻ quá', css: 'bg-orange-600 text-white' })
-    }
-    if (displayPrice >= 10000000) {
-      list.push({ text: 'Trả góp 0%', css: 'bg-emerald-600 text-white' })
-    }
-    if (product.review_count >= 15) {
-      list.push({ text: 'Bán chạy', css: 'bg-red-650 text-white' })
-    }
-    return list.slice(0, 2)
-  }, [product.stock, discountPercent, displayPrice, product.review_count])
-
   return (
-    <div className="relative flex flex-col h-full bg-white rounded-lg border border-neutral-200 overflow-hidden hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 group">
-      
+    <div className="relative flex flex-col h-full bg-white border border-[#E4E4E7] hover:border-[#18181B] transition-all duration-300 rounded-none group">
       {/* Image Container with Soft Gray Backdrop & Heart Overlay */}
-      <div className="relative w-full aspect-square bg-neutral-100/70 flex items-center justify-center p-3">
-        <Link to={`/products/${product.id}`} className="w-full h-full flex items-center justify-center overflow-hidden rounded">
+      <div className="relative w-full aspect-square bg-[#FAF9F5] flex items-center justify-center p-4 border-b border-[#E4E4E7] rounded-none">
+        <Link to={`/products/${product.id}`} className="w-full h-full flex items-center justify-center overflow-hidden">
           <img
             src={product.image || '/placeholder-product.png'}
             alt={product.name}
-            className="object-contain max-h-full max-w-full mix-blend-multiply group-hover:scale-105 transition-transform duration-550 ease-out"
+            className="object-contain max-h-full max-w-full mix-blend-multiply group-hover:scale-[1.02] transition-transform duration-500 ease-out"
           />
         </Link>
 
@@ -174,36 +149,31 @@ const ProductCard = ({ product }: ProductCardProps) => {
             }
           }}
           disabled={loadingWishlist}
-          className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-neutral-450 hover:text-red-500 hover:scale-105 transition-all disabled:opacity-50"
+          className="absolute top-2 right-2 w-8 h-8 rounded-none border border-[#E4E4E7] bg-[#FAF9F5] hover:bg-[#18181B] hover:text-[#FAF9F5] flex items-center justify-center text-[#8C8273] hover:scale-105 transition-all disabled:opacity-50 cursor-pointer"
         >
           <svg
-            className={`w-4 h-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : 'text-neutral-400'}`}
+            className={`w-3.5 h-3.5 transition-colors ${isLiked ? 'fill-[#18181B] text-[#18181B] group-hover:fill-[#FAF9F5]' : 'currentColor'}`}
             fill={isLiked ? 'currentColor' : 'none'}
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
         </button>
 
-        {/* TGDĐ Marketing Badges Overlay */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-10">
+        {/* Minimal Marketing Badges Overlay */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
           {hasDiscount && (
-            <div className="bg-red-505 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide w-fit shadow-sm">
+            <div className="bg-[#18181B] text-[#FAF9F5] text-[8px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-none">
               -{discountPercent}%
             </div>
           )}
-          {marketingBadges.map((badge, idx) => (
-            <div key={idx} className={`${badge.css} text-[9px] font-extrabold px-1.5 py-0.5 rounded-sm uppercase tracking-wide w-fit shadow-sm`}>
-              {badge.text}
-            </div>
-          ))}
         </div>
 
         {/* Out of Stock Overlay */}
         {product.stock === 0 && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center">
-            <span className="bg-neutral-900 text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-sm tracking-wider">
+          <div className="absolute inset-0 bg-[#FAF9F5]/90 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="bg-[#18181B] text-[#FAF9F5] text-[9px] font-bold uppercase px-3 py-1 rounded-none tracking-wider">
               Hết hàng
             </span>
           </div>
@@ -211,27 +181,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
       </div>
 
       {/* Info Details Section */}
-      <div className="flex flex-col flex-1 p-3.5">
-        
+      <div className="flex flex-col flex-1 p-4 bg-white">
         {/* Brand */}
         {product.brand && (
-          <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mb-1">
+          <span className="text-[8px] font-semibold uppercase tracking-[0.2em] text-[#8C8273] mb-1">
             {product.brand.name}
           </span>
         )}
         
         {/* Title */}
         <Link to={`/products/${product.id}`} className="block mb-2">
-          <h3 className="line-clamp-2 text-[13px] font-semibold text-neutral-800 leading-snug hover:text-black transition-colors min-h-[36px]">
+          <h3 className="line-clamp-2 font-serif-display text-sm text-[#18181B] leading-snug hover:text-[#8C8273] transition-colors min-h-[36px] font-medium">
             {product.name}
           </h3>
         </Link>
 
-        {/* Specification Snippet Pills (TGDĐ style) */}
+        {/* Specification Snippet Pills */}
         {specTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {specTags.map((tag, idx) => (
-              <span key={idx} className="bg-neutral-100 text-neutral-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm border border-neutral-200/50 truncate max-w-[80px]" title={tag}>
+              <span key={idx} className="bg-[#FAF9F5] text-[#8C8273] text-[9px] font-semibold px-1.5 py-0.5 rounded-none border border-[#E4E4E7]/60 truncate max-w-[90px]" title={tag}>
                 {tag}
               </span>
             ))}
@@ -239,29 +208,24 @@ const ProductCard = ({ product }: ProductCardProps) => {
         )}
 
         {/* Rating and Sold inline badge */}
-        <div className="flex items-center gap-2 mb-3 text-[11px] text-neutral-500">
-          <div className="flex items-center text-amber-500">
-            <span className="text-xs mr-0.5">★</span>
-            <span className="font-bold text-neutral-700">{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
+        <div className="flex items-center gap-2 mb-3 text-[10px] text-[#8C8273]">
+          <div className="flex items-center text-[#8C8273]">
+            <span className="text-[11px] mr-0.5">★</span>
+            <span className="font-semibold text-[#18181B]">{product.rating ? product.rating.toFixed(1) : '0.0'}</span>
           </div>
-          <span className="text-neutral-300">|</span>
-          <span>Đã bán {soldCount}</span>
+          <span className="text-[#E4E4E7]">/</span>
+          <span className="lowercase font-light">đã bán {soldCount}</span>
         </div>
 
         {/* Price & Cart Actions */}
-        <div className="mt-auto pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+        <div className="mt-auto pt-3 border-t border-[#E4E4E7]/60 flex items-center justify-between gap-2">
           <div className="flex flex-col">
             {hasDiscount && (
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[10px] text-neutral-400 line-through">
-                  {originalPrice.toLocaleString('vi-VN')} đ
-                </span>
-                <span className="text-[9px] font-black text-red-500 bg-red-50 px-1 py-0.2 rounded">
-                  Tiết kiệm {(originalPrice - displayPrice).toLocaleString('vi-VN')}đ
-                </span>
-              </div>
+              <span className="text-[9px] text-[#A1A1AA] line-through mb-0.5">
+                {originalPrice.toLocaleString('vi-VN')} đ
+              </span>
             )}
-            <span className="text-sm font-black text-neutral-900">
+            <span className="text-xs font-bold text-[#18181B]">
               {displayPrice.toLocaleString('vi-VN')} đ
             </span>
           </div>
@@ -270,16 +234,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
             type="button"
             disabled={product.stock === 0 || loadingCart}
             onClick={handleQuickAdd}
-            className="w-8 h-8 rounded-full border border-neutral-250 flex items-center justify-center text-neutral-750 hover:bg-black hover:text-white hover:border-black active:scale-95 disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-neutral-750 disabled:hover:border-neutral-250 transition-all shrink-0"
+            className="w-8 h-8 rounded-none border border-[#E4E4E7] flex items-center justify-center text-[#18181B] hover:bg-[#18181B] hover:text-[#FAF9F5] hover:border-[#18181B] disabled:opacity-30 transition-all shrink-0 cursor-pointer bg-white"
             title="Thêm vào giỏ hàng"
           >
             {loadingCart ? (
-              <svg className="animate-spin h-4 w-4 text-black" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-3 w-3 text-current" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
               </svg>
             )}

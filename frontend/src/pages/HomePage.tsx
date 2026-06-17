@@ -6,6 +6,7 @@ import { useFeaturedProducts } from '../hooks/useProducts'
 import { bannerAPI } from '../services/bannerAPI'
 import { voucherAPI } from '../services/voucherAPI'
 import type { Banner, Promotion, Product } from '../types'
+import { keycloak } from '../utils/keycloak'
 
 const brandLogos: { [key: string]: string } = {
   apple: ' Apple',
@@ -23,18 +24,15 @@ const brandLogos: { [key: string]: string } = {
 }
 
 const HomePage = () => {
-  const { categories, brands, loading: catalogLoading } = useCatalog()
+  const { brands, loading: catalogLoading } = useCatalog()
   const { products: featuredProducts, loading: productsLoading } = useFeaturedProducts(24)
 
   const [activeTab, setActiveTab] = useState<'for_you' | 'best_seller' | 'discount' | 'newest'>('for_you')
   const [currentSlide, setCurrentSlide] = useState(0)
 
-  // Flash Sale Countdown timer & promotions state
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 })
   const [promotions, setPromotions] = useState<Promotion[]>([])
   const [countdownTarget, setCountdownTarget] = useState<Date | null>(null)
-
-  // Dynamic slides state
   const [slides, setSlides] = useState<Banner[]>([])
 
   const loadBanners = async () => {
@@ -53,7 +51,6 @@ const HomePage = () => {
       const data = await voucherAPI.getPromotions()
       setPromotions(data)
       
-      // Find the closest active promotion that ends in the future
       const now = new Date()
       const activeFuturePromotions = data.filter(p => {
         if (!p.is_active || p.is_deleted) return false
@@ -103,7 +100,6 @@ const HomePage = () => {
     return () => clearInterval(timer)
   }, [countdownTarget])
 
-  // Auto rotate slides
   useEffect(() => {
     const slideInterval = setInterval(() => {
       if (slides.length > 0) {
@@ -113,7 +109,6 @@ const HomePage = () => {
     return () => clearInterval(slideInterval)
   }, [slides])
 
-  // Filter products for tabs
   const getFilteredProducts = () => {
     if (!featuredProducts) return []
     switch (activeTab) {
@@ -129,7 +124,6 @@ const HomePage = () => {
     }
   }
 
-  // Find matching promotion for a product and override display discount price
   const getProductWithPromotion = (product: Product, promo: Promotion): Product => {
     let calculatedDiscountPrice = product.discount_price
     if (promo.discount_type === 'percentage') {
@@ -143,7 +137,6 @@ const HomePage = () => {
     }
   }
 
-  // Get active promotions
   const activePromotions = promotions.filter(promo => {
     if (!promo.is_active || promo.is_deleted) return false
     const now = new Date()
@@ -152,7 +145,6 @@ const HomePage = () => {
     return now >= startDate && now <= endDate
   })
 
-  // Get discount products for Flash Sale
   const flashSaleProducts = featuredProducts 
     ? (activePromotions.length > 0
         ? activePromotions.map(promo => {
@@ -165,35 +157,36 @@ const HomePage = () => {
     : []
 
   return (
-    <div className="bg-neutral-50 min-h-screen pb-16 font-sans">
+    <div className="bg-[#FAF9F5] min-h-screen pb-16 font-sans">
       
-      {/* TGDĐ Split Hero Section */}
+      {/* 1. Main Slider Block - Styled in print layout format */}
       {slides.length > 0 && (
-        <div className="w-full bg-neutral-100/60 py-4 border-b border-neutral-200/80">
+        <div className="w-full bg-[#FAF9F5] py-6 border-b border-[#E4E4E7]">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Left 2/3 for Main Banner Slider */}
-              <div className="lg:col-span-2 relative overflow-hidden rounded-xl bg-white border border-neutral-200/80 shadow-sm aspect-[21/9] lg:aspect-[16/7] flex items-center group">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left Main Banner Slider */}
+              <div className="lg:col-span-2 relative overflow-hidden rounded-none bg-white border border-[#E4E4E7] aspect-[21/9] lg:aspect-[16/7] flex items-center group">
                 <Link to={slides[currentSlide]?.link_url || '/browse'} className="w-full h-full block">
                   <img
                     src={slides[currentSlide]?.image_url}
                     alt={slides[currentSlide]?.title}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-101"
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.01]"
                   />
                 </Link>
                 
-                {/* Glassmorphic overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent flex flex-col justify-end p-6 md:p-10 text-white pointer-events-none">
+                {/* Elegant overlay text */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/25 to-transparent flex flex-col justify-end p-8 text-white pointer-events-none">
                   {slides[currentSlide]?.tag && (
-                    <span className="bg-amber-400 text-neutral-950 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm w-fit mb-3">
+                    <span className="bg-[#FAF9F5] text-[#18181B] text-[8px] font-bold uppercase tracking-[0.2em] px-2 py-0.5 w-fit mb-3">
                       {slides[currentSlide].tag}
                     </span>
                   )}
-                  <h1 className="text-xl md:text-3xl font-black leading-tight drop-shadow-sm max-w-lg">
+                  <h1 className="font-serif-display text-2xl md:text-4xl font-light leading-tight max-w-lg">
                     {slides[currentSlide]?.title}
                   </h1>
                   {slides[currentSlide]?.subtitle && (
-                    <p className="text-xs md:text-sm text-neutral-200 mt-1 font-semibold drop-shadow-sm">
+                    <p className="text-[10px] md:text-xs text-[#FAF9F5]/80 mt-2 tracking-widest uppercase font-semibold">
                       {slides[currentSlide].subtitle}
                     </p>
                   )}
@@ -202,179 +195,129 @@ const HomePage = () => {
                 {/* Left/Right Buttons */}
                 <button
                   onClick={() => setCurrentSlide(prev => (prev - 1 + slides.length) % slides.length)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/45 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-none border border-white/20 bg-black/40 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   ‹
                 </button>
                 <button
                   onClick={() => setCurrentSlide(prev => (prev + 1) % slides.length)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/45 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-none border border-white/20 bg-black/40 hover:bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 >
                   ›
                 </button>
 
-                {/* Navigation Indicators */}
-                <div className="absolute bottom-3 left-6 md:left-10 flex gap-1.5 z-10">
+                {/* Indicators */}
+                <div className="absolute bottom-4 left-8 flex gap-2 z-10">
                   {slides.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentSlide(idx)}
-                      className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-5 bg-amber-400' : 'w-1.5 bg-white/50 hover:bg-white'}`}
+                      className={`h-1 transition-all rounded-none ${idx === currentSlide ? 'w-6 bg-[#FAF9F5]' : 'w-2 bg-[#FAF9F5]/40 hover:bg-white'}`}
                     />
                   ))}
                 </div>
               </div>
 
-              {/* Right 1/3 for Stacked Promos */}
-              <div className="flex flex-col gap-3 h-full justify-between">
+              {/* Right Stacked Promos */}
+              <div className="flex flex-col gap-4 h-full justify-between">
                 {/* Promo 1 */}
-                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-indigo-900 via-indigo-950 to-neutral-950 text-white p-4.5 flex flex-col justify-between group min-h-[135px]">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay group-hover:scale-102 transition-transform duration-500" style={{ backgroundImage: slides[1] ? `url(${slides[1].image_url})` : 'none' }}></div>
+                <div className="relative flex-1 rounded-none overflow-hidden border border-[#E4E4E7] bg-[#18181B] text-white p-5 flex flex-col justify-between group min-h-[140px]">
+                  <div className="absolute inset-0 bg-cover bg-center opacity-20 mix-blend-overlay group-hover:scale-[1.01] transition-transform duration-500" style={{ backgroundImage: slides[1] ? `url(${slides[1].image_url})` : 'none' }}></div>
                   <div className="relative z-10 space-y-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded text-indigo-200">Độc quyền online</span>
-                    <h3 className="text-xs font-black mt-1.5 leading-snug">{slides[1]?.title || 'Sản Phẩm Độc Quyền'}</h3>
-                    <p className="text-[10px] text-indigo-200/85 line-clamp-1">{slides[1]?.subtitle || 'Nhập mã giảm cực sâu hôm nay'}</p>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#8C8273]">Độc quyền</span>
+                    <h3 className="font-serif-display text-lg mt-1 font-light">{slides[1]?.title || 'Sản Phẩm Độc Quyền'}</h3>
+                    <p className="text-[10px] text-[#A1A1AA] font-light line-clamp-1">{slides[1]?.subtitle || 'Tuyển chọn các thiết kế giới hạn'}</p>
                   </div>
-                  <Link to={slides[1]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-amber-300 hover:text-amber-250 uppercase tracking-wider mt-3 flex items-center gap-1">
-                    Mua ngay <span className="text-xs">→</span>
+                  <Link to={slides[1]?.link_url || '/browse'} className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-[#FAF9F5] hover:text-[#8C8273] transition-colors mt-4 flex items-center gap-1 w-fit">
+                    Khám phá <span className="text-xs">→</span>
                   </Link>
                 </div>
 
                 {/* Promo 2 */}
-                <div className="relative flex-1 rounded-xl overflow-hidden border border-neutral-200/80 shadow-sm bg-gradient-to-br from-amber-600 via-red-650 to-neutral-950 text-white p-4.5 flex flex-col justify-between group min-h-[135px]">
-                  <div className="absolute inset-0 bg-cover bg-center opacity-30 mix-blend-overlay group-hover:scale-102 transition-transform duration-500" style={{ backgroundImage: slides[2] ? `url(${slides[2].image_url})` : 'none' }}></div>
+                <div className="relative flex-1 rounded-none overflow-hidden border border-[#E4E4E7] bg-[#F6F5F0] text-[#18181B] p-5 flex flex-col justify-between group min-h-[140px]">
+                  <div className="absolute inset-0 bg-cover bg-center opacity-10 mix-blend-overlay group-hover:scale-[1.01] transition-transform duration-500" style={{ backgroundImage: slides[2] ? `url(${slides[2].image_url})` : 'none' }}></div>
                   <div className="relative z-10 space-y-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-black/10 px-2 py-0.5 rounded text-amber-100">Hot deal</span>
-                    <h3 className="text-xs font-black mt-1.5 leading-snug">{slides[2]?.title || 'Deal Sốc Giờ Vàng'}</h3>
-                    <p className="text-[10px] text-amber-100/85 line-clamp-1">{slides[2]?.subtitle || 'Số lượng có hạn, săn ngay kẻo lỡ'}</p>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#8C8273]">Điểm hẹn</span>
+                    <h3 className="font-serif-display text-lg mt-1 font-light">{slides[2]?.title || 'Tuyển chọn Giờ Vàng'}</h3>
+                    <p className="text-[10px] text-[#71717A] font-light line-clamp-1">{slides[2]?.subtitle || 'Số lượng giới hạn dành cho hội viên'}</p>
                   </div>
-                  <Link to={slides[2]?.link_url || '/browse'} className="relative z-10 text-[10px] font-extrabold text-white hover:underline uppercase tracking-wider mt-3 flex items-center gap-1">
-                    Khám phá <span className="text-xs">→</span>
+                  <Link to={slides[2]?.link_url || '/browse'} className="relative z-10 text-[9px] font-bold uppercase tracking-widest text-[#18181B] hover:text-[#8C8273] transition-colors mt-4 flex items-center gap-1 w-fit">
+                    Xem ngay <span className="text-xs">→</span>
                   </Link>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       )}
 
-      {/* Main Grid Content */}
-      <div className="mx-auto max-w-7xl px-4 py-4 space-y-6">
+      {/* 2. Main Grid Content */}
+      <div className="mx-auto max-w-7xl px-4 py-6 space-y-8">
 
-        {/* Brand Value & Trust Section (Moved to top below Hero slider) */}
-        <div className="py-1 border-b border-neutral-200/60 pb-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-center">
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                </svg>
+        {/* Brand Values Row */}
+        <div className="py-2 border-b border-[#E4E4E7] pb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { title: 'Miễn phí giao hàng', desc: 'Cho các đơn hàng từ 299K' },
+              { title: '100% Chính hãng', desc: 'Cam kết chất lượng thiết kế' },
+              { title: 'Bảo mật thanh toán', desc: 'Mã hóa dữ liệu giao dịch 24/7' },
+              { title: '7 ngày đổi trả', desc: 'Đổi trả nhanh chóng, thủ tục tối giản' }
+            ].map((val, idx) => (
+              <div key={idx} className="flex flex-col p-4 bg-white border border-[#E4E4E7]">
+                <h5 className="text-[9px] font-bold uppercase tracking-[0.2em] text-[#18181B]">{val.title}</h5>
+                <p className="text-[10px] text-[#8C8273] mt-1 font-light">{val.desc}</p>
               </div>
-              <div className="text-left">
-                <h5 className="text-[10px] font-black uppercase text-neutral-800">Miễn phí vận chuyển</h5>
-                <p className="text-[9px] text-neutral-400 mt-0.5">Mọi hóa đơn toàn quốc từ 299K</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h5 className="text-[10px] font-black uppercase text-neutral-800">100% Chính hãng</h5>
-                <p className="text-[9px] text-neutral-400 mt-0.5">Bồi hoàn gấp đôi nếu phát hiện giả</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h5 className="text-[10px] font-black uppercase text-neutral-800">Bảo mật thanh toán</h5>
-                <p className="text-[9px] text-neutral-400 mt-0.5">Mã hóa thông tin 24/7 an toàn</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-neutral-200/60 shadow-sm">
-              <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18.5" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <h5 className="text-[10px] font-black uppercase text-neutral-800">7 ngày đổi trả</h5>
-                <p className="text-[9px] text-neutral-400 mt-0.5">Chính sách đổi trả dễ dàng nhanh chóng</p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-
-
-        {/* Flash Sale Countdown Section with Neon Highlight Bar */}
+        {/* Flash Sale Section */}
         {flashSaleProducts.length > 0 && (
-          <div className="border border-red-200/80 rounded-xl p-5 bg-gradient-to-b from-white to-red-50/10 space-y-4 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-rose-600"></div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="bg-red-500 text-white text-xs font-black tracking-wider px-2.5 py-1 rounded-sm uppercase flex items-center gap-1 shadow-sm">
-                  <span>⚡</span> FLASH SALE
+          <div className="border border-[#E4E4E7] rounded-none p-6 bg-white space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#E4E4E7] pb-4">
+              <div className="flex items-baseline gap-4">
+                <span className="font-serif-display text-2xl font-medium tracking-tight text-[#18181B]">
+                  BeliBeli // Giờ Vàng
                 </span>
                 
-                {/* Timer */}
-                <div className="flex items-center gap-1.5 font-bold text-sm text-neutral-850">
-                  <span className="bg-neutral-900 text-white px-2.5 py-0.8 rounded text-xs font-mono shadow-sm">{String(timeLeft.hours).padStart(2, '0')}</span>
+                {/* Clean Timer */}
+                <div className="flex items-center gap-1 font-mono text-xs text-[#18181B] font-bold">
+                  <span className="bg-[#18181B] text-[#FAF9F5] px-2 py-0.5 rounded-none">{String(timeLeft.hours).padStart(2, '0')}</span>
                   <span>:</span>
-                  <span className="bg-neutral-900 text-white px-2.5 py-0.8 rounded text-xs font-mono shadow-sm">{String(timeLeft.minutes).padStart(2, '0')}</span>
+                  <span className="bg-[#18181B] text-[#FAF9F5] px-2 py-0.5 rounded-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
                   <span>:</span>
-                  <span className="bg-red-650 text-white px-2.5 py-0.8 rounded text-xs font-mono shadow-sm animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className="bg-[#18181B] text-[#FAF9F5] px-2 py-0.5 rounded-none">{String(timeLeft.seconds).padStart(2, '0')}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-neutral-555 flex items-center gap-1.5 bg-neutral-100 px-3 py-1.2 rounded-full border border-neutral-200">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
-                  KẾT THÚC LÚC {countdownTarget ? countdownTarget.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '24:00'}
-                </span>
-              </div>
+              <span className="text-[9px] uppercase tracking-[0.25em] text-[#8C8273] font-bold">
+                KẾT THÚC LÚC {countdownTarget ? countdownTarget.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '24:00'}
+              </span>
             </div>
 
-            {/* Flash Sale Product Cards and Progress Bars */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 pt-1">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {flashSaleProducts.map(product => (
-                <div key={product.id} className="relative flex flex-col justify-between bg-white border border-neutral-150 rounded-lg p-1.5 hover:shadow-md transition-shadow">
-                  <div className="flex-1">
-                    <ProductCard product={product} />
-                  </div>
+                <div key={product.id} className="relative flex flex-col justify-between bg-white border border-[#E4E4E7] p-1 group">
+                  <ProductCard product={product} />
                   
-                  {/* Glowing dynamic progress bar */}
-                  <div className="mt-3 px-1.5 pb-2">
+                  {/* Slim, clean progress bar */}
+                  <div className="mt-3 px-3 pb-3">
                     {(() => {
                       const totalStock = product.stock + Math.max(5, (product.stock % 7) + 3)
                       const soldCount = totalStock - product.stock
                       const soldPercentage = Math.round((soldCount / totalStock) * 100)
                       return (
-                        <div className="space-y-1.5">
-                          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider">
-                            <span className="flex items-center gap-0.5 text-red-600">
-                              <span>🔥</span>
-                              Đã bán {soldCount}
-                            </span>
-                            <span className="text-neutral-450">Còn {product.stock}</span>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider text-[#8C8273]">
+                            <span>Đã bán {soldCount}</span>
+                            <span>Còn {product.stock}</span>
                           </div>
-                          <div className="w-full bg-neutral-150 rounded-full h-3.5 relative overflow-hidden shadow-inner border border-neutral-200">
+                          <div className="w-full bg-[#FAF9F5] border border-[#E4E4E7] h-1.5 relative overflow-hidden">
                             <div 
-                              className="bg-gradient-to-r from-orange-500 via-red-500 to-rose-600 h-full rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(239,68,68,0.35)]" 
+                              className="bg-[#18181B] h-full transition-all duration-700 ease-out" 
                               style={{ width: `${soldPercentage}%` }}
                             >
                             </div>
-                            <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-neutral-800 leading-none">
-                              {soldPercentage >= 50 ? <span className="text-white">Hot - Bán {soldPercentage}%</span> : `Đã bán ${soldPercentage}%`}
-                            </span>
                           </div>
                         </div>
                       )
@@ -386,29 +329,24 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Thematic Promotion Block: Apple Zone */}
+        {/* Luxe Editorial Section: Apple Zone */}
         {featuredProducts && featuredProducts.some(p => p.brand?.name?.toLowerCase().includes('apple') || p.name?.toLowerCase().includes('iphone') || p.name?.toLowerCase().includes('ipad')) && (
-          <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-950 to-neutral-900 p-6 md:p-8 border border-neutral-800 shadow-xl space-y-6">
-            {/* Background luxury highlights */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-neutral-850/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-brand-500/5 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="relative z-10 flex items-center justify-between flex-wrap gap-4 border-b border-neutral-800 pb-4">
-              <span className="text-white text-lg font-black flex items-center gap-1.5">
-                 <span className="bg-gradient-to-r from-neutral-100 to-neutral-400 bg-clip-text text-transparent tracking-tight">Apple Authorized Reseller</span>
+          <div className="relative rounded-none bg-[#18181B] text-[#FAF9F5] p-8 border border-[#18181B] space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-4 border-b border-[#FAF9F5]/10 pb-4">
+              <span className="font-serif-display text-2xl font-light tracking-wide text-white">
+                 Apple Reseller // <span className="italic">Góc trưng bày thiết kế</span>
               </span>
-              <Link to="/browse?brand=1" className="text-xs font-black uppercase tracking-wider text-amber-300 hover:text-amber-250 transition-colors">
+              <Link to="/browse?brand=1" className="text-[9px] font-bold uppercase tracking-[0.25em] text-[#8C8273] hover:text-[#FAF9F5] transition-colors">
                 Xem tất cả sản phẩm Apple →
               </Link>
             </div>
 
-            {/* Apple Products List */}
-            <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {featuredProducts
                 .filter(p => p.brand?.name?.toLowerCase().includes('apple') || p.name?.toLowerCase().includes('iphone') || p.name?.toLowerCase().includes('ipad') || p.name?.toLowerCase().includes('macbook'))
                 .slice(0, 5)
                 .map(product => (
-                  <div key={product.id} className="bg-neutral-950/40 rounded-xl border border-neutral-800/80 p-1 hover:border-neutral-700 transition-all duration-300">
+                  <div key={product.id} className="bg-white/5 border border-white/10 p-1 hover:border-white/20 transition-all duration-300">
                     <ProductCard product={product} />
                   </div>
                 ))
@@ -417,32 +355,35 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Slogan Banner Block */}
-        <div className="w-full bg-neutral-900 text-white py-6 px-8 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4 border border-neutral-800 shadow-md relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
-          <div className="relative z-10">
-            <h3 className="text-base font-black tracking-wider uppercase text-amber-400">Let's Shop Beyond Boundaries</h3>
-            <p className="text-[11px] text-neutral-450 mt-1 max-w-xl">Đặt mua thiết bị công nghệ chính hãng từ các tập đoàn hàng đầu thế giới với chính sách hậu mãi và chăm sóc khách hàng tốt nhất tại BeliBeli.</p>
+        {/* Minimal Slogan Block */}
+        <div className="w-full bg-[#FAF9F5] text-[#18181B] py-10 px-8 border border-[#E4E4E7] flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+          <div className="space-y-2 max-w-xl">
+            <h3 className="font-serif-display text-2xl font-light leading-snug">
+              "Ngôn ngữ của sự tĩnh lặng và nét thanh lịch thuần khiết."
+            </h3>
+            <p className="text-[11px] text-[#8C8273] font-light leading-relaxed">
+              Tất cả các sản phẩm trưng bày tại BeliBeli đều trải qua quy trình đánh giá nghiêm ngặt để đảm bảo sự hòa hợp tuyệt đối giữa thiết kế mỹ thuật và hiệu năng vận hành.
+            </p>
           </div>
-          <Link to="/browse" className="relative z-10 bg-white text-neutral-900 text-xs font-black uppercase px-6 py-3 rounded-lg hover:bg-neutral-150 transition-colors shadow-sm shrink-0">
-            Mua ngay
+          <Link to="/browse" className="bg-[#18181B] text-[#FAF9F5] text-[10px] font-semibold uppercase tracking-[0.2em] px-8 py-3.5 hover:bg-transparent hover:text-[#18181B] border border-[#18181B] transition-colors shrink-0">
+            Xem Bộ Sưu Tập
           </Link>
         </div>
 
-        {/* Today's For You Tabs & Grid */}
+        {/* Tabs Grid */}
         <div className="space-y-6">
-          <div className="border-b border-neutral-200">
+          <div className="border-b border-[#E4E4E7]">
             <div className="flex gap-6 overflow-x-auto pb-px scrollbar-none">
               {[
-                { id: 'for_you', label: 'Gợi ý cho bạn' },
+                { id: 'for_you', label: 'Gợi ý tuyển chọn' },
                 { id: 'best_seller', label: 'Bán chạy nhất' },
-                { id: 'discount', label: 'Khuyến mãi cực sâu' },
+                { id: 'discount', label: 'Ưu đãi thành viên' },
                 { id: 'newest', label: 'Hàng mới về' },
               ].map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`pb-3 text-xs font-black border-b-2 transition-all shrink-0 uppercase tracking-wider ${activeTab === tab.id ? 'border-brand-600 text-brand-600' : 'border-transparent text-neutral-400 hover:text-neutral-600'}`}
+                  className={`pb-3 text-[10px] uppercase tracking-[0.2em] font-bold border-b transition-all shrink-0 cursor-pointer ${activeTab === tab.id ? 'border-[#18181B] text-[#18181B]' : 'border-transparent text-[#8C8273] hover:text-[#18181B]'}`}
                 >
                   {tab.label}
                 </button>
@@ -453,7 +394,7 @@ const HomePage = () => {
           {productsLoading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="aspect-[3/4] bg-neutral-200 animate-pulse rounded-lg border border-neutral-200"></div>
+                <div key={i} className="aspect-[3/4] bg-white border border-[#E4E4E7] animate-pulse"></div>
               ))}
             </div>
           ) : (
@@ -465,13 +406,10 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* Best Selling Store (Brand Panels) */}
+        {/* Gian hàng nổi bật (Featured Store Cards) */}
         {!catalogLoading && brands.length > 0 && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[13px] font-black text-neutral-900 uppercase tracking-wider">Gian Hàng Nổi Bật</h2>
-              <Link to="/browse" className="text-xs font-bold text-brand-600 hover:text-brand-850 transition-colors uppercase">Xem tất cả</Link>
-            </div>
+            <h2 className="font-serif-display text-2xl font-light text-[#18181B] tracking-tight">Gian Hàng Nổi Bật</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {brands.slice(0, 3).map(brand => {
@@ -480,41 +418,38 @@ const HomePage = () => {
                   : []
                 
                 return (
-                  <div key={brand.id} className="border border-neutral-200/80 rounded-xl p-4.5 bg-white hover:shadow-premium transition-all duration-300 flex flex-col justify-between">
+                  <div key={brand.id} className="border border-[#E4E4E7] bg-white p-6 transition-all duration-300 flex flex-col justify-between">
                     <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                          {brand.logo ? (
-                            <img src={brand.logo} alt={brand.name} className="w-10 h-10 object-contain rounded-full border border-neutral-100 p-0.5" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-full bg-neutral-950 text-white flex items-center justify-center font-black text-sm">{brandLogos[brand.name.toLowerCase()]?.slice(0, 2) || brand.name.slice(0, 2)}</div>
-                          )}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#FAF9F5] border border-[#E4E4E7] text-[#18181B] flex items-center justify-center font-bold text-xs uppercase">
+                            {brandLogos[brand.name.toLowerCase()]?.slice(0, 2) || brand.name.slice(0, 2)}
+                          </div>
                           <div>
                             <div className="flex items-center gap-1">
-                              <span className="font-bold text-xs text-neutral-800 uppercase tracking-wider">{brand.name}</span>
-                              <span className="text-blue-500 text-xs" title="Official Store">✓</span>
+                              <span className="font-serif-display font-medium text-sm text-[#18181B] uppercase tracking-wider">{brand.name}</span>
+                              <span className="text-[#8C8273] text-xs">✓</span>
                             </div>
-                            <p className="text-[9px] text-neutral-400 uppercase tracking-widest font-semibold">Chính hãng</p>
+                            <p className="text-[8px] text-[#A1A1AA] uppercase tracking-[0.2em] font-semibold">Chính hãng</p>
                           </div>
                         </div>
-                        <Link to={`/browse?brand=${brand.id}`} className="border border-neutral-250 text-neutral-800 text-[10px] font-bold px-3 py-1 rounded hover:bg-black hover:text-white hover:border-black transition-all uppercase">
-                          Ghé thăm
+                        <Link to={`/browse?brand=${brand.id}`} className="border border-[#E4E4E7] text-[#18181B] text-[9px] font-bold px-3 py-1.5 hover:bg-[#18181B] hover:text-[#FAF9F5] transition-all uppercase tracking-wider">
+                          Khám phá
                         </Link>
                       </div>
                       
-                      {/* Product Previews */}
                       <div className="grid grid-cols-3 gap-2">
                         {brandProducts.slice(0, 3).map((p) => (
-                          <Link key={p.id} to={`/products/${p.id}`} className="aspect-square bg-neutral-50 rounded-lg border border-neutral-200 p-1 flex items-center justify-center hover:border-neutral-400 transition-colors">
+                          <Link key={p.id} to={`/products/${p.id}`} className="aspect-square bg-[#FAF9F5] border border-[#E4E4E7] p-1 flex items-center justify-center hover:border-[#18181B] transition-colors">
                             <img src={p.image || '/placeholder-product.png'} alt={p.name} className="max-h-full max-w-full object-contain mix-blend-multiply" />
                           </Link>
                         ))}
                         {brandProducts.length === 0 && (
                           [...Array(3)].map((_, idx) => {
                             const idxProduct = featuredProducts ? featuredProducts[idx * 2 + (brand.id % 3)] : null
-                            if (!idxProduct) return <div key={idx} className="aspect-square bg-neutral-50 rounded-lg border border-neutral-200" />
+                            if (!idxProduct) return <div key={idx} className="aspect-square bg-[#FAF9F5] border border-[#E4E4E7]" />
                             return (
-                              <Link key={idx} to={`/products/${idxProduct.id}`} className="aspect-square bg-neutral-50 rounded-lg border border-neutral-200 p-1 flex items-center justify-center hover:border-neutral-400 transition-colors">
+                              <Link key={idx} to={`/products/${idxProduct.id}`} className="aspect-square bg-[#FAF9F5] border border-[#E4E4E7] p-1 flex items-center justify-center hover:border-[#18181B] transition-colors">
                                 <img src={idxProduct.image || '/placeholder-product.png'} alt={idxProduct.name} className="max-h-full max-w-full object-contain mix-blend-multiply" />
                               </Link>
                             )
@@ -529,34 +464,38 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Promotional & Feature Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-          <div className="bg-gradient-to-tr from-neutral-900 to-neutral-800 text-white rounded-xl p-6 flex flex-col justify-between min-h-[160px] border border-neutral-800 shadow-sm relative overflow-hidden">
-            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
+        {/* Bottom Editorial Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+          <div className="bg-[#18181B] text-white p-8 border border-[#18181B] flex flex-col justify-between min-h-[180px]">
             <div>
-              <span className="text-[10px] font-black tracking-wider bg-white/10 px-2.5 py-1 rounded uppercase text-amber-300">Đặc quyền VIP</span>
-              <h4 className="text-xs font-black mt-3 uppercase tracking-wider">Thành Viên Premium</h4>
-              <p className="text-[10.5px] text-neutral-400 mt-1 leading-relaxed">Nhận ngay hoàn tiền 5% cho tất cả đơn hàng & miễn phí giao hàng trọn đời.</p>
+              <span className="text-[8px] font-bold tracking-[0.2em] bg-white/10 px-2 py-1 uppercase text-[#FAF9F5]">Hội viên</span>
+              <h4 className="font-serif-display text-lg font-light mt-4">Thành Viên Premium</h4>
+              <p className="text-[11px] text-[#A1A1AA] mt-2 font-light leading-relaxed">Đăng ký thành viên để nhận ngay chính sách hoàn tiền 5% trọn đời và giao hàng ưu tiên.</p>
             </div>
-            <Link to="/register" className="text-[10px] font-black uppercase text-amber-300 tracking-wider hover:underline mt-4 w-fit">Đăng ký ngay →</Link>
+            <button
+              onClick={() => void keycloak.register()}
+              className="text-[9px] font-bold uppercase text-[#FAF9F5] tracking-[0.2em] hover:text-[#8C8273] transition-colors mt-6 w-fit bg-transparent border-0 p-0 cursor-pointer text-left font-sans"
+            >
+              Đăng ký ngay →
+            </button>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-xl p-6 flex flex-col justify-between min-h-[160px] shadow-sm">
+          <div className="bg-white border border-[#E4E4E7] p-8 flex flex-col justify-between min-h-[180px]">
             <div>
-              <span className="text-[10px] font-black tracking-wider bg-neutral-100 text-neutral-600 px-2.5 py-1 rounded uppercase">Ưu đãi thanh toán</span>
-              <h4 className="text-xs font-black mt-3 text-neutral-900 uppercase tracking-wider">BeliBeli Credit Card</h4>
-              <p className="text-[10.5px] text-neutral-500 mt-1 leading-relaxed">Giảm thêm tới 200.000đ khi thanh toán bằng thẻ VISA/MasterCard của các ngân hàng đối tác.</p>
+              <span className="text-[8px] font-bold tracking-[0.2em] bg-[#FAF9F5] text-[#8C8273] px-2 py-1 uppercase">Tài chính</span>
+              <h4 className="font-serif-display text-lg font-light mt-4">BeliBeli Credit Card</h4>
+              <p className="text-[11px] text-[#71717A] mt-2 font-light leading-relaxed">Nhận ưu đãi giảm giá thêm tới 200.000đ khi liên kết thanh toán với thẻ VISA / MasterCard của ngân hàng đối tác.</p>
             </div>
-            <a href="#" className="text-[10px] font-black uppercase text-neutral-900 hover:text-brand-600 tracking-wider mt-4 w-fit">Tìm hiểu thêm →</a>
+            <a href="#" className="text-[9px] font-bold uppercase text-[#18181B] hover:text-[#8C8273] transition-colors tracking-[0.2em] mt-6 w-fit">Tìm hiểu thêm →</a>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-xl p-6 flex flex-col justify-between min-h-[160px] shadow-sm">
+          <div className="bg-white border border-[#E4E4E7] p-8 flex flex-col justify-between min-h-[180px]">
             <div>
-              <span className="text-[10px] font-black tracking-wider bg-neutral-100 text-neutral-600 px-2.5 py-1 rounded uppercase">Dịch vụ hỏa tốc</span>
-              <h4 className="text-xs font-black mt-3 text-neutral-900 uppercase tracking-wider">Giao hàng 2 Giờ</h4>
-              <p className="text-[10.5px] text-neutral-500 mt-1 leading-relaxed">Nhận hàng nhanh chóng trong 2h tại khu vực nội thành. Miễn phí cho đơn hàng từ 500.000đ.</p>
+              <span className="text-[8px] font-bold tracking-[0.2em] bg-[#FAF9F5] text-[#8C8273] px-2 py-1 uppercase">Dịch vụ</span>
+              <h4 className="font-serif-display text-lg font-light mt-4">Giao Hàng 2 Giờ</h4>
+              <p className="text-[11px] text-[#71717A] mt-2 font-light leading-relaxed">Dịch vụ chuyển phát hỏa tốc trong vòng 2 giờ nội thành Hồ Chí Minh & Hà Nội cho các đơn hàng tuyển chọn.</p>
             </div>
-            <a href="#" className="text-[10px] font-black uppercase text-neutral-900 hover:text-brand-600 tracking-wider mt-4 w-fit">Xem khu vực áp dụng →</a>
+            <a href="#" className="text-[9px] font-bold uppercase text-[#18181B] hover:text-[#8C8273] transition-colors tracking-[0.2em] mt-6 w-fit">Xem khu vực hỗ trợ →</a>
           </div>
         </div>
 

@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useCart } from '../hooks/useCart'
 import { useWishlist } from '../hooks/useWishlist'
 import { useCatalog } from '../hooks/useCatalog'
+import { keycloak } from '../utils/keycloak'
 import CategoryNavStrip from './CategoryNavStrip'
 
 const Header = () => {
@@ -65,50 +66,60 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white shadow-sm font-sans">
+    <header className="sticky top-0 z-50 w-full bg-[#FAF9F5] border-b border-[#E4E4E7] font-sans">
       {/* Top Utility Bar */}
-      <div className="w-full bg-neutral-50 border-b border-neutral-200 py-1.5 text-xs text-neutral-500">
+      <div className="w-full bg-[#FAF9F5] border-b border-[#E4E4E7]/60 py-1.5 text-[10px] text-[#8C8273] tracking-wider uppercase font-semibold">
         <div className="mx-auto max-w-7xl px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="cursor-pointer hover:text-neutral-900 transition-colors">Download BeliBeli App</span>
-            <span className="h-3 w-px bg-neutral-350"></span>
-            <span className="cursor-pointer hover:text-neutral-900 transition-colors">BeliBeli Care</span>
-            <span className="h-3 w-px bg-neutral-350"></span>
-            <span className="cursor-pointer hover:text-neutral-900 transition-colors text-red-500 font-medium">Promo</span>
+            <span className="cursor-pointer hover:text-[#18181B] transition-colors">Tải Ứng Dụng</span>
+            <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
+            <span className="cursor-pointer hover:text-[#18181B] transition-colors">BeliBeli Care</span>
+            <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
+            <span className="cursor-pointer hover:text-[#18181B] transition-colors text-[#8C8273]">Độc Quyền</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/browse?sort=popular" className="hover:text-neutral-900 transition-colors">Bán chạy</Link>
-            <span className="h-3 w-px bg-neutral-350"></span>
+            <Link to="/browse?sort=popular" className="hover:text-[#18181B] transition-colors">Bán chạy</Link>
+            <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 {user?.role === 'admin' && (
                   <>
                     <Link
                       to="/admin"
-                      className="text-neutral-900 hover:text-red-600 font-bold transition-colors uppercase tracking-wider text-[10px]"
+                      className="text-[#18181B] hover:text-[#8C8273] font-bold transition-colors uppercase tracking-wider text-[10px]"
                     >
-                      Quản trị viên
+                      Quản trị
                     </Link>
-                    <span className="h-3 w-px bg-neutral-350"></span>
+                    <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
                   </>
                 )}
-                <span className="font-semibold text-neutral-800">
-                  Hi, {user?.full_name || user?.email}
+                <span className="font-semibold text-[#18181B] lowercase">
+                  @{user?.full_name?.replace(/\s+/g, '').toLowerCase() || 'member'}
                 </span>
-                <span className="h-3 w-px bg-neutral-350"></span>
+                <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="hover:text-neutral-900 transition-colors font-medium"
+                  className="hover:text-[#18181B] transition-colors font-semibold cursor-pointer uppercase tracking-wider bg-transparent border-0 p-0 text-[10px]"
                 >
                   Đăng xuất
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <Link to="/login" className="hover:text-neutral-900 transition-colors font-medium">Đăng nhập</Link>
-                <span className="h-3 w-px bg-neutral-350"></span>
-                <Link to="/register" className="text-neutral-900 hover:underline font-semibold">Đăng ký</Link>
+                <button
+                  onClick={() => void keycloak.login()}
+                  className="hover:text-[#18181B] transition-colors font-semibold cursor-pointer bg-transparent border-0 p-0 text-[10px] uppercase tracking-wider"
+                >
+                  Đăng nhập
+                </button>
+                <span className="h-2.5 w-[0.5px] bg-[#E4E4E7]"></span>
+                <button
+                  onClick={() => void keycloak.register()}
+                  className="hover:text-[#18181B] transition-colors font-semibold cursor-pointer bg-transparent border-0 p-0 text-[10px] uppercase tracking-wider"
+                >
+                  Đăng ký
+                </button>
               </div>
             )}
           </div>
@@ -116,36 +127,33 @@ const Header = () => {
       </div>
 
       {/* Main Navbar */}
-      <div className="w-full bg-white border-b border-neutral-100 py-3.5">
+      <div className="w-full bg-[#FAF9F5] py-4">
         <div className="mx-auto max-w-7xl px-4 flex items-center justify-between gap-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-1.5 group shrink-0">
-            <div className="bg-black text-white px-2 py-1 rounded font-black text-lg tracking-wider">
-              B
-            </div>
-            <span className="text-xl font-extrabold tracking-tight text-neutral-900">
-              BeliBeli<span className="text-neutral-400 font-semibold text-sm">.com</span>
+          {/* Logo - Print Serif display logo */}
+          <Link to="/" className="shrink-0">
+            <span className="font-serif-display text-2xl font-bold tracking-[0.15em] text-[#18181B] hover:opacity-85 transition-opacity">
+              BELIBELI.
             </span>
           </Link>
 
           {/* Search Input Group with Dropdown */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl">
-            <div className="flex items-center rounded-md border border-neutral-400 bg-white hover:border-neutral-500 focus-within:border-black focus-within:ring-2 focus-within:ring-black/10 focus-within:shadow-md transition-all duration-300">
+          <form onSubmit={handleSearch} className="flex-1 max-w-xl">
+            <div className="flex items-center border border-[#E4E4E7] bg-[#FAF9F5] focus-within:border-[#18181B] transition-colors duration-300 rounded-none overflow-hidden">
               {/* Category Select Dropdown */}
-              <div className="relative border-r border-neutral-200">
+              <div className="relative border-r border-[#E4E4E7] bg-[#FAF9F5]">
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="bg-transparent pl-4 pr-8 py-2 text-xs font-semibold text-neutral-700 focus:outline-none appearance-none cursor-pointer"
+                  className="bg-transparent pl-4 pr-8 py-2 text-[10px] uppercase tracking-widest font-bold text-[#8C8273] focus:outline-none appearance-none cursor-pointer"
                 >
-                  <option value="all">Tất cả danh mục</option>
+                  <option value="all">Tất cả</option>
                   <option value="1">Thời trang</option>
                   <option value="2">Điện tử</option>
                   <option value="3">Gia dụng</option>
-                  <option value="4">Sức khỏe & Làm đẹp</option>
+                  <option value="4">Làm đẹp</option>
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-neutral-500">
-                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[#8C8273]">
+                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
@@ -156,16 +164,16 @@ const Header = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Tìm sản phẩm, thương hiệu hoặc cửa hàng mong muốn..."
-                className="w-full bg-transparent px-4 py-2 text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none"
+                placeholder="Tìm sản phẩm, thiết kế..."
+                className="w-full bg-transparent px-4 py-2 text-[11px] text-[#18181B] placeholder-[#8C8273]/60 focus:outline-none font-medium"
               />
 
               {/* Search Button */}
               <button
                 type="submit"
-                className="bg-black text-white px-6 py-2.5 rounded-r-[4px] hover:bg-neutral-850 active:bg-black transition-colors"
+                className="bg-[#18181B] text-[#FAF9F5] px-5 py-2 hover:bg-transparent hover:text-[#18181B] border-l border-[#18181B] transition-all duration-300"
               >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
@@ -173,26 +181,18 @@ const Header = () => {
           </form>
 
           {/* Action Icons */}
-          <div className="flex items-center gap-4 shrink-0">
-            {/* Notifications */}
-            <button className="relative p-2 text-neutral-700 hover:bg-neutral-100 hover:text-black rounded-full transition-colors">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
-
+          <div className="flex items-center gap-2 shrink-0">
             {/* Wishlist */}
             <Link
               to="/wishlist"
-              className="relative p-2 text-neutral-700 hover:bg-neutral-100 hover:text-red-500 rounded-full transition-colors"
-              title="Danh sách yêu thích"
+              className="relative p-2 text-[#8C8273] hover:text-[#18181B] transition-colors"
+              title="Yêu thích"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
               {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                <span className="absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-none bg-[#18181B] text-[#FAF9F5] px-0.5 text-[8px] font-semibold border border-[#FAF9F5]">
                   {wishlistCount}
                 </span>
               )}
@@ -201,20 +201,23 @@ const Header = () => {
             {/* Shopping Bag */}
             <Link
               to="/cart"
-              className="relative p-2 text-neutral-700 hover:bg-neutral-100 hover:text-black rounded-full transition-colors"
+              className="relative p-2 text-[#8C8273] hover:text-[#18181B] transition-colors"
+              title="Giỏ hàng"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-900 px-1 text-[9px] font-bold text-white">
-                {totalItems}
-              </span>
+              {totalItems > 0 && (
+                <span className="absolute top-1 right-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-none bg-[#18181B] text-[#FAF9F5] px-0.5 text-[8px] font-semibold border border-[#FAF9F5]">
+                  {totalItems}
+                </span>
+              )}
             </Link>
 
             {/* Profile Avatar if Authenticated */}
             {isAuthenticated && (
-              <Link to="/profile" className="flex items-center justify-center h-8 w-8 rounded-full border border-neutral-200 overflow-hidden hover:border-black transition-colors bg-neutral-100">
-                <div className="font-bold text-xs text-neutral-700">
+              <Link to="/profile" className="ml-2 flex items-center justify-center h-8 w-8 rounded-none border border-[#E4E4E7] hover:border-[#18181B] transition-colors bg-[#FAF9F5]">
+                <div className="font-serif-display font-medium text-sm text-[#18181B]">
                   {(user?.full_name || 'U')[0].toUpperCase()}
                 </div>
               </Link>
@@ -224,7 +227,7 @@ const Header = () => {
       </div>
 
       {/* Sub-navbar / Category Sub-navigation */}
-      <div className="w-full bg-white border-b border-neutral-200 relative z-40">
+      <div className="w-full bg-[#FAF9F5] border-t border-[#E4E4E7] relative z-40">
         <div className="mx-auto max-w-7xl px-4 py-1 overflow-visible">
           <CategoryNavStrip
             categories={categories}
@@ -242,4 +245,3 @@ const Header = () => {
 }
 
 export default Header
-
