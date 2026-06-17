@@ -38,6 +38,10 @@ func (m *mockAddressUsecase) Delete(ctx context.Context, userID, addressID int) 
 	return m.DeleteFunc(ctx, userID, addressID)
 }
 
+func (m *mockAddressUsecase) Update(ctx context.Context, userID, addressID int, req *domain.CreateAddressRequest) (*domain.Address, error) {
+	return nil, nil
+}
+
 func TestAddressController_Create(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

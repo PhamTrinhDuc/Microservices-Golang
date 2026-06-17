@@ -27,8 +27,6 @@ type JWTClaims struct {
 	jwt.RegisteredClaims
 }
 
-
-
 // ExtractTokenFromHeader extracts JWT token from Authorization header.
 func ExtractTokenFromHeader(authHeader string) (string, error) {
 	if authHeader == "" {
@@ -76,6 +74,7 @@ func getOIDCVerifier() (*oidc.IDTokenVerifier, error) {
 
 // ValidateToken validates a JWT token string using Keycloak OIDC.
 func ValidateToken(tokenString string) (*JWTClaims, error) {
+	fmt.Println("Token:", tokenString)
 	verifier, err := getOIDCVerifier()
 	if err != nil {
 		return nil, fmt.Errorf("OIDC verifier not initialized: %w", err)
@@ -88,9 +87,9 @@ func ValidateToken(tokenString string) (*JWTClaims, error) {
 	}
 
 	var kcClaims struct {
-		Sub         string   `json:"sub"`
-		Email       string   `json:"email"`
-		Name        string   `json:"name"`
+		Sub         string `json:"sub"`
+		Email       string `json:"email"`
+		Name        string `json:"name"`
 		RealmAccess struct {
 			Roles []string `json:"roles"`
 		} `json:"realm_access"`
@@ -117,9 +116,4 @@ func ValidateToken(tokenString string) (*JWTClaims, error) {
 	}
 
 	return nil, fmt.Errorf("failed to parse Keycloak token claims")
-}
-
-// GenerateToken is disabled. Tokens must be obtained directly from Keycloak.
-func GenerateToken(userID string, email, role string) (string, error) {
-	return "", fmt.Errorf("local token generation is disabled, use Keycloak to obtain tokens")
 }

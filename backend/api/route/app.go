@@ -9,14 +9,6 @@ import (
 
 // SetupUserRoutes sets up user authentication and profile routes
 func SetupUserRoutes(router *gin.RouterGroup, uc *controller.UserController, authMiddleware *middleware.AuthMiddleware) {
-	// Public authentication endpoints
-	auth := router.Group("/auth")
-	{
-		auth.POST("/register", uc.Register)
-		auth.POST("/login", uc.Login)
-		auth.POST("/google", uc.GoogleAuth)
-	}
-
 	// Protected user profiles
 	user := router.Group("")
 	user.Use(authMiddleware.Handler())

@@ -54,7 +54,7 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) (*domain.Us
 func (r *UserRepository) GetByID(ctx context.Context, id int) (*domain.User, error) {
 	u := &domain.User{}
 	query := `
-		SELECT id, full_name, email, password, phone, gender, dob, role, avatar, is_lock, is_verified, created_at, updated_at
+		SELECT id, full_name, email, COALESCE(password, ''), phone, gender, dob, role, avatar, is_lock, is_verified, created_at, updated_at
 		FROM users
 		WHERE id = $1`
 
@@ -77,7 +77,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int) (*domain.User, err
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	u := &domain.User{}
 	query := `
-		SELECT id, full_name, email, password, phone, gender, dob, role, avatar, is_lock, is_verified, created_at, updated_at
+		SELECT id, full_name, email, COALESCE(password, ''), phone, gender, dob, role, avatar, is_lock, is_verified, created_at, updated_at
 		FROM users
 		WHERE email = $1`
 

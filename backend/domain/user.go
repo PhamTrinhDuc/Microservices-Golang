@@ -65,9 +65,6 @@ type UserRepository interface {
 }
 
 type UserUsecase interface {
-	Register(ctx context.Context, req *RegisterRequest) (*User, error)
-	Authenticate(ctx context.Context, email, password string) (*User, string, error)
-	LoginOrRegisterWithGoogle(ctx context.Context, idToken string) (*User, string, error)
 	GetByID(ctx context.Context, id int) (*User, error)
 	UpdateProfile(ctx context.Context, id int, req *UpdateProfileRequest) (*User, error)
 	UpdatePassword(ctx context.Context, id int, req *UpdatePasswordRequest) error

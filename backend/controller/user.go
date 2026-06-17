@@ -2,121 +2,21 @@ package controller
 
 import (
 	"errors"
-	"net/http"
 	"strconv"
 
 	"backend/domain"
 	"backend/internal/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 )
 
 type UserController struct {
-	useCase  domain.UserUsecase
-	validate *validator.Validate
+	useCase domain.UserUsecase
 }
 
 func NewUserController(useCase domain.UserUsecase) *UserController {
 	return &UserController{
-		useCase:  useCase,
-		validate: validator.New(),
+		useCase: useCase,
 	}
-}
-
-// Register handles POST /auth/register.
-func (uc *UserController) Register(ctx *gin.Context) {
-	var req domain.RegisterRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	if err := uc.validate.Struct(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	result, err := uc.useCase.Register(ctx.Request.Context(), &req)
-	if err != nil {
-		if errors.Is(err, domain.ErrEmailTaken) {
-			ctx.JSON(http.StatusConflict, utils.HTTPResponse{Error: err.Error()})
-			return
-		}
-		if errors.Is(err, domain.ErrWeakPassword) || errors.Is(err, domain.ErrInvalidEmail) {
-			utils.RespondBadRequest(ctx, err.Error())
-			return
-		}
-		utils.RespondInternalError(ctx, err.Error())
-		return
-	}
-
-	utils.RespondCreated(ctx, result)
-}
-
-// Login handles POST /auth/login.
-func (uc *UserController) Login(ctx *gin.Context) {
-	var req domain.LoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	if err := uc.validate.Struct(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	user, token, err := uc.useCase.Authenticate(ctx.Request.Context(), req.Email, req.Password)
-	if err != nil {
-		if errors.Is(err, domain.ErrInvalidPassword) {
-			utils.RespondUnauthorized(ctx, err.Error())
-			return
-		}
-		if errors.Is(err, domain.ErrLocked) {
-			utils.RespondForbidden(ctx, err.Error())
-			return
-		}
-		utils.RespondInternalError(ctx, err.Error())
-		return
-	}
-
-	utils.RespondOK(ctx, domain.LoginResponse{
-		User:  user,
-		Token: token,
-	})
-}
-
-// GoogleAuth handles POST /auth/google.
-func (uc *UserController) GoogleAuth(ctx *gin.Context) {
-	var req domain.GoogleLoginRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	if err := uc.validate.Struct(&req); err != nil {
-		utils.RespondBadRequest(ctx, err.Error())
-		return
-	}
-
-	user, token, err := uc.useCase.LoginOrRegisterWithGoogle(ctx.Request.Context(), req.Credential)
-	if err != nil {
-		if errors.Is(err, domain.ErrLocked) {
-			utils.RespondForbidden(ctx, err.Error())
-			return
-		}
-		if errors.Is(err, domain.ErrGoogleLoginFailed) {
-			utils.RespondUnauthorized(ctx, err.Error())
-			return
-		}
-		utils.RespondInternalError(ctx, err.Error())
-		return
-	}
-
-	utils.RespondOK(ctx, domain.LoginResponse{
-		User:  user,
-		Token: token,
-	})
 }
 
 // GetMe handles GET /profile.
