@@ -1,0 +1,56 @@
+{
+    "id": "multi-agent",
+    "realm": "multi-agent",
+    "enabled": true,
+    "registrationAllowed": true,
+    "roles": {
+        "realm": [
+            {
+                "name": "admin",
+                "description": "Administrator Role"
+            },
+            {
+                "name": "user",
+                "description": "Standard User Role"
+            }
+        ]
+    },
+    "identityProviders": [
+        {
+            "alias": "google",
+            "displayName": "Google",
+            "providerId": "google",
+            "enabled": true,
+            "trustEmail": true,
+            "storeToken": false,
+            "addReadTokenRoleOnCreate": false,
+            "authenticateByDefault": false,
+            "linkOnly": false,
+            "firstBrokerLoginFlowAlias": "first broker login",
+            "config": {
+                "clientId": "351347449879...",
+                "clientSecret": "GOCSPX-...",
+                "useJwksUrl": "true"
+            }
+        }
+    ],
+    "clients": [
+        {
+            "clientId": "ecommerce-system-12345",
+            "enabled": true,
+            "publicClient": true,
+            "directAccessGrantsEnabled": true,
+            "redirectUris": [
+                "http://localhost:8501/*",
+                "http://localhost:3000/*",
+                "http://localhost:3000/",
+                "http://localhost:3000"
+            ],
+            "webOrigins": [
+                "*"
+            ],
+            "standardFlowEnabled": true,
+            "implicitFlowEnabled": false
+        }
+    ]
+}

@@ -6,3 +6,4 @@ frontend/dist/
 frontend/tsconfig.tsbuildinfo
 pull_request.go
 note_pull_request.md
+realm-export.json
