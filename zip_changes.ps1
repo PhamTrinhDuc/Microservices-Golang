@@ -9,40 +9,56 @@ if ($changes) {
     Write-Host "Đang chuẩn bị nén các file sau:"
     $changes | ForEach-Object { Write-Host "- $_" }
     
-    # Tạo thư mục tạm để gom các file (giữ nguyên cấu trúc thư mục)
-    $tempDir = "./temp_patch"
-    if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
-    New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-    
-    foreach ($file in $changes) {
-        if (Test-Path $file) {
-            $dest = Join-Path $tempDir $file
-            $parent = Split-Path $dest
-            if (!(Test-Path $parent)) { New-Item -Type Directory -Path $parent -Force | Out-Null }
-            Copy-Item $file -Destination $dest -Force
-        }
-    }
-    
-    # Đợi 1 giây để hệ thống giải phóng toàn bộ file handles trước khi nén
-    Start-Sleep -Seconds 1
-    
-    # Tiến hành nén thư mục tạm thành file patch.zip
     $zipPath = "./patch.zip"
     if (Test-Path $zipPath) { Remove-Item -Force $zipPath }
     
-    # Di chuyển vào trong thư mục tạm để nén nhằm tránh bị đè lock từ folder cha
-    Push-Location $tempDir
+    # Load thư viện nén của .NET
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    
+    # Lấy đường dẫn tuyệt đối của file zip đích
+    $absoluteZipPath = [System.IO.Path]::GetFullPath($zipPath)
+    
+    # Khởi tạo Archive
+    $zipArchive = [System.IO.Compression.ZipFile]::Open($absoluteZipPath, [System.IO.Compression.ZipArchiveMode]::Create)
+    
     try {
-        Compress-Archive -Path * -DestinationPath "../$zipPath" -Force
+        foreach ($file in $changes) {
+            if (Test-Path $file) {
+                $absoluteFilePath = [System.IO.Path]::GetFullPath($file)
+                
+                # Mở file stream với chế độ cho phép chia sẻ đọc/ghi (tránh lỗi file lock)
+                $fileStream = New-Object System.IO.FileStream(
+                    $absoluteFilePath,
+                    [System.IO.FileMode]::Open,
+                    [System.IO.FileAccess]::Read,
+                    [System.IO.FileShare]::ReadWrite
+                )
+                
+                try {
+                    # Tạo entry trong file zip và giữ nguyên cấu trúc đường dẫn tương đối (dùng ký tự gạch chéo '/')
+                    $entryName = $file.Replace("\", "/")
+                    $entry = $zipArchive.CreateEntry($entryName)
+                    $entryStream = $entry.Open()
+                    
+                    try {
+                        $fileStream.CopyTo($entryStream)
+                    } finally {
+                        $entryStream.Close()
+                        $entryStream.Dispose()
+                    }
+                } finally {
+                    $fileStream.Close()
+                    $fileStream.Dispose()
+                }
+            }
+        }
+        Write-Host "SUCCESS: Đã tạo file patch.zip thành công bằng .NET ZipArchive!"
+    } catch {
+        Write-Error "Lỗi khi nén file: $_"
+    } finally {
+        $zipArchive.Dispose()
     }
-    finally {
-        Pop-Location
-    }
-    
-    # Dọn dẹp thư mục tạm
-    Remove-Item -Recurse -Force $tempDir
-    
-    Write-Host "SUCCESS: Đã tạo file patch.zip thành công!"
     Write-Host "=========================================="
 } else {
     Write-Host "=========================================="
@@ -52,6 +68,5 @@ if ($changes) {
 
 # 3. Trả trạng thái git về ban đầu
 git reset . | Out-Null
-
 
 # powershell -ExecutionPolicy Bypass -File .\zip_changes.ps1
