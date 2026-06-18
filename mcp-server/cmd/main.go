@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"mcp-server/internal/database"
 	"mcp-server/internal/middleware"
@@ -16,15 +17,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-)
-
-const (
-	defaultPort      = "8081"
-	defaultDBHost    = "localhost"
-	defaultDBPort    = 5433
-	defaultRedisHost = "localhost"
-	defaultRedisPort = 6379
 )
 
 type Config struct {
@@ -39,10 +33,10 @@ type Config struct {
 
 func loadConfig() Config {
 	return Config{
-		Port: utils.GetEnvString("PORT", defaultPort),
+		Port: utils.GetEnvString("MCP_SERVER_PORT", "8081"),
 		Database: database.DBConfig{
-			Host:     utils.GetEnvString("DB_HOST", defaultDBHost),
-			Port:     utils.GetEnvInt("DB_PORT", defaultDBPort),
+			Host:     utils.GetEnvString("DB_HOST", "localhost"),
+			Port:     utils.GetEnvInt("DB_PORT", 5433),
 			User:     utils.GetEnvString("DB_USER", "jiyuu_user"),
 			Password: utils.GetEnvString("DB_PASSWORD", "jiyuu_password"),
 			DBName:   utils.GetEnvString("DB_NAME", "ecommerce_db"),
@@ -51,8 +45,8 @@ func loadConfig() Config {
 			MinConns: int32(utils.GetEnvInt("DB_MIN_CONNS", 5)),
 		},
 		Redis: redis.RedisConfig{
-			Host:     utils.GetEnvString("REDIS_HOST", defaultRedisHost),
-			Port:     utils.GetEnvInt("REDIS_PORT", defaultRedisPort),
+			Host:     utils.GetEnvString("REDIS_HOST", "localhost"),
+			Port:     utils.GetEnvInt("REDIS_PORT", 6379),
 			Username: utils.GetEnvString("REDIS_USERNAME", "jiyuu"),
 			Password: utils.GetEnvString("REDIS_PASSWORD", "a2amcpgo"),
 			DB:       utils.GetEnvInt("REDIS_DB", 0),
@@ -68,11 +62,16 @@ func loadConfig() Config {
 			EnableTracing:  utils.GetEnvBool("OTEL_ENABLE_TRACING", true),
 			EnableMetrics:  utils.GetEnvBool("OTEL_ENABLE_METRICS", true),
 		},
-		BackendURL: utils.GetEnvString("BACKEND_URL", "http://localhost:8082/api/v1"),
+		BackendURL: utils.GetEnvString("BACKEND_URL", fmt.Sprintf("http://localhost:%s/api/v1", utils.GetEnvString("BACKEND_PORT", "8082"))),
 	}
 }
 
 func main() {
+	// Load godotenv first
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: failed to load .env file, reading system environment variables")
+	}
+
 	// 1. Init context and config
 	ctx := context.Background()
 	cfg := loadConfig()

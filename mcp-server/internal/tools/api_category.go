@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+
+	"mcp-server/internal/utils"
 )
 
 type Category struct {
@@ -37,15 +40,55 @@ func (t *CategoryTool) ListCategoryDefinition() *mcp.Tool {
 		Name:        "list_categories",
 		Description: "List all product categories available in the catalog.",
 		InputSchema: map[string]any{
-			"type":       "object",
-			"properties": map[string]any{},
+			"type": "object",
+			"properties": map[string]any{
+				"page": map[string]any{
+					"type":        "number",
+					"description": "Page number (default 1)",
+				},
+				"limit": map[string]any{
+					"type":        "number",
+					"description": "Number of items per page (default 10)",
+				},
+				"is_popular": map[string]any{
+					"type":        []string{"boolean", "string"},
+					"description": "true if you want popular categories only, false otherwise. Accepts true/false/True/False",
+					"default":     true,
+				},
+				"search_term": map[string]any{
+					"type":        "string",
+					"description": "Keyword to search for categories",
+				},
+			},
 		},
 	}
 }
 
+type ListCategoriesArgs struct {
+	Page       float64             `json:"page"`
+	Limit      float64             `json:"limit"`
+	IsPopular  *utils.FlexibleBool `json:"is_popular"`
+	SearchTerm string              `json:"search_term"`
+}
+
 // Handler
-func (t *CategoryTool) ListCategoryHandler(ctx context.Context, req *mcp.CallToolRequest, args map[string]any) (*mcp.CallToolResult, any, error) {
-	apiURL := fmt.Sprintf("%s/categories", t.baseURL)
+func (t *CategoryTool) ListCategoryHandler(ctx context.Context, req *mcp.CallToolRequest, args ListCategoriesArgs) (*mcp.CallToolResult, any, error) {
+	u, _ := url.Parse(fmt.Sprintf("%s/categories", t.baseURL))
+	q := u.Query()
+	if args.Page > 0 {
+		q.Set("page", fmt.Sprintf("%.0f", args.Page))
+	}
+	if args.Limit > 0 {
+		q.Set("limit", fmt.Sprintf("%.0f", args.Limit))
+	}
+	if args.IsPopular != nil && bool(*args.IsPopular) {
+		q.Set("is_popular", "true")
+	}
+	if args.SearchTerm != "" {
+		q.Set("search_term", args.SearchTerm)
+	}
+	u.RawQuery = q.Encode()
+	apiURL := u.String()
 
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
 	if err != nil {
@@ -74,11 +117,7 @@ func (t *CategoryTool) ListCategoryHandler(ctx context.Context, req *mcp.CallToo
 
 	resultText := fmt.Sprintf("Found %d category(ies):\n", len(apiResp.Data))
 	for _, c := range apiResp.Data {
-		parentStr := "None"
-		if c.ParentID != nil {
-			parentStr = fmt.Sprintf("%d", *c.ParentID)
-		}
-		resultText += fmt.Sprintf("- %s (ID: %d, Parent ID: %s, Slug: %s, Order: %d)\n", c.Name, c.ID, parentStr, c.Slug, c.SortOrder)
+		resultText += fmt.Sprintf("- %s (ID: %d, Slug: %s)\n", c.Name, c.ID, c.Slug)
 	}
 
 	return &mcp.CallToolResult{}, mcp.TextContent{Text: resultText}, nil

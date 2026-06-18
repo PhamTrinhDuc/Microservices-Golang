@@ -10,6 +10,8 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+
+	utils "mcp-server/internal/utils"
 )
 
 type Product struct {
@@ -39,7 +41,7 @@ func NewProductTool(baseURL string) *ProductTool {
 func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "list_products",
-		Description: "Search and list products with pagination and filters (category, brand, price, rating, availability, specification filters).",
+		Description: "Search and list products with pagination and filters (category, brand, price, rating, availability, specification filters). Don't use type string with fields have format is number",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -80,8 +82,8 @@ func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 					"description": "Minimum rating",
 				},
 				"in_stock_only": map[string]any{
-					"type":        "boolean",
-					"description": "Only show products that are currently in stock (quantity > 0)",
+					"type":        []string{"boolean", "string"},
+					"description": "Only show products that are currently in stock (quantity > 0). Accepts true/false/True/False",
 				},
 				"spec_filter": map[string]any{
 					"type":        "object",
@@ -101,7 +103,7 @@ func (t *ProductTool) GetProductDefinition() *mcp.Tool {
 			"properties": map[string]any{
 				"id": map[string]any{
 					"type":        "string",
-					"description": "The unique ID of the product",
+					"description": "The unique ID of the product. Example: '123345', '765345",
 				},
 			},
 			"required": []string{"id"},
@@ -119,7 +121,7 @@ type ListProductsArgs struct {
 	MinPrice    *float64               `json:"min_price"`
 	MaxPrice    *float64               `json:"max_price"`
 	MinRating   *float64               `json:"min_rating"`
-	InStockOnly bool                   `json:"in_stock_only"`
+	InStockOnly *utils.FlexibleBool    `json:"in_stock_only"`
 	SpecFilter  map[string]interface{} `json:"spec_filter"`
 }
 
@@ -159,7 +161,7 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 	if args.MinRating != nil {
 		q.Set("min_rating", fmt.Sprintf("%.2f", *args.MinRating))
 	}
-	if args.InStockOnly {
+	if args.InStockOnly != nil && bool(*args.InStockOnly) {
 		q.Set("in_stock_only", "true")
 	}
 	if args.SpecFilter != nil {
@@ -206,7 +208,7 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("failed to decode response: %v", err)}, nil
 	}
 
-	resultText := fmt.Sprintf("Found %d product(s) (Total: %d, Page: %d, Limit: %d):\n", 
+	resultText := fmt.Sprintf("Found %d product(s) (Total: %d, Page: %d, Limit: %d):\n",
 		len(apiResp.Data.Products), apiResp.Data.TotalCount, apiResp.Data.Page, apiResp.Data.Limit)
 	for _, s := range apiResp.Data.Products {
 		resultText += fmt.Sprintf("- %s (ID: %s, Price: %.2f, Stock: %d, Rating: %.1f, Reviews: %d)\n",

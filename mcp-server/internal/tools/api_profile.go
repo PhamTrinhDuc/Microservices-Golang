@@ -10,41 +10,37 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
-
-	"mcp-server/internal/utils"
 )
 
-type Brand struct {
+type Wishlist struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Slug     string `json:"slug"`
 	IsActive bool   `json:"is_active"`
 }
 
-type BrandTool struct {
+type WishlistTool struct {
 	baseURL string
 	client  *http.Client
 }
 
-func NewBrandTool(baseURL string) *BrandTool {
-	return &BrandTool{
+func NewWishlistTool(baseURL string) *WishlistTool {
+	return &WishlistTool{
 		baseURL: baseURL,
 		client:  &http.Client{},
 	}
 }
 
-type ListBrandsArgs struct {
-	Page       float64             `json:"page"`
-	Limit      float64             `json:"limit"`
-	IsPopular  *utils.FlexibleBool `json:"is_popular"`
-	SearchTerm string              `json:"search_term"`
+type ListWishlistArgs struct {
+	Page  float64 `json:"page"`
+	Limit float64 `json:"limit"`
 }
 
 // Definition returns the tool definitions for Brand API
-func (t *BrandTool) ListBrandDefinition() *mcp.Tool {
+func (t *BrandTool) ListWishlistDefinition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:        "list_brands",
-		Description: "List all product brands.",
+		Name:        "list_wishlist",
+		Description: "List all product from wishlist user.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -58,23 +54,14 @@ func (t *BrandTool) ListBrandDefinition() *mcp.Tool {
 					"description": "Number of items per page",
 					"default":     10,
 				},
-				"is_popular": map[string]any{
-					"type":        []string{"boolean", "string"},
-					"description": "true if you need popular brands only, false otherwise. Accepts true/false/True/False",
-					"default":     true,
-				},
-				"search_term": map[string]any{
-					"type":        "string",
-					"description": "Keyword to search for brands",
-				},
 			},
 		},
 	}
 }
 
 // Handler
-func (t *BrandTool) ListBrandHandler(ctx context.Context, req *mcp.CallToolRequest, args ListBrandsArgs) (*mcp.CallToolResult, any, error) {
-	u, _ := url.Parse(fmt.Sprintf("%s/brands", t.baseURL))
+func (t *BrandTool) ListWishlistHandler(ctx context.Context, req *mcp.CallToolRequest, args ListWishlistArgs) (*mcp.CallToolResult, any, error) {
+	u, _ := url.Parse(fmt.Sprintf("%s/wishlist", t.baseURL))
 	q := u.Query()
 	if args.Page > 0 {
 		q.Set("page", fmt.Sprintf("%.0f", args.Page))
@@ -82,13 +69,7 @@ func (t *BrandTool) ListBrandHandler(ctx context.Context, req *mcp.CallToolReque
 	if args.Limit > 0 {
 		q.Set("limit", fmt.Sprintf("%.0f", args.Limit))
 	}
-	if args.IsPopular != nil && bool(*args.IsPopular) {
-		q.Set("is_popular", "true")
-	}
-	if args.SearchTerm != "" {
-		q.Set("search_term", args.SearchTerm)
-	}
-	
+
 	u.RawQuery = q.Encode()
 	apiURL := u.String()
 
