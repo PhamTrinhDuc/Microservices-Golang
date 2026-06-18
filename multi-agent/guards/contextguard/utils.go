@@ -12,41 +12,7 @@ import (
 )
 
 // ========================================== SUMMARY HELPER FUNCTIOn ==========================================
-const summarizeSystemPrompt = `You are summarizing a conversation to preserve context for continuing later.
-
-Critical: This summary will be the ONLY context available when the conversation resumes. Assume all previous messages will be lost. Be thorough.
-
-Required sections:
-
-## Current State
-
-- What was being discussed or worked on (exact user request if applicable)
-- Current progress and what has been completed
-- What was being addressed right now (incomplete work or open thread)
-- What remains to be done or answered (specific, not vague)
-
-## Key Information
-
-- Facts, data, and specific details mentioned (names, dates, numbers, URLs, identifiers)
-- User preferences, instructions, and constraints stated during the conversation
-- Definitions, terminology, or domain knowledge established
-- Any external resources, references, or sources mentioned
-
-## Context & Decisions
-
-- Decisions made during the conversation and why
-- Alternatives that were considered and discarded (and why)
-- Assumptions made
-- Important clarifications or corrections that occurred
-- Any blockers, risks, or open questions identified
-
-## Exact Next Steps
-
-Be specific. Don't write "continue with the task" — write exactly what should happen next, with enough detail that someone reading only this summary can pick up without asking questions.
-
-Tone: Write as if briefing a colleague taking over mid-conversation. Include everything they would need to continue without asking questions. Write in the same language as the conversation.
-
-Length: A dynamic word limit will be appended to this prompt at runtime based on the model's buffer size. Within that limit, err on the side of too much detail rather than too little. Critical context is worth the tokens.`
+const summarizeSystemPrompt = ``
 
 // loadSummary loads the summary from the agent's state, return "" if not found.
 func loadSummary(ctx agent.CallbackContext) string {

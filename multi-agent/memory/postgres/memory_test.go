@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"iter"
+	"multi-agent/utils"
 	"testing"
 	"time"
 
@@ -18,6 +19,27 @@ const (
 	appName   = "multi_agent"
 	userID    = "user_001"
 )
+
+func GetConfigPGMem() PostgresMemoryServiceConfig {
+	return PostgresMemoryServiceConfig{
+		ConnString: utils.GetEnvString("POSTGRES_URL", "postgres://jiyuu_user:jiyuu_password@localhost:5433/ecommerce_db"),
+		EmbeddingModel: NewOpenAICompatibleEmbedding(
+			OpenAICompatibleEmbeddingConfig{
+				// BaseURL:   utils.GetEnvString("BASE_URL_OLLAMA", "http://localhost:11434/v1"),
+				// Model:     utils.GetEnvString("EMBEDDING_MODEL", "qwen3-embedding:0.6b"),
+				BaseURL:   utils.GetEnvString("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+				Model:     utils.GetEnvString("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large"),
+				Dimension: utils.GetEnvInt("OPENAI_EMBEDDING_DIM", 675),
+				APIKey:    utils.GetEnvString("OPENAI_API_KEY", ""),
+			},
+		),
+		TopKBM25:     50,
+		TopKVector:   50,
+		TopKHybrid:   5,
+		WeightBM25:   0.5,
+		WeightVector: 0.5,
+	}
+}
 
 var pgSvc, _ = NewPostgresMemoryService(
 	context.Background(),

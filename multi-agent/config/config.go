@@ -15,10 +15,23 @@ type AgentConfig struct {
 	ApprovedTools []string `yaml:"approvedTools"`
 }
 
+type PromptGuardConfig struct {
+	System        string `yaml:"system"`
+	AnalyzeInput  string `yaml:"analyze_input"`
+	AnalyzeOutput string `yaml:"analyze_output"`
+	AnalyzeBoth   string `yaml:"analyze_both"`
+}
+
+type PromptsConfig struct {
+	GuardsPrompt PromptGuardConfig `yaml:"guards"`
+	SystemPrompt string            `yaml:"system_prompt"`
+}
+
 type AppConfig struct {
+	Prompts   PromptsConfig          `yaml:"prompts"`
 	Agents    map[string]AgentConfig `yaml:"agents"`
-	McpServer string                 `yaml:"mcp_server"`
 	Models    map[string]string      `yaml:"models"`
+	McpServer string                 `yaml:"mcp_server"`
 }
 
 func LoadAgentConfig(filePath string, agentName string) (*AgentConfig, error) {
@@ -38,6 +51,21 @@ func LoadAgentConfig(filePath string, agentName string) (*AgentConfig, error) {
 		return nil, fmt.Errorf("agent %s not found", agentName)
 	}
 	return &agent, nil
+}
+
+func LoadPromptsConfig(filePath string) (*PromptsConfig, error) {
+	// 1. Read File yaml
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Parse yaml
+	var config AppConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+	return &config.Prompts, nil
 }
 
 func LoadAppConfig(filePath string) (*AppConfig, error) {

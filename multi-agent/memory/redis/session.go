@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"multi-agent/utils"
 	"strings"
 	"sync"
 	"time"
@@ -72,18 +71,6 @@ type RedisConfig struct {
 	// Defaults to 0 (no expiration), matching the canonical ADK behaviour
 	// where user state outlives individual sessions.
 	UserStateTTL time.Duration
-}
-
-func GetConfigRedis() RedisConfig {
-	return RedisConfig{
-		Host:         utils.GetEnvString("REDIS_HOST", "localhost"),
-		Port:         utils.GetEnvInt("REDIS_PORT", 6379),
-		Username:     utils.GetEnvString("REDIS_USERNAME", "jiyuu"),
-		Password:     utils.GetEnvString("REDIS_PASSWORD", "a2amcpgo"),
-		AppStateTTL:  1 * time.Second,
-		UserStateTTL: 1 * time.Second,
-		TTL:          15 * time.Second,
-	}
 }
 
 func NewRedisService(cfg RedisConfig) (*RedisService, error) {

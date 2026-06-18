@@ -15,7 +15,6 @@ import (
 	"multi-agent/observability"
 	// "multi-agent/provider/gemini"
 
-	"multi-agent/provider/openai"
 	"multi-agent/utils"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +25,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/adk/agent"
 	"google.golang.org/adk/memory"
+	"google.golang.org/adk/model"
 	"google.golang.org/adk/runner"
 	"google.golang.org/adk/session"
 	"google.golang.org/adk/tool/toolconfirmation"
@@ -120,37 +120,9 @@ func runAgent(ctx context.Context, runnr *runner.Runner, sessionID string, input
 	return responseText
 }
 
-func loadConfig() observability.Config {
-	return observability.Config{
-		ServiceName:    utils.GetEnvString("OTEL_SERVICE", "agent-server"),
-		ServiceVersion: utils.GetEnvString("OTEL_VERSION", "1.0.0"),
-		Environment:    utils.GetEnvString("ENVIRONMENT", "development"),
-		OTLPEndpoint:   utils.GetEnvString("OTEL_EXPORTER_OTLP_ENDPOINT", "localhost:4318"),
-		SamplingRate:   utils.GetEnvFloat("OTEL_TRACES_SAMPLER_ARG", 1.0),
-		EnableTracing:  utils.GetEnvBool("OTEL_ENABLE_TRACING", true),
-		EnableMetrics:  utils.GetEnvBool("OTEL_ENABLE_METRICS", true),
-	}
-}
-
-func NewAgentsServer(ctx context.Context, cfgPath string) (*AgentServer, error) {
-	// 1. Load App Config (contains all agent definitions)
-	appCfg, err := config.LoadAppConfig(cfgPath)
-	if err != nil {
-		log.Printf("Failed to load app config: %v", err)
-	}
+func NewAgentServer(ctx context.Context, appCfg *config.AppConfig, telemetry *observability.Telemetry, llm model.LLM) (*AgentServer, error) {
 
 	// 2. Init Shared Resources
-	// Shared LLM model
-	// llm, err := gemini.NewGeminiLLM(ctx, "gemini-3-flash-preview") // Gemini 2.0 Flash is stable
-	llm := openai.New(openai.Config{
-		APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
-		BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
-		ModelName: utils.GetEnvString("GROQ_LLM", "llama-3.3-70b-versatile"),
-	})
-	if err != nil {
-		log.Printf("Failed to create LLM model: %v", err)
-	}
-
 	mcpToken := utils.GetEnvString("AUTH_TOKEN", "")
 
 	// Shared MCP Transport
@@ -221,10 +193,10 @@ func NewAgentsServer(ctx context.Context, cfgPath string) (*AgentServer, error) 
 	memoryService := memory.InMemoryService()
 	// memoryService, err := mySvc.NewPostgresMemoryService(ctx, mySvc.GetConfigPGMem())
 
-	if err != nil {
-		log.Printf("Failed to init session service for agent: %s", err.Error())
-		return nil, fmt.Errorf("Failed to init session service for agent: %s", err.Error())
-	}
+	// if err != nil {
+	// 	log.Printf("Failed to init session service for agent: %s", err.Error())
+	// 	return nil, fmt.Errorf("Failed to init session service for agent: %s", err.Error())
+	// }
 
 	runr, err := runner.New(runner.Config{
 		AppName:        appName,
@@ -235,13 +207,6 @@ func NewAgentsServer(ctx context.Context, cfgPath string) (*AgentServer, error) 
 	if err != nil {
 		log.Printf("Failed to create runner: %v", err)
 		return nil, fmt.Errorf("failed to create runner: %w", err)
-	}
-
-	// 6. Init telemetry
-	cfgTelemetry := loadConfig()
-	telemetry, err := observability.NewTelemetry(ctx, cfgTelemetry)
-	if err != nil {
-		log.Printf("Failed to initialize telemetry: %v", err)
 	}
 
 	// tạo context mới để shutdown thay vì shutdown trực tiếp để tránh cancel context chính của app

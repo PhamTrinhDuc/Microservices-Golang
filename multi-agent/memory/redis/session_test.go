@@ -3,7 +3,9 @@ package redis
 import (
 	"context"
 	"fmt"
+	"multi-agent/utils"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/adk/model"
@@ -21,6 +23,18 @@ const (
 	userName = "Jiyuu"
 	account  = "Jiyuu@gmail.com"
 )
+
+func GetConfigRedis() RedisConfig {
+	return RedisConfig{
+		Host:         utils.GetEnvString("REDIS_HOST", "localhost"),
+		Port:         utils.GetEnvInt("REDIS_PORT", 6379),
+		Username:     utils.GetEnvString("REDIS_USERNAME", "jiyuu"),
+		Password:     utils.GetEnvString("REDIS_PASSWORD", "a2amcpgo"),
+		AppStateTTL:  1 * time.Second,
+		UserStateTTL: 1 * time.Second,
+		TTL:          15 * time.Second,
+	}
+}
 
 func SetupRedis() *RedisService {
 	cfg := GetConfigRedis()

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"multi-agent/memory/types"
-	"multi-agent/utils"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -48,32 +47,11 @@ type PostgresMemoryServiceConfig struct {
 	ConnString string
 	// EmbeddingModel is used to generate embeddings for semantic search (optional)
 	EmbeddingModel EmbeddingModel
-	topKBM25       int
-	topKVector     int
-	topKHybrid     int
-	weightBM25     float64
-	weightVector   float64
-}
-
-func GetConfigPGMem() PostgresMemoryServiceConfig {
-	return PostgresMemoryServiceConfig{
-		ConnString: utils.GetEnvString("POSTGRES_URL", "postgres://jiyuu_user:jiyuu_password@localhost:5433/ecommerce_db"),
-		EmbeddingModel: NewOpenAICompatibleEmbedding(
-			OpenAICompatibleEmbeddingConfig{
-				// BaseURL:   utils.GetEnvString("BASE_URL_OLLAMA", "http://localhost:11434/v1"),
-				// Model:     utils.GetEnvString("EMBEDDING_MODEL", "qwen3-embedding:0.6b"),
-				BaseURL:   utils.GetEnvString("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-				Model:     utils.GetEnvString("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large"),
-				Dimension: utils.GetEnvInt("OPENAI_EMBEDDING_DIM", embeddingDim),
-				APIKey:    utils.GetEnvString("OPENAI_API_KEY", ""),
-			},
-		),
-		topKBM25:     50,
-		topKVector:   50,
-		topKHybrid:   5,
-		weightBM25:   0.5,
-		weightVector: 0.5,
-	}
+	TopKBM25       int
+	TopKVector     int
+	TopKHybrid     int
+	WeightBM25     float64
+	WeightVector   float64
 }
 
 func NewPostgresMemoryService(ctx context.Context, cfg PostgresMemoryServiceConfig) (*PostgresMemoryService, error) {
@@ -111,11 +89,11 @@ func NewPostgresMemoryService(ctx context.Context, cfg PostgresMemoryServiceConf
 		pool:           pool,
 		embeddingDim:   embeddingDim,
 		embeddingModel: cfg.EmbeddingModel,
-		topKBM25:       cfg.topKBM25,
-		topKVector:     cfg.topKVector,
-		topKHybrid:     cfg.topKHybrid,
-		weightBM25:     cfg.weightBM25,
-		weightVector:   cfg.weightVector,
+		topKBM25:       cfg.TopKBM25,
+		topKVector:     cfg.TopKVector,
+		topKHybrid:     cfg.TopKHybrid,
+		weightBM25:     cfg.WeightBM25,
+		weightVector:   cfg.WeightVector,
 	}, nil
 }
 

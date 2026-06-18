@@ -2,6 +2,7 @@ package slm
 
 import (
 	"context"
+	"multi-agent/provider/openai"
 	"multi-agent/utils"
 	"testing"
 
@@ -12,19 +13,20 @@ import (
 // This test demonstrates how to set up and use the SLM guard
 
 func TestNewGuardOpenAI(t *testing.T) {
-	cfg := Config{
-		Provider: "openai",
-		OpenAIConfig: &OpenAIProviderConfig{
-			APIKey:    utils.GetEnvString("GROQ_API_KEY", ""), // Set your API key
-			BaseURL:   "https://api.groq.com/openai/v1",       // Leave empty for OpenAI, or set to Ollama endpoint for local models
-			ModelName: "llama-3.3-70b-versatile",              // Can use: gpt-4o-mini, gpt-4, or Ollama models like llama2:7b
-		},
-		RiskThreshold:     0.8,
-		BehaviorThreshold: 0.5,
-		Timeout:           30,
-	}
+	llm := openai.New(openai.Config{
+		APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
+		BaseURL:   "https://api.groq.com/openai/v1",
+		ModelName: "gpt-oss-safeguard-20b",
+	})
 
-	guard, err := NewGuard(context.Background(), "slm-guard", cfg)
+	guard, err := NewGuard(
+		context.Background(),
+		"slm-guard",
+		llm,
+		WithRiskThreshold(0.8),
+		WithBehaviorThreshold(0.5),
+		WithTimeout(30),
+	)
 	if err != nil {
 		t.Fatalf("Failed to create guard: %v", err)
 	}
@@ -39,19 +41,20 @@ func TestNewGuardOpenAI(t *testing.T) {
 }
 
 func TestGuard(t *testing.T) {
-	cfg := Config{
-		Provider: "openai",
-		OpenAIConfig: &OpenAIProviderConfig{
-			APIKey:    utils.GetEnvString("GROQ_API_KEY", ""), // Set your API key
-			BaseURL:   "https://api.groq.com/openai/v1",       // Leave empty for OpenAI, or set to Ollama endpoint for local models
-			ModelName: "llama-3.1-8b-instant",                 // Can use: gpt-4o-mini, gpt-4, or Ollama models like llama2:7b
-		},
-		RiskThreshold:     0.8,
-		BehaviorThreshold: 0.5,
-		Timeout:           30,
-	}
+	llm := openai.New(openai.Config{
+		APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
+		BaseURL:   "https://api.groq.com/openai/v1",
+		ModelName: "gpt-oss-safeguard-20b",
+	})
 
-	guard, err := NewGuard(context.Background(), "slm-guard", cfg)
+	guard, err := NewGuard(
+		context.Background(),
+		"slm-guard",
+		llm,
+		WithRiskThreshold(0.8),
+		WithBehaviorThreshold(0.5),
+		WithTimeout(30),
+	)
 	assert.NoError(t, err)
 
 	// Test input guarding

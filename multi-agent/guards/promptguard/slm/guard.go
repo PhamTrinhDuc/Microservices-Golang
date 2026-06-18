@@ -24,6 +24,64 @@ type Guard struct {
 	analyzeOutputPrompt string
 }
 
+type Option func(*Guard)
+
+func WithRiskThreshold(riskThreshold float64) Option {
+	return func(g *Guard) {
+		g.riskThreshold = riskThreshold
+	}
+}
+
+func WithBehaviorThreshold(behaviorThreshold float64) Option {
+	return func(g *Guard) {
+		g.behaviorThreshold = behaviorThreshold
+	}
+}
+
+func WithTimeout(timeoutSeconds int) Option {
+	return func(g *Guard) {
+		g.timeoutSeconds = timeoutSeconds
+	}
+}
+
+func WithSystemPrompt(systemPrompt string) Option {
+	return func(g *Guard) {
+		g.systemPrompt = systemPrompt
+	}
+}
+
+func WithAnalyzeInputPrompt(analyzeInputPrompt string) Option {
+	return func(g *Guard) {
+		g.analyzeInputPrompt = analyzeInputPrompt
+	}
+}
+
+func WithAnalyzeOutputPrompt(analyzeOutputPrompt string) Option {
+	return func(g *Guard) {
+		g.analyzeOutputPrompt = analyzeOutputPrompt
+	}
+}
+
+// NewGuard creates a new SLM guard based on the provider configuration
+func NewGuard(ctx context.Context, name string, llm model.LLM, opts ...Option) (*Guard, error) {
+	g := &Guard{
+		name:                name,
+		provider:            llm,
+		riskThreshold:       0.8,
+		behaviorThreshold:   0.5,
+		timeoutSeconds:      30,
+		systemPrompt:        SystemPromptGuard,
+		analyzeInputPrompt:  PromptAnalyzeInput,
+		analyzeOutputPrompt: PromptAnalyzeOutput,
+	}
+
+	for _, opt := range opts {
+		opt(g)
+	}
+
+	return g, nil
+}
+
 // --- Implement Guard interface ---
 
 func (g *Guard) Name() string {
