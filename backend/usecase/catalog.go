@@ -156,8 +156,8 @@ func (uc *CatalogUsecase) CreateCategory(ctx context.Context, req *domain.Create
 	return uc.repo.CreateCategory(ctx, cat)
 }
 
-func (uc *CatalogUsecase) ListCategories(ctx context.Context) ([]*domain.Category, error) {
-	return uc.repo.ListCategories(ctx)
+func (uc *CatalogUsecase) ListCategories(ctx context.Context, req *domain.ListCategoriesRequest) ([]*domain.Category, error) {
+	return uc.repo.ListCategories(ctx, req)
 }
 
 func (uc *CatalogUsecase) UpdateCategory(ctx context.Context, id int, req *domain.UpdateCategoryRequest) (*domain.Category, error) {
@@ -222,8 +222,8 @@ func (uc *CatalogUsecase) CreateBrand(ctx context.Context, req *domain.CreateBra
 	return uc.repo.CreateBrand(ctx, brand)
 }
 
-func (uc *CatalogUsecase) ListBrands(ctx context.Context) ([]*domain.Brand, error) {
-	return uc.repo.ListBrands(ctx)
+func (uc *CatalogUsecase) ListBrands(ctx context.Context, req *domain.ListBrandsRequest) ([]*domain.Brand, error) {
+	return uc.repo.ListBrands(ctx, req)
 }
 
 func (uc *CatalogUsecase) UpdateBrand(ctx context.Context, id int, req *domain.UpdateBrandRequest) (*domain.Brand, error) {
@@ -396,6 +396,9 @@ func (uc *CatalogUsecase) buildSuggestions(ctx context.Context, query *domain.Pr
 			relexedQuery.BrandID = nil
 		case "category_id":
 			relexedQuery.CategoryID = nil
+		case "price_range":
+			relexedQuery.MinPrice = nil
+			relexedQuery.MaxPrice = nil
 		case "min_price":
 			relexedQuery.MinPrice = nil
 		case "max_price":
@@ -447,7 +450,7 @@ func (uc *CatalogUsecase) SearchProducts(ctx context.Context, query *domain.Prod
 	if err != nil {
 		return nil, err
 	}
-	
+
 	hasMore := query.Page*query.Limit < products.TotalCount
 	appliedFilter := diagnoseEmptyResult(query) // get filters apply to search
 	suggestions := make(map[string]any)

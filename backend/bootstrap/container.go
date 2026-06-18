@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -14,11 +15,12 @@ import (
 	"backend/repository"
 	"backend/usecase"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"indexing/chunker"
 	"indexing/db"
 	"indexing/embedder"
 	"indexing/ingestion"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Container struct {
@@ -116,8 +118,13 @@ func NewContainer(pool *pgxpool.Pool) *Container {
 	policyUC := usecase.NewPolicyUsecase(policyRepo, emb, syncManager)
 
 	// Initialize Storage Provider
-	storageType := utils.GetEnvString("STORAGE_PROVIDER", "local")
-	baseURL := utils.GetEnvString("APP_BASE_URL", "http://localhost:8082")
+	storageType := "local"
+	if utils.GetEnvString("ENVIRONMENT", "dev") == "dev" {
+		storageType = "local"
+	} else {
+		storageType = "s3"
+	}
+	baseURL := fmt.Sprintf("http://localhost:%s", utils.GetEnvString("BACKEND_PORT", "8082"))
 
 	var storageProvider storage.StorageProvider
 	if storageType == "s3" {

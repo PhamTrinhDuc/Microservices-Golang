@@ -49,14 +49,95 @@ func (r *CatalogRepository) CreateCategory(ctx context.Context, cat *domain.Cate
 	return cat, nil
 }
 
-func (r *CatalogRepository) ListCategories(ctx context.Context) ([]*domain.Category, error) {
-	query := `
-		SELECT id, name, parent_id, icon_img_url, slug, sort_order, is_deleted
-		FROM category
-		WHERE is_deleted = false
-		ORDER BY sort_order ASC, name ASC`
+func (r *CatalogRepository) ListCategories(ctx context.Context, req *domain.ListCategoriesRequest) ([]*domain.Category, error) {
+	var query string
+	if req != nil && req.IsPopular != nil && *req.IsPopular {
+		query = `
+		WITH RECURSIVE category_tree AS (
+			SELECT id AS root_category_id, id AS category_id
+			FROM category
+			WHERE is_deleted = false
+			
+			UNION ALL
+			
+			SELECT t.root_category_id, c.id AS category_id
+			FROM category_tree t
+			JOIN category c ON t.category_id = c.parent_id
+			WHERE c.is_deleted = false
+		),
+		product_stats AS (
+			SELECT 
+				p.category_id,
+				COALESCE(SUM(od.quantity), 0) AS sales_qty,
+				COUNT(DISTINCT r.id) AS review_count,
+				COALESCE(AVG(r.rating), 0) AS avg_rating,
+				COUNT(DISTINCT p.id) AS product_count
+			FROM product p
+			LEFT JOIN product_variant pv ON p.id = pv.product_id AND pv.is_deleted = false AND pv.is_active = true
+			LEFT JOIN order_details od ON pv.id = od.variant_id
+			LEFT JOIN reviews r ON p.id = r.product_id
+			WHERE p.is_deleted = false AND p.is_active = true
+			GROUP BY p.category_id
+		),
+		category_aggregated_stats AS (
+			SELECT 
+				t.root_category_id AS category_id,
+				SUM(COALESCE(ps.sales_qty, 0)) AS sales_qty,
+				SUM(COALESCE(ps.review_count, 0)) AS review_count,
+				COALESCE(AVG(ps.avg_rating), 0) AS avg_rating,
+				SUM(COALESCE(ps.product_count, 0)) AS product_count
+			FROM category_tree t
+			LEFT JOIN product_stats ps ON t.category_id = ps.category_id
+			GROUP BY t.root_category_id
+		)
+		SELECT 
+			c.id, c.name, c.parent_id, c.icon_img_url, c.slug, c.sort_order, c.is_deleted
+		FROM category c
+		LEFT JOIN category_aggregated_stats cas ON c.id = cas.category_id
+		WHERE c.is_deleted = false`
+	} else {
+		query = `
+		SELECT c.id, c.name, c.parent_id, c.icon_img_url, c.slug, c.sort_order, c.is_deleted
+		FROM category c
+		WHERE c.is_deleted = false`
+	}
 
-	rows, err := r.db.Query(ctx, query)
+	var conditions []string
+	var args []interface{}
+	placeholderIdx := 1
+
+	if req != nil && req.SearchTerm != "" {
+		conditions = append(conditions, fmt.Sprintf("c.name ILIKE $%d", placeholderIdx))
+		args = append(args, "%"+req.SearchTerm+"%")
+		placeholderIdx++
+	}
+
+	if len(conditions) > 0 {
+		query += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	if req != nil && req.IsPopular != nil && *req.IsPopular {
+		query += ` ORDER BY (
+			COALESCE(cas.sales_qty, 0) * 10.0 + 
+			COALESCE(cas.review_count, 0) * 5.0 + 
+			COALESCE(cas.avg_rating, 0) * 20.0 + 
+			COALESCE(cas.product_count, 0) * 2.0
+		) DESC, c.name ASC`
+	} else {
+		query += " ORDER BY c.sort_order ASC, c.name ASC"
+	}
+
+	if req != nil && req.Limit > 0 {
+		limit := req.Limit
+		offset := (req.Page - 1) * limit
+		if offset < 0 {
+			offset = 0
+		}
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", placeholderIdx, placeholderIdx+1)
+		args = append(args, limit, offset)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query categories: %w", err)
 	}
@@ -184,14 +265,86 @@ func (r *CatalogRepository) CreateBrand(ctx context.Context, brand *domain.Brand
 	return brand, nil
 }
 
-func (r *CatalogRepository) ListBrands(ctx context.Context) ([]*domain.Brand, error) {
-	query := `
-		SELECT id, name, slug, logo_url, is_active, is_deleted
-		FROM brand
-		WHERE is_deleted = false AND is_active = true
-		ORDER BY name ASC`
+func (r *CatalogRepository) ListBrands(ctx context.Context, req *domain.ListBrandsRequest) ([]*domain.Brand, error) {
+	var query string
+	if req != nil && req.IsPopular != nil && *req.IsPopular {
+		query = `
+		WITH brand_sales AS (
+			SELECT 
+				p.brand_id,
+				COALESCE(SUM(od.quantity), 0) AS sales_qty
+			FROM product p
+			JOIN product_variant pv ON p.id = pv.product_id AND pv.is_deleted = false AND pv.is_active = true
+			JOIN order_details od ON pv.id = od.variant_id
+			WHERE p.is_deleted = false AND p.is_active = true
+			GROUP BY p.brand_id
+		),
+		brand_reviews AS (
+			SELECT 
+				p.brand_id,
+				COUNT(r.id) AS review_count,
+				COALESCE(AVG(r.rating), 0) AS avg_rating
+			FROM product p
+			JOIN reviews r ON p.id = r.product_id
+			WHERE p.is_deleted = false AND p.is_active = true
+			GROUP BY p.brand_id
+		),
+		brand_product_count AS (
+			SELECT 
+				brand_id,
+				COUNT(id) AS product_count
+			FROM product
+			WHERE is_deleted = false AND is_active = true
+			GROUP BY brand_id
+		)
+		SELECT b.id, b.name, b.slug, b.logo_url, b.is_active, b.is_deleted
+		FROM brand b
+		LEFT JOIN brand_sales bs ON b.id = bs.brand_id
+		LEFT JOIN brand_reviews br ON b.id = br.brand_id
+		LEFT JOIN brand_product_count bpc ON b.id = bpc.brand_id
+		WHERE b.is_deleted = false AND b.is_active = true`
+	} else {
+		query = `
+		SELECT b.id, b.name, b.slug, b.logo_url, b.is_active, b.is_deleted
+		FROM brand b
+		WHERE b.is_deleted = false AND b.is_active = true`
+	}
 
-	rows, err := r.db.Query(ctx, query)
+	var conditions []string
+	var args []interface{}
+	placeholderIdx := 1
+	if req != nil && req.SearchTerm != "" {
+		conditions = append(conditions, fmt.Sprintf("b.name ILIKE $%d", placeholderIdx))
+		args = append(args, "%"+req.SearchTerm+"%")
+		placeholderIdx++
+	}
+
+	if len(conditions) > 0 {
+		query += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	if req != nil && req.IsPopular != nil && *req.IsPopular {
+		query += ` ORDER BY (
+			COALESCE(bs.sales_qty, 0) * 10.0 + 
+			COALESCE(br.review_count, 0) * 5.0 + 
+			COALESCE(br.avg_rating, 0) * 20.0 + 
+			COALESCE(bpc.product_count, 0) * 2.0
+		) DESC, b.name ASC`
+	} else {
+		query += " ORDER BY b.name ASC"
+	}
+
+	if req != nil && req.Limit > 0 {
+		limit := req.Limit
+		offset := (req.Page - 1) * limit
+		if offset < 0 {
+			offset = 0
+		}
+		query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", placeholderIdx, placeholderIdx+1)
+		args = append(args, limit, offset)
+	}
+
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query brands: %w", err)
 	}
@@ -471,7 +624,23 @@ func (r *CatalogRepository) GetProductByID(ctx context.Context, id string) (*dom
 }
 
 func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.ProductSearchQuery) (*domain.ProductSearchResult, error) {
-	countQueryStr := `SELECT COUNT(*) FROM product p WHERE p.is_deleted = false AND p.is_active = true`
+	countQueryStr := `
+		SELECT COUNT(*) 
+		FROM product p
+		LEFT JOIN (
+			SELECT product_id, MIN(sell_price) as sell_price, MIN(compare_price) as compare_price
+			FROM product_variant
+			WHERE is_deleted = false AND is_active = true
+			GROUP BY product_id
+		) min_var ON p.id = min_var.product_id
+		LEFT JOIN (
+			SELECT pv.product_id, SUM(pi.quantity - pi.reserved) as total_qty
+			FROM product_variant pv
+			JOIN product_inventory pi ON pv.id = pi.variant_id
+			WHERE pv.is_deleted = false AND pv.is_active = true
+			GROUP BY pv.product_id
+		) inv ON p.id = inv.product_id
+		WHERE p.is_deleted = false AND p.is_active = true`
 	selectQueryStr := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
 		       COALESCE(min_var.compare_price, min_var.sell_price, 0) as price,
@@ -542,6 +711,14 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 		args = append(args, *query.MinPrice)
 		args = append(args, *query.MaxPrice)
 		placeholderIdx += 2
+	} else if query.MinPrice != nil {
+		conditions = append(conditions, fmt.Sprintf("COALESCE(min_var.sell_price, 0) >= $%d", placeholderIdx))
+		args = append(args, *query.MinPrice)
+		placeholderIdx++
+	} else if query.MaxPrice != nil {
+		conditions = append(conditions, fmt.Sprintf("COALESCE(min_var.sell_price, 0) <= $%d", placeholderIdx))
+		args = append(args, *query.MaxPrice)
+		placeholderIdx++
 	}
 
 	// out of stock filter

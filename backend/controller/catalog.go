@@ -83,7 +83,18 @@ func (cc *CatalogController) CreateCategory(ctx *gin.Context) {
 
 // ListCategories handles GET /categories
 func (cc *CatalogController) ListCategories(ctx *gin.Context) {
-	result, err := cc.useCase.ListCategories(ctx.Request.Context())
+	var req domain.ListCategoriesRequest
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	if err := cc.validate.Struct(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+	result, err := cc.useCase.ListCategories(ctx.Request.Context(), &req)
 	if err != nil {
 		cc.handleError(ctx, err)
 		return
@@ -165,7 +176,19 @@ func (cc *CatalogController) CreateBrand(ctx *gin.Context) {
 
 // ListBrands handles GET /brands
 func (cc *CatalogController) ListBrands(ctx *gin.Context) {
-	result, err := cc.useCase.ListBrands(ctx.Request.Context())
+	var req domain.ListBrandsRequest
+
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	if err := cc.validate.Struct(&req); err != nil {
+		utils.RespondBadRequest(ctx, err.Error())
+		return
+	}
+
+	result, err := cc.useCase.ListBrands(ctx.Request.Context(), &req)
 	if err != nil {
 		cc.handleError(ctx, err)
 		return
@@ -434,4 +457,3 @@ func (cc *CatalogController) DeleteVariant(ctx *gin.Context) {
 
 	utils.RespondNoContent(ctx)
 }
-

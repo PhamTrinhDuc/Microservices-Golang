@@ -15,6 +15,7 @@ type Category struct {
 	Slug      string  `json:"slug" db:"slug"`
 	SortOrder int     `json:"sort_order" db:"sort_order"`
 	IsDeleted bool    `json:"is_deleted" db:"is_deleted"`
+	FullPath  string  `json:"full_path" db:"full_path"`
 }
 
 type Brand struct {
@@ -132,6 +133,13 @@ type CreateCategoryRequest struct {
 	SortOrder int     `json:"sort_order"`
 }
 
+type ListCategoriesRequest struct {
+	Limit      int    `json:"limit" form:"limit"`
+	Page       int    `json:"page" form:"page"`
+	IsPopular  *bool  `json:"is_popular" form:"is_popular"`
+	SearchTerm string `json:"search_term" form:"q"`
+}
+
 type UpdateCategoryRequest struct {
 	Name      string  `json:"name" validate:"required"`
 	ParentID  *int    `json:"parent_id"`
@@ -145,6 +153,13 @@ type CreateBrandRequest struct {
 	Slug     string  `json:"slug"` // optional
 	LogoURL  *string `json:"logo_url"`
 	IsActive bool    `json:"is_active"`
+}
+
+type ListBrandsRequest struct {
+	Limit      int    `json:"limit" form:"limit"`
+	Page       int    `json:"page" form:"page"`
+	IsPopular  *bool  `json:"is_popular" form:"is_popular"`
+	SearchTerm string `json:"search_term" form:"q"`
 }
 
 type UpdateBrandRequest struct {
@@ -297,14 +312,14 @@ type CreateProductInput struct {
 type CatalogRepository interface {
 	// Category
 	CreateCategory(ctx context.Context, cat *Category) (*Category, error)
-	ListCategories(ctx context.Context) ([]*Category, error)
+	ListCategories(ctx context.Context, req *ListCategoriesRequest) ([]*Category, error)
 	GetCategoryByID(ctx context.Context, id int) (*Category, error)
 	UpdateCategory(ctx context.Context, cat *Category) (*Category, error)
 	DeleteCategory(ctx context.Context, id int) error
 
 	// Brand
 	CreateBrand(ctx context.Context, brand *Brand) (*Brand, error)
-	ListBrands(ctx context.Context) ([]*Brand, error)
+	ListBrands(ctx context.Context, req *ListBrandsRequest) ([]*Brand, error)
 	GetBrandByID(ctx context.Context, id int) (*Brand, error)
 	UpdateBrand(ctx context.Context, brand *Brand) (*Brand, error)
 	DeleteBrand(ctx context.Context, id int) error
@@ -329,13 +344,13 @@ type CatalogRepository interface {
 type CatalogUsecase interface {
 	// Category
 	CreateCategory(ctx context.Context, req *CreateCategoryRequest) (*Category, error)
-	ListCategories(ctx context.Context) ([]*Category, error)
+	ListCategories(ctx context.Context, req *ListCategoriesRequest) ([]*Category, error)
 	UpdateCategory(ctx context.Context, id int, req *UpdateCategoryRequest) (*Category, error)
 	DeleteCategory(ctx context.Context, id int) error
 
 	// Brand
 	CreateBrand(ctx context.Context, req *CreateBrandRequest) (*Brand, error)
-	ListBrands(ctx context.Context) ([]*Brand, error)
+	ListBrands(ctx context.Context, req *ListBrandsRequest) ([]*Brand, error)
 	UpdateBrand(ctx context.Context, id int, req *UpdateBrandRequest) (*Brand, error)
 	DeleteBrand(ctx context.Context, id int) error
 

@@ -21,9 +21,7 @@ import (
 )
 
 const (
-	defaultPort   = "8082"
-	defaultDBHost = "localhost"
-	defaultDBPort = 5433
+	defaultPort = "8082"
 )
 
 func run(log *slog.Logger) error {
