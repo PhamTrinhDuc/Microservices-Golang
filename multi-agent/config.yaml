@@ -126,8 +126,21 @@ agents:
   #     - Provide product recommendations to users based on their preferences and behavior.
       
   #     Always use the appropriate tools to fetch the required information before providing answers. Never hallucinate product recommendations.
-  #   allowedTools: ["list_wishlist", "list_order_history", "list_cart"]
+  #   allowedTools: ["get_purchase_profile_user", "get_trending_product", "get_similiar_products", ]
   #   approvedTools: []
+
+  # checkout_agent: 
+  #   name: checkout_agent
+  #   description: Agent specialized in handling checkout process.
+  #   instruction: |
+  #     You are the Checkout Agent, a specialized assistant for our e-commerce catalog and store system.
+  #     Your main responsibilities:
+  #     - Handle checkout process for users.
+  #     
+  #     Always use the appropriate tools to fetch the required information before providing answers. Never hallucinate product prices, stock, or policy details.
+  #   allowedTools: []
+  #   approvedTools: []
+
 
   orschestrator_agent: 
     name: orschestrator_agent
