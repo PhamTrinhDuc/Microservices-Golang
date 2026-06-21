@@ -34,10 +34,10 @@ func NewBrandTool(baseURL string) *BrandTool {
 }
 
 type ListBrandsArgs struct {
-	Page       float64             `json:"page"`
-	Limit      float64             `json:"limit"`
-	IsPopular  *utils.FlexibleBool `json:"is_popular"`
-	SearchTerm string              `json:"search_term"`
+	Page       float64              `json:"page"`
+	Limit      float64              `json:"limit"`
+	IsPopular  *utils.FlexibleBool  `json:"is_popular"`
+	SearchTerm utils.FlexibleString `json:"search_term"`
 }
 
 // Definition returns the tool definitions for Brand API
@@ -64,7 +64,7 @@ func (t *BrandTool) ListBrandDefinition() *mcp.Tool {
 					"default":     true,
 				},
 				"search_term": map[string]any{
-					"type":        "string",
+					"type":        []string{"string", "number"},
 					"description": "Keyword to search for brands",
 				},
 			},
@@ -86,7 +86,7 @@ func (t *BrandTool) ListBrandHandler(ctx context.Context, req *mcp.CallToolReque
 		q.Set("is_popular", "true")
 	}
 	if args.SearchTerm != "" {
-		q.Set("search_term", args.SearchTerm)
+		q.Set("search_term", string(args.SearchTerm))
 	}
 	
 	u.RawQuery = q.Encode()

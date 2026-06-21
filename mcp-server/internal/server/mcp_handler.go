@@ -127,6 +127,7 @@ func NewSSEHandler(db database.Store, telemetry *observability.Telemetry, backen
 	// API Product
 	mcp.AddTool(s, productTool.ListProductDefinition(), productTool.ListProductHandler)
 	mcp.AddTool(s, productTool.GetProductDefinition(), productTool.GetProductHandler)
+	mcp.AddTool(s, productTool.GetSpectByCategoryDefinition(), productTool.GetSpectByCategoryHandler)
 
 	sseHandler := mcp.NewSSEHandler(func(r *http.Request) *mcp.Server {
 		return s

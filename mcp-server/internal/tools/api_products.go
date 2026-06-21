@@ -40,8 +40,12 @@ func NewProductTool(baseURL string) *ProductTool {
 // Definition returns the tool definitions for Product API
 func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:        "list_products",
-		Description: "Search and list products with pagination and filters (category, brand, price, rating, availability, specification filters). Don't use type string with fields have format is number",
+		Name: "list_products",
+		Description: `
+		Tìm kiếm và liệt kê sản phẩm với phân trang và bộ lọc (danh mục, thương hiệu, giá, đánh giá, tính khả dụng, bộ lọc thông số kỹ thuật).
+		Hữu ích: khi người dùng muốn tìm sản phẩm với bộ lọc chi tiết bao gồm thương hiệu, giá, đánh giá, thông số kỹ thuật, v.v... 
+		Lưu ý: khi dùng spec_filter cân phải biết rõ tên của các bộ lọc, để biết tên các bộ lọc hãy dùng tool 'get_specs_by_category'
+		`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -62,8 +66,12 @@ func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 					"description": "Filter by Brand ID",
 				},
 				"q": map[string]any{
-					"type":        "string",
+					"type":        []string{"string", "number"},
 					"description": "Search keyword matching name, slug, ID or variant SKU",
+				},
+				"spec_filter": map[string]any{
+					"type":        "object",
+					"description": "Key-value pair object of specific specs to filter (e.g. {'Screen': '6.1', 'Resolution': 'Retina'})",
 				},
 				"sort": map[string]any{
 					"type":        "string",
@@ -85,10 +93,6 @@ func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 					"type":        []string{"boolean", "string"},
 					"description": "Only show products that are currently in stock (quantity > 0). Accepts true/false/True/False",
 				},
-				"spec_filter": map[string]any{
-					"type":        "object",
-					"description": "Key-value pair object of specific specs to filter (e.g. {'Screen': '6.1', 'Resolution': 'Retina'})",
-				},
 			},
 		},
 	}
@@ -96,17 +100,39 @@ func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 
 func (t *ProductTool) GetProductDefinition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:        "get_product_by_id",
-		Description: "Get details of a specific product by their ID (including brand, category, specs, and variants).",
+		Name: "get_product_by_id",
+		Description: `
+		Lấy thông tin chi tiết của 1 sản phẩm theo id của sản phẩm
+		Hữu ích khi user muốn biết toàn bộ thông tin của 1 sản phẩm cụ thể.
+		`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"id": map[string]any{
-					"type":        "string",
+					"type":        []string{"string", "number"},
 					"description": "The unique ID of the product. Example: '123345', '765345",
 				},
 			},
 			"required": []string{"id"},
+		},
+	}
+}
+
+func (t *ProductTool) GetSpectByCategoryDefinition() *mcp.Tool {
+	return &mcp.Tool{
+		Name: "get_specs_by_category",
+		Description: `
+		Lấy tập hợp các thông số kỹ thuật theo danh mục. 
+		Hữu ích khi muốn filter thông số theo sản phẩm khi chưa biết tên của thông số.`,
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"category_id": map[string]any{
+					"type":        "number",
+					"description": "The unique ID of the category. Example: '123345', '765345",
+				},
+			},
+			"required": []string{"category_id"},
 		},
 	}
 }
@@ -116,7 +142,7 @@ type ListProductsArgs struct {
 	Limit       float64                `json:"limit"`
 	CategoryID  *float64               `json:"category_id"`
 	BrandID     *float64               `json:"brand_id"`
-	Q           string                 `json:"q"`
+	Q           utils.FlexibleString   `json:"q"`
 	Sort        string                 `json:"sort"`
 	MinPrice    *float64               `json:"min_price"`
 	MaxPrice    *float64               `json:"max_price"`
@@ -126,7 +152,11 @@ type ListProductsArgs struct {
 }
 
 type GetProductArgs struct {
-	ID string `json:"id"`
+	ID utils.FlexibleString `json:"id"`
+}
+
+type GetSpectByCategoryArgs struct {
+	CategoryID utils.FlexibleString `json:"category_id"`
 }
 
 // Handlers
@@ -147,7 +177,7 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 		q.Set("brand_id", fmt.Sprintf("%.0f", *args.BrandID))
 	}
 	if args.Q != "" {
-		q.Set("q", args.Q)
+		q.Set("q", string(args.Q))
 	}
 	if args.Sort != "" {
 		q.Set("sort", args.Sort)
@@ -231,7 +261,7 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 }
 
 func (t *ProductTool) GetProductHandler(ctx context.Context, req *mcp.CallToolRequest, args GetProductArgs) (*mcp.CallToolResult, any, error) {
-	apiURL := fmt.Sprintf("%s/products/%s", t.baseURL, args.ID)
+	apiURL := fmt.Sprintf("%s/products/%s", t.baseURL, string(args.ID))
 
 	// 1. Tạo request mới với Context
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -300,6 +330,62 @@ func (t *ProductTool) GetProductHandler(ctx context.Context, req *mcp.CallToolRe
 		resultText += "\nVariants:\n"
 		for _, v := range apiResp.Data.Variants {
 			resultText += fmt.Sprintf("- %s (SKU: %s, Price: %.2f)\n", v.Name, v.SKU, v.SellPrice)
+		}
+	}
+
+	return &mcp.CallToolResult{}, mcp.TextContent{Text: resultText}, nil
+}
+
+func (t *ProductTool) GetSpectByCategoryHandler(ctx context.Context, req *mcp.CallToolRequest, args GetSpectByCategoryArgs) (*mcp.CallToolResult, any, error) {
+	u, _ := url.Parse(fmt.Sprintf("%s/categories/%s/specs", t.baseURL, args.CategoryID))
+
+	httpReq, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+	if err != nil {
+		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("API request failed: %v", err)}, nil
+	}
+
+	resp, err := t.client.Do(httpReq)
+	if err != nil {
+		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("API request failed: %v", err)}, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("API returned error: %s", resp.Status)}, nil
+	}
+
+	var apiResp struct {
+		Data struct {
+			Specs []struct {
+				Group string  `json:"group"`
+				Key   string  `json:"key"`
+				Value string  `json:"value"`
+				Unit  *string `json:"unit"`
+			} `json:"specs"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("failed to decode response: %v", err)}, nil
+	}
+
+	resultText := ""
+	if len(apiResp.Data.Specs) > 0 {
+		type specKey struct {
+			Group string
+			Key   string
+		}
+		seenKeys := make(map[specKey]bool)
+		resultText += "Các thông số kỹ thuật có sẵn trong danh mục này (sử dụng các tên Key này cho bộ lọc spec_filter):\n"
+		for _, sp := range apiResp.Data.Specs {
+			k := specKey{Group: sp.Group, Key: sp.Key}
+			if !seenKeys[k] {
+				seenKeys[k] = true
+				unitStr := ""
+				if sp.Unit != nil && *sp.Unit != "" {
+					unitStr = " (Đơn vị: " + *sp.Unit + ")"
+				}
+				resultText += fmt.Sprintf("- [%s] %s%s\n", sp.Group, sp.Key, unitStr)
+			}
 		}
 	}
 

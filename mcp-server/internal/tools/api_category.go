@@ -56,7 +56,7 @@ func (t *CategoryTool) ListCategoryDefinition() *mcp.Tool {
 					"default":     true,
 				},
 				"search_term": map[string]any{
-					"type":        "string",
+					"type":        []string{"string", "number"},
 					"description": "Keyword to search for categories",
 				},
 			},
@@ -65,10 +65,10 @@ func (t *CategoryTool) ListCategoryDefinition() *mcp.Tool {
 }
 
 type ListCategoriesArgs struct {
-	Page       float64             `json:"page"`
-	Limit      float64             `json:"limit"`
-	IsPopular  *utils.FlexibleBool `json:"is_popular"`
-	SearchTerm string              `json:"search_term"`
+	Page       float64              `json:"page"`
+	Limit      float64              `json:"limit"`
+	IsPopular  *utils.FlexibleBool  `json:"is_popular"`
+	SearchTerm utils.FlexibleString `json:"search_term"`
 }
 
 // Handler
@@ -85,7 +85,7 @@ func (t *CategoryTool) ListCategoryHandler(ctx context.Context, req *mcp.CallToo
 		q.Set("is_popular", "true")
 	}
 	if args.SearchTerm != "" {
-		q.Set("search_term", args.SearchTerm)
+		q.Set("search_term", string(args.SearchTerm))
 	}
 	u.RawQuery = q.Encode()
 	apiURL := u.String()
