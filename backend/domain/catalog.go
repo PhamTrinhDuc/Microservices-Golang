@@ -61,6 +61,13 @@ type ProductSpec struct {
 	SortOrder int     `json:"sort_order" db:"sort_order"`
 }
 
+type CategorySpec struct {
+	Group string  `json:"group" db:"group"`
+	Key   string  `json:"key" db:"key"`
+	Value string  `json:"value" db:"value"`
+	Unit  *string `json:"unit" db:"unit"`
+}
+
 type ProductOptionValue struct {
 	ID           int     `json:"id" db:"id"`
 	OptionTypeID int     `json:"option_type_id" db:"option_type_id"`
@@ -316,6 +323,7 @@ type CatalogRepository interface {
 	GetCategoryByID(ctx context.Context, id int) (*Category, error)
 	UpdateCategory(ctx context.Context, cat *Category) (*Category, error)
 	DeleteCategory(ctx context.Context, id int) error
+	GetSpecsByCategoryID(ctx context.Context, categoryID int) ([]*CategorySpec, error)
 
 	// Brand
 	CreateBrand(ctx context.Context, brand *Brand) (*Brand, error)
@@ -347,6 +355,7 @@ type CatalogUsecase interface {
 	ListCategories(ctx context.Context, req *ListCategoriesRequest) ([]*Category, error)
 	UpdateCategory(ctx context.Context, id int, req *UpdateCategoryRequest) (*Category, error)
 	DeleteCategory(ctx context.Context, id int) error
+	GetSpecsByCategoryID(ctx context.Context, categoryID int) ([]*CategorySpec, error)
 
 	// Brand
 	CreateBrand(ctx context.Context, req *CreateBrandRequest) (*Brand, error)

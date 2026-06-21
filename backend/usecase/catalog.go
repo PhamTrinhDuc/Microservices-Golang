@@ -200,6 +200,14 @@ func (uc *CatalogUsecase) DeleteCategory(ctx context.Context, id int) error {
 	return uc.repo.DeleteCategory(ctx, id)
 }
 
+func (uc *CatalogUsecase) GetSpecsByCategoryID(ctx context.Context, categoryID int) ([]*domain.CategorySpec, error) {
+	_, err := uc.repo.GetCategoryByID(ctx, categoryID)
+	if err != nil {
+		return nil, err
+	}
+	return uc.repo.GetSpecsByCategoryID(ctx, categoryID)
+}
+
 // --- Brand ---
 
 func (uc *CatalogUsecase) CreateBrand(ctx context.Context, req *domain.CreateBrandRequest) (*domain.Brand, error) {

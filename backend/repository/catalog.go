@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -237,6 +236,42 @@ func (r *CatalogRepository) DeleteCategory(ctx context.Context, id int) error {
 	}
 
 	return nil
+}
+
+func (r *CatalogRepository) GetSpecsByCategoryID(ctx context.Context, categoryID int) ([]*domain.CategorySpec, error) {
+	query := `
+		SELECT DISTINCT ps."group", ps.key, ps.value, ps.unit
+		FROM product_spec ps
+		JOIN product p ON ps.product_id = p.id
+		WHERE p.category_id = $1 AND p.is_deleted = false AND p.is_active = true
+		ORDER BY ps."group", ps.key, ps.value`
+
+	rows, err := r.db.Query(ctx, query, categoryID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query category specs: %w", err)
+	}
+	defer rows.Close()
+
+	specs := make([]*domain.CategorySpec, 0)
+	for rows.Next() {
+		spec := &domain.CategorySpec{}
+		err := rows.Scan(
+			&spec.Group,
+			&spec.Key,
+			&spec.Value,
+			&spec.Unit,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan category spec: %w", err)
+		}
+		specs = append(specs, spec)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("category specs rows error: %w", err)
+	}
+
+	return specs, nil
 }
 
 // --- Brand ---
@@ -698,10 +733,15 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 	// filter apply
 	if query.SpecFilter != nil {
 		for key, val := range query.SpecFilter {
-			filterJson, _ := json.Marshal(map[string]interface{}{key: val})
-			conditions = append(conditions, fmt.Sprintf("p.specs_jsonb @> $%d", placeholderIdx))
-			args = append(args, filterJson)
-			placeholderIdx++
+			valStr := fmt.Sprintf("%v", val)
+			conditions = append(conditions, fmt.Sprintf(`EXISTS (
+				SELECT 1 FROM product_spec ps 
+				WHERE ps.product_id = p.id 
+				  AND ps.key = $%d 
+				  AND (ps.value = $%d OR ps.value ILIKE $%d)
+			)`, placeholderIdx, placeholderIdx+1, placeholderIdx+2))
+			args = append(args, key, valStr, "%"+valStr+"%")
+			placeholderIdx += 3
 		}
 	}
 

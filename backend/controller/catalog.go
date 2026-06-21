@@ -150,6 +150,28 @@ func (cc *CatalogController) DeleteCategory(ctx *gin.Context) {
 	utils.RespondNoContent(ctx)
 }
 
+// GetSpecsByCategoryID handles GET /categories/:category_id/specs
+func (cc *CatalogController) GetSpecsByCategoryID(ctx *gin.Context) {
+	categoryIDParam := ctx.Param("category_id")
+	categoryID, err := strconv.Atoi(categoryIDParam)
+	if err != nil {
+		utils.RespondBadRequest(ctx, "invalid category id param")
+		return
+	}
+
+	result, err := cc.useCase.GetSpecsByCategoryID(ctx.Request.Context(), categoryID)
+	if err != nil {
+		cc.handleError(ctx, err)
+		return
+	}
+
+	type GetSpecsByCategoryResponse struct {
+		Specs []*domain.CategorySpec `json:"specs"`
+	}
+
+	utils.RespondOK(ctx, GetSpecsByCategoryResponse{Specs: result})
+}
+
 // --- Brand ---
 
 // CreateBrand handles POST /admin/brands

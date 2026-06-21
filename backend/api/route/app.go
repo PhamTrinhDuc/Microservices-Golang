@@ -44,6 +44,7 @@ func SetupAddressRoutes(router *gin.RouterGroup, ac *controller.AddressControlle
 func SetupCatalogRoutes(router *gin.RouterGroup, cc *controller.CatalogController, authMiddleware *middleware.AuthMiddleware) {
 	// Public catalog routes
 	router.GET("/categories", cc.ListCategories)
+	router.GET("/categories/:category_id/specs", cc.GetSpecsByCategoryID)
 	router.GET("/brands", cc.ListBrands)
 	router.GET("/products", cc.SearchProducts)
 	router.GET("/products/:id", cc.GetProductDetails)
