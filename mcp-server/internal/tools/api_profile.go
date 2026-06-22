@@ -37,7 +37,7 @@ type ListWishlistArgs struct {
 }
 
 // Definition returns the tool definitions for Brand API
-func (t *BrandTool) ListWishlistDefinition() *mcp.Tool {
+func (t *WishlistTool) ListWishlistDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name:        "list_wishlist",
 		Description: "List all product from wishlist user.",
@@ -60,7 +60,7 @@ func (t *BrandTool) ListWishlistDefinition() *mcp.Tool {
 }
 
 // Handler
-func (t *BrandTool) ListWishlistHandler(ctx context.Context, req *mcp.CallToolRequest, args ListWishlistArgs) (*mcp.CallToolResult, any, error) {
+func (t *WishlistTool) ListWishlistHandler(ctx context.Context, req *mcp.CallToolRequest, args ListWishlistArgs) (*mcp.CallToolResult, any, error) {
 	u, _ := url.Parse(fmt.Sprintf("%s/wishlist", t.baseURL))
 	q := u.Query()
 	if args.Page > 0 {

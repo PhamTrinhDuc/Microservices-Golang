@@ -24,6 +24,14 @@ import (
 func tracingMiddleware(telemetry *observability.Telemetry) mcp.Middleware {
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+			// Bắt buộc phải có token khi gọi thực thi Tool (tools/call)
+			if method == "tools/call" {
+				userID := ctx.Value("user_id")
+				if userID == nil || userID == "" {
+					return nil, fmt.Errorf("unauthorized: user context not found for tools/call")
+				}
+			}
+
 			if telemetry == nil || telemetry.Tracer == nil {
 				return next(ctx, method, req)
 			}

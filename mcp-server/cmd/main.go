@@ -136,12 +136,21 @@ func main() {
 
 	mcpGroup := r.Group("/mcp")
 	mcpGroup.Use(
-		authMid.Handler(),
+		authMid.OptionalHandler(), // Dùng OptionalHandler để cho phép kết nối SSE và ListTools không cần Token
 		rateLimiter.Handler(),
 	)
 	{
-		// Official SDK SSE transport needs wildcards for session handling
-		mcpGroup.Any("/*path", gin.WrapH(mcpHandler))
+		// Đọc thông tin từ Gin context chuyển vào HTTP Request context trước khi chạy MCP Handler
+		mcpGroup.Any("/*path", func(c *gin.Context) {
+			ctx := c.Request.Context()
+			for _, key := range []string{"user_id", "email", "role"} {
+				if val, exists := c.Get(key); exists {
+					ctx = context.WithValue(ctx, key, val)
+				}
+			}
+			c.Request = c.Request.WithContext(ctx)
+			mcpHandler.ServeHTTP(c.Writer, c.Request)
+		})
 	}
 
 	srv := &http.Server{

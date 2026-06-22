@@ -13,6 +13,9 @@ import (
 	"multi-agent/server"
 	"multi-agent/utils"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -164,6 +167,11 @@ func main() {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
 	log.Println("Shutting down...")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
