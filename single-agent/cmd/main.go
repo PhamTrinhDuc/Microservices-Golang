@@ -4,18 +4,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"single-agent/config"
 	memory "single-agent/memory/postgres"
 	session "single-agent/memory/redis"
+	"single-agent/middleware"
 	"single-agent/observability"
 	anthropicprd "single-agent/provider/anthropic"
 	openaiprd "single-agent/provider/openai"
 	"single-agent/server"
 	"single-agent/utils"
-	"net/http"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"google.golang.org/adk/model"
 	"google.golang.org/adk/model/gemini"
 	"google.golang.org/genai"
@@ -100,13 +105,18 @@ func loadConfig() Config {
 			TTL:          15 * time.Second,
 		},
 
-		ConfigPath: "../config.yaml",
+		ConfigPath: "./config.yaml",
 		Provider:   utils.GetEnvString("PROVIDER", "groq"),
 		Port:       utils.GetEnvString("AGENT_SERVER_PORT", "8000"),
 	}
 }
 
 func main() {
+	// Load godotenv first
+	if err := godotenv.Load(); err != nil {
+		log.Printf("Warning: failed to load .env file, reading system environment variables")
+	}
+
 	ctx := context.Background()
 
 	// 1. Init telemetry
@@ -126,7 +136,12 @@ func main() {
 	}()
 	log.Println("OpenTelemetry initialized successfully")
 
-	// 2. Khởi tạo Agent Server (Nó sẽ tự lo liệu từ Config, LLM đến MCP)
+	// 2. Middleware
+	authMid := middleware.NewAuthMiddleware()
+	tracingMiddleware := middleware.NewTracingMiddleware(telemetry)
+	corsMiddleware := middleware.CORSMiddleware()
+
+	// 3. Khởi tạo Agent Server (Nó sẽ tự lo liệu từ Config, LLM đến MCP)
 	appCfg, err := config.LoadAppConfig(cfg.ConfigPath)
 	if err != nil {
 		log.Fatalf("Failed to load app config: %v", err)
@@ -142,17 +157,20 @@ func main() {
 		log.Fatalf("Failed to initialize Agent Server: %v", err)
 	}
 
-	// 3. Thiết lập Gin
+	// 4. Thiết lập Gin
 	r := gin.Default()
+	r.Use(tracingMiddleware.Handler())
+	r.Use(corsMiddleware)
 
-	// 4. Đăng ký các Routes
+	// 5. Đăng ký các Routes
 	api := r.Group("/api")
+	api.Use(authMid.Handler())
 	{
 		api.POST("/chat", agentServer.HandlerChat)
 		api.POST("/chat/confirm", agentServer.HandlerConfirm)
 	}
 
-	// 5. Chạy Server
+	// 6. Chạy Server
 	srv := &http.Server{
 		Addr:    ":" + cfg.Port,
 		Handler: r,
@@ -164,6 +182,10 @@ func main() {
 			log.Fatalf("listen: %s\n", err)
 		}
 	}()
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
 	log.Println("Shutting down...")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

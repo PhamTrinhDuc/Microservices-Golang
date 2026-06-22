@@ -32,8 +32,8 @@ func main() {
 	llm := openai.New(openai.Config{
 		APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
 		BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
-		ModelName: utils.GetEnvString("GROQ_LLM", "qwen/qwen3.6-27b"),
-		// ModelName: utils.GetEnvString("GROQ_LLM", "qwen/qwen3-32b"),
+		// ModelName: utils.GetEnvString("GROQ_LLM", "qwen/qwen3.6-27b"),
+		ModelName: utils.GetEnvString("GROQ_LLM", "qwen/qwen3-32b"),
 	})
 	appCfg, err := config.LoadAppConfig("./config.yaml")
 	if err != nil {
@@ -55,15 +55,40 @@ func main() {
 		log.Fatalf("Failed to create session: %v", err)
 	}
 
-	userMsg := genai.NewContentFromText("Tôi đang cần 1 con màn hình rời 27inch, 2K mà giá loanh quanh 4 triệu?", genai.RoleUser)
+	userMsg := genai.NewContentFromText("Bên bạn có đồng hồ thông minh < 3 triệu mà có thể GPS để chạy bộ không?", genai.RoleUser)
 
-	fmt.Printf("Agent: ")
+	toolMapping := map[string]string{
+		"list_categories":         "Tìm kiếm danh mục sản phẩm phù hợp...",
+		"get_specs_by_category":   "Kiểm tra thông số kỹ thuật (Hỗ trợ GPS, Chạy bộ)...",
+		"list_products":           "Tìm kiếm các sản phẩm trong khoảng giá yêu cầu...",
+		"get_product_by_id":       "Kiểm tra chi tiết thông tin và tồn kho sản phẩm...",
+		"hybrid_search_documents": "Tìm kiếm tài liệu chính sách mua sắm/bảo hành...",
+		"list_brands":             "Kiểm tra danh sách các thương hiệu...",
+	}
+
+	fmt.Println("\n--- Bắt đầu hành trình Agent ---")
 	for event, err := range agents.Runner.Run(ctx, "demo_user", sessionID, userMsg, agent.RunConfig{}) {
 		if err != nil {
 			log.Fatalf("\nRun error: %v", err)
 		}
-		if event.Content != nil && len(event.Content.Parts) > 0 {
-			fmt.Print(event.Content.Parts[0].Text)
+		if event.Content != nil {
+			for _, part := range event.Content.Parts {
+				if part.FunctionCall != nil {
+					toolName := part.FunctionCall.Name
+					friendlyName, ok := toolMapping[toolName]
+					if !ok {
+						friendlyName = fmt.Sprintf("Đang xử lý bước %s...", toolName)
+					}
+					fmt.Printf("\n[⚙️ Bước đi] %s (Công cụ: %s)\n", friendlyName, toolName)
+				}
+				if part.FunctionResponse != nil {
+					fmt.Printf("[✓ Đã hoàn thành] Nhận dữ liệu kết quả từ công cụ %s\n", part.FunctionResponse.Name)
+				}
+				if part.Text != "" {
+					fmt.Print(part.Text)
+				}
+			}
 		}
 	}
+	fmt.Println("\n--- Kết thúc hành trình Agent ---")
 }

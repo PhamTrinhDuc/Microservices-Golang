@@ -14,8 +14,6 @@ import (
 	"single-agent/observability"
 	// "single-agent/provider/gemini"
 
-	"single-agent/utils"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -40,9 +38,19 @@ type ChatRequest struct {
 	Message   string `json:"message"`
 }
 
+var toolMapping = map[string]string{
+	"list_categories":         "Tìm kiếm danh mục sản phẩm phù hợp...",
+	"get_specs_by_category":   "Kiểm tra thông số kỹ thuật (Hỗ trợ GPS, Chạy bộ)...",
+	"list_products":           "Tìm kiếm các sản phẩm trong khoảng giá yêu cầu...",
+	"get_product_by_id":       "Kiểm tra chi tiết thông tin và tồn kho sản phẩm...",
+	"hybrid_search_documents": "Tìm kiếm tài liệu chính sách mua sắm/bảo hành...",
+	"list_brands":             "Kiểm tra danh sách các thương hiệu...",
+}
+
 type ChatResponse struct {
-	SessionID string `json:"session_id"`
-	Message   string `json:"message"`
+	SessionID string   `json:"session_id"`
+	Message   string   `json:"message"`
+	Steps     []string `json:"steps,omitempty"`
 
 	RequiresConfirmation bool        `json:"requires_confirmation"`
 	ConfirmationID       string      `json:"confirmation_id"`
@@ -121,8 +129,6 @@ func runAgent(ctx context.Context, runnr *runner.Runner, sessionID string, input
 func NewAgentServer(ctx context.Context, appCfg *config.AppConfig, telemetry *observability.Telemetry, llm model.LLM) (*AgentServer, error) {
 
 	// 2. Init Shared Resources
-	mcpToken := utils.GetEnvString("AUTH_TOKEN", "")
-
 	// Shared MCP Transport
 	transport := &mcp.SSEClientTransport{
 		Endpoint: appCfg.McpServer,
@@ -130,12 +136,12 @@ func NewAgentServer(ctx context.Context, appCfg *config.AppConfig, telemetry *ob
 			Transport: &headerTransport{
 				base:   http.DefaultTransport,
 				header: "Authorization",
-				value:  "Bearer " + mcpToken,
+				value:  "",
 			},
 		},
 	}
 
-	// 3. Initialize Single Agent
+	// Initialize Single Agent
 	agentCfg, ok := appCfg.Agents["ecommerce_agent"]
 	if !ok {
 		return nil, fmt.Errorf("ecommerce_agent config not found")
@@ -186,20 +192,35 @@ func (s *AgentServer) HandlerChat(c *gin.Context) {
 		return
 	}
 
-	if r.SessionID == "" {
-		sessionID := uuid.NewString()
+	sessionID := r.SessionID
+	var exists bool
+	if sessionID != "" {
+		_, err := s.SessionService.Get(c.Request.Context(), &session.GetRequest{
+			UserID:    userID,
+			SessionID: sessionID,
+			AppName:   appName,
+		})
+		if err == nil {
+			exists = true
+		}
+	}
+
+	if !exists {
+		if sessionID == "" {
+			sessionID = uuid.NewString()
+		}
 		_, err := s.SessionService.Create(c.Request.Context(), &session.CreateRequest{
 			UserID:    userID,
 			SessionID: sessionID,
 			AppName:   appName,
 		})
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"Failed to create session ": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"Failed to create session": err.Error()})
 			log.Printf("Failed to create session: %v", err)
 			return
 		}
-		r.SessionID = sessionID
 	}
+	r.SessionID = sessionID
 
 	userMsg := genai.NewContentFromText(r.Message, genai.RoleUser)
 
@@ -216,23 +237,31 @@ func (s *AgentServer) HandlerChat(c *gin.Context) {
 	var confirmationCallID string
 
 	finalResponse := ""
+	var steps []string
 
 	for event, err := range s.Runner.Run(ctxOtel, userID, r.SessionID, userMsg, agent.RunConfig{}) {
 		if err != nil {
 			log.Printf("Run error: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"Failed to run agent ": err.Error()})
+			return
 		}
 
-		// In text bình thường
-		if event.Content != nil && len(event.Content.Parts) > 0 {
-			if event.Content.Parts[0].Text != "" {
-				finalResponse += event.Content.Parts[0].Text
-			}
+		if event.Content != nil {
 			for _, part := range event.Content.Parts {
-				// Nếu thấy Agent gọi hàm adk_request_confirmation
-				if part.FunctionCall != nil && part.FunctionCall.Name == "adk_request_confirmation" {
-					confirmationCallID = part.FunctionCall.ID // LẤY CÁI ID NÀY!
-					// log.Printf("[DEBUG] Thấy hàm duyệt ảo! ID: %s", confirmationCallID)
+				if part.Text != "" {
+					finalResponse += part.Text
+				}
+				if part.FunctionCall != nil {
+					toolName := part.FunctionCall.Name
+					if toolName == "adk_request_confirmation" {
+						confirmationCallID = part.FunctionCall.ID
+					} else {
+						friendlyName, ok := toolMapping[toolName]
+						if !ok {
+							friendlyName = fmt.Sprintf("Đang xử lý bước %s...", toolName)
+						}
+						steps = append(steps, friendlyName)
+					}
 				}
 			}
 		}
@@ -257,6 +286,7 @@ func (s *AgentServer) HandlerChat(c *gin.Context) {
 					RequiresConfirmation: true,
 					ConfirmationID:       confirmationCallID, // Trả cái ID ảo này về cho Client
 					Hint:                 conf.Hint,          // Lấy hint từ map
+					Steps:                steps,
 				})
 				return
 			}
@@ -265,6 +295,7 @@ func (s *AgentServer) HandlerChat(c *gin.Context) {
 	c.JSON(http.StatusOK, ChatResponse{
 		SessionID: r.SessionID,
 		Message:   finalResponse,
+		Steps:     steps,
 	})
 }
 
@@ -305,6 +336,7 @@ func (s *AgentServer) HandlerConfirm(c *gin.Context) {
 		Parts: parts,
 	}
 	finalResponse := ""
+	var steps []string
 	for event, err := range s.Runner.Run(ctxOtel, userID, r.SessionID, approvalMsg, agent.RunConfig{}) {
 		if err != nil {
 			log.Printf("Resume error: %v", err)
@@ -318,6 +350,16 @@ func (s *AgentServer) HandlerConfirm(c *gin.Context) {
 				if part.Text != "" {
 					finalResponse += part.Text
 				}
+				if part.FunctionCall != nil {
+					toolName := part.FunctionCall.Name
+					if toolName != "adk_request_confirmation" {
+						friendlyName, ok := toolMapping[toolName]
+						if !ok {
+							friendlyName = fmt.Sprintf("Đang xử lý bước %s...", toolName)
+						}
+						steps = append(steps, friendlyName)
+					}
+				}
 			}
 		}
 	}
@@ -326,6 +368,6 @@ func (s *AgentServer) HandlerConfirm(c *gin.Context) {
 	c.JSON(http.StatusOK, ChatResponse{
 		SessionID: r.SessionID,
 		Message:   finalResponse,
+		Steps:     steps,
 	})
-
 }
