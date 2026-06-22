@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Footer from './components/Footer'
 import Header from './components/Header'
 import ProtectedRoute from './components/ProtectedRoute'
+import JiyuuChat from './components/JiyuuChat'
 import BrowsePage from './pages/BrowsePage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -141,6 +142,7 @@ const App = () => {
           </Routes>
         </main>
         <Footer />
+        <JiyuuChat />
       </div>
     </GoogleOAuthProvider>
   )
