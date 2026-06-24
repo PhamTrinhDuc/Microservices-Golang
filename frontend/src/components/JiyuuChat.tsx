@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { agentAPI, ChatResponse } from '../services/agentAPI'
+import { agentAPI } from '../services/agentAPI'
 import { sessionManager } from '../utils/sessionManager'
+import MarkdownRenderer from './MarkdownRenderer'
 
 interface Message {
   id: string
@@ -11,6 +12,29 @@ interface Message {
   confirmationId?: string
   hint?: string
   payload?: any
+}
+
+const getFriendlyErrorMessage = (rawError: string): string => {
+  const errLower = rawError.toLowerCase()
+  if (
+    errLower.includes('limit') ||
+    errLower.includes('too large') ||
+    errLower.includes('rate limit') ||
+    errLower.includes('413') ||
+    errLower.includes('tpm') ||
+    errLower.includes('rpm')
+  ) {
+    return '⚠️ Xin lỗi bạn, hệ thống AI đang quá tải giới hạn xử lý (Rate Limit/Context Limit). Vui lòng thử lại sau ít phút hoặc rút ngắn câu hỏi hơn nhé!'
+  }
+  if (
+    errLower.includes('api request failed') ||
+    errLower.includes('connection') ||
+    errLower.includes('failed to run') ||
+    errLower.includes('request failed')
+  ) {
+    return '⚠️ Jiyuu không thể kết nối tới dịch vụ lúc này. Bạn vui lòng kiểm tra kết nối mạng hoặc thử lại sau nhé!'
+  }
+  return '⚠️ Jiyuu gặp sự cố ngoài ý muốn khi xử lý yêu cầu. Vui lòng thử lại sau.'
 }
 
 export const JiyuuChat: React.FC = () => {
@@ -35,6 +59,7 @@ export const JiyuuChat: React.FC = () => {
   } | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -44,11 +69,46 @@ export const JiyuuChat: React.FC = () => {
     scrollToBottom()
   }, [messages, isLoading])
 
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+  }, [])
+
   const toggleSteps = (msgId: string) => {
     setShowStepsIndex((prev) => ({
       ...prev,
       [msgId]: !prev[msgId],
     }))
+  }
+
+  const handleCancelResponse = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setIsLoading(false)
+    
+    setMessages((prev) => {
+      if (prev.length === 0) return prev
+      const lastMsg = prev[prev.length - 1]
+      if (lastMsg.sender === 'bot') {
+        if (lastMsg.text === '') {
+          return prev.slice(0, -1).concat({
+            ...lastMsg,
+            text: '*(Đã dừng phản hồi)*',
+          })
+        } else {
+          return prev.slice(0, -1).concat({
+            ...lastMsg,
+            text: lastMsg.text + '\n\n*(Đã dừng phản hồi)*',
+          })
+        }
+      }
+      return prev
+    })
   }
 
   const handleSendMessage = async (textToSend: string) => {
@@ -66,42 +126,105 @@ export const JiyuuChat: React.FC = () => {
     setIsLoading(true)
     setPendingConfirm(null) // Reset pending confirm
 
-    try {
-      const sessionId = sessionManager.getSessionId()
-      const response = await agentAPI.chat(textToSend, sessionId)
-      
-      const botMsgId = `bot-${Date.now()}`
-      const botMessage: Message = {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    const botMsgId = `bot-${Date.now()}`
+    // Thêm placeholder tin nhắn của bot để bắt đầu stream
+    setMessages((prev) => [
+      ...prev,
+      {
         id: botMsgId,
         sender: 'bot',
-        text: response.message || 'Xin lỗi bạn, mình chưa xử lý được câu hỏi này.',
-        steps: response.steps,
-        requiresConfirmation: response.requires_confirmation,
-        confirmationId: response.confirmation_id,
-        hint: response.hint,
-        payload: response.payload,
-      }
+        text: '',
+        steps: [],
+      },
+    ])
 
-      setMessages((prev) => [...prev, botMessage])
+    // Tự động mở danh sách các bước xử lý của bot
+    setShowStepsIndex((prev) => ({
+      ...prev,
+      [botMsgId]: true,
+    }))
 
-      if (response.requires_confirmation && response.confirmation_id) {
-        setPendingConfirm({
-          messageId: botMsgId,
-          confirmationId: response.confirmation_id,
-          hint: response.hint || '',
-          payload: response.payload,
-        })
-      }
-    } catch (error: any) {
-      setMessages((prev) => [
-        ...prev,
+    try {
+      const sessionId = sessionManager.getSessionId()
+      await agentAPI.chatStream(
+        textToSend,
         {
-          id: `error-${Date.now()}`,
-          sender: 'bot',
-          text: `⚠️ Đã xảy ra lỗi khi kết nối với Agent: ${error.message}`,
+          onToken: (token) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId ? { ...msg, text: msg.text + token } : msg
+              )
+            )
+          },
+          onStep: (step) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? { ...msg, steps: msg.steps ? [...msg.steps, step] : [step] }
+                  : msg
+              )
+            )
+          },
+          onConfirmation: (confirmationId, hint) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? {
+                      ...msg,
+                      requiresConfirmation: true,
+                      confirmationId: confirmationId,
+                      hint: hint,
+                    }
+                  : msg
+              )
+            )
+            setPendingConfirm({
+              messageId: botMsgId,
+              confirmationId: confirmationId,
+              hint: hint,
+              payload: null,
+            })
+          },
+          onError: (err) => {
+            if (err === 'AbortError' || err.includes('aborted')) return
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? { ...msg, text: getFriendlyErrorMessage(err) }
+                  : msg
+              )
+            )
+            setIsLoading(false)
+            abortControllerRef.current = null
+          },
+          onDone: () => {
+            setIsLoading(false)
+            abortControllerRef.current = null
+          },
         },
-      ])
-    } finally {
+        sessionId,
+        controller.signal
+      )
+    } catch (error: any) {
+      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        return
+      }
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMsgId
+            ? {
+                ...msg,
+                text: getFriendlyErrorMessage(error.message || ''),
+              }
+            : msg
+        )
+      )
       setIsLoading(false)
     }
   }
@@ -109,11 +232,16 @@ export const JiyuuChat: React.FC = () => {
   const handleConfirmation = async (confirmed: boolean) => {
     if (!pendingConfirm || isLoading) return
 
-    const { messageId, confirmationId, hint, payload } = pendingConfirm
+    const { confirmationId, hint, payload } = pendingConfirm
     setIsLoading(true)
-    setPendingConfirm(null) // Clear immediately to hide buttons
+    setPendingConfirm(null) // Ẩn nút ngay lập tức
 
-    // Add UI indicator for the confirmation action
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
     const actionText = confirmed ? '👍 Bạn đã xác nhận đồng ý.' : '👎 Bạn đã từ chối xác nhận.'
     setMessages((prev) => [
       ...prev,
@@ -124,48 +252,101 @@ export const JiyuuChat: React.FC = () => {
       },
     ])
 
+    const botMsgId = `bot-${Date.now()}`
+    // Thêm tin nhắn bot mới để bắt đầu stream phản hồi từ sau khi xác nhận
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: botMsgId,
+        sender: 'bot',
+        text: '',
+        steps: [],
+      },
+    ])
+
+    setShowStepsIndex((prev) => ({
+      ...prev,
+      [botMsgId]: true,
+    }))
+
     try {
       const sessionId = sessionManager.getSessionId()
-      const response = await agentAPI.confirm(
+      await agentAPI.confirmStream(
         sessionId,
         confirmationId,
         confirmed,
-        hint,
-        payload
-      )
-
-      const botMsgId = `bot-${Date.now()}`
-      const botMessage: Message = {
-        id: botMsgId,
-        sender: 'bot',
-        text: response.message || 'Cảm ơn bạn đã xác nhận.',
-        steps: response.steps,
-        requiresConfirmation: response.requires_confirmation,
-        confirmationId: response.confirmation_id,
-        hint: response.hint,
-        payload: response.payload,
-      }
-
-      setMessages((prev) => [...prev, botMessage])
-
-      if (response.requires_confirmation && response.confirmation_id) {
-        setPendingConfirm({
-          messageId: botMsgId,
-          confirmationId: response.confirmation_id,
-          hint: response.hint || '',
-          payload: response.payload,
-        })
-      }
-    } catch (error: any) {
-      setMessages((prev) => [
-        ...prev,
         {
-          id: `error-${Date.now()}`,
-          sender: 'bot',
-          text: `⚠️ Đã xảy ra lỗi khi gửi xác nhận: ${error.message}`,
+          onToken: (token) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId ? { ...msg, text: msg.text + token } : msg
+              )
+            )
+          },
+          onStep: (step) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? { ...msg, steps: msg.steps ? [...msg.steps, step] : [step] }
+                  : msg
+              )
+            )
+          },
+          onConfirmation: (nextConfId, nextHint) => {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? {
+                      ...msg,
+                      requiresConfirmation: true,
+                      confirmationId: nextConfId,
+                      hint: nextHint,
+                    }
+                  : msg
+              )
+            )
+            setPendingConfirm({
+              messageId: botMsgId,
+              confirmationId: nextConfId,
+              hint: nextHint,
+              payload: null,
+            })
+          },
+          onError: (err) => {
+            if (err === 'AbortError' || err.includes('aborted')) return
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMsgId
+                  ? { ...msg, text: getFriendlyErrorMessage(err) }
+                  : msg
+              )
+            )
+            setIsLoading(false)
+            abortControllerRef.current = null
+          },
+          onDone: () => {
+            setIsLoading(false)
+            abortControllerRef.current = null
+          },
         },
-      ])
-    } finally {
+        hint,
+        payload,
+        controller.signal
+      )
+    } catch (error: any) {
+      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        return
+      }
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === botMsgId
+            ? {
+                ...msg,
+                text: getFriendlyErrorMessage(error.message || ''),
+              }
+            : msg
+        )
+      )
       setIsLoading(false)
     }
   }
@@ -269,7 +450,7 @@ export const JiyuuChat: React.FC = () => {
                       </button>
                       
                       {showStepsIndex[msg.id] && (
-                        <div className="border-t border-[#1e202f] bg-[#0d0e15] px-3 py-2.5 space-y-2">
+                        <div className="border-t border-[#1e202f] bg-[#0d0e15] px-3 py-2.5 space-y-2 animate-in slide-in-from-top-1">
                           {msg.steps.map((step, idx) => (
                             <div key={idx} className="flex items-start space-x-2 text-slate-300">
                               <span className="text-emerald-400 mt-0.5 font-bold">✓</span>
@@ -289,10 +470,13 @@ export const JiyuuChat: React.FC = () => {
                         : 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-tr-none shadow-[0_4px_15px_rgba(99,102,241,0.25)]'
                     }`}
                   >
-                    {/* Preserve line breaks for chatbot answers */}
-                    <div className="whitespace-pre-line font-normal">
-                      {msg.text}
-                    </div>
+                    {isBot ? (
+                      <MarkdownRenderer content={msg.text} />
+                    ) : (
+                      <div className="whitespace-pre-line font-normal">
+                        {msg.text}
+                      </div>
+                    )}
                   </div>
 
                   {/* Confirmation Required Box */}
@@ -377,15 +561,28 @@ export const JiyuuChat: React.FC = () => {
               placeholder={isLoading ? 'Agent đang suy nghĩ...' : 'Hỏi Jiyuu điều bạn muốn...'}
               className="flex-1 bg-[#12141f] border border-[#202334] focus:border-indigo-500/80 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/80 disabled:opacity-50 transition-all"
             />
-            <button
-              type="submit"
-              disabled={!inputValue.trim() || isLoading}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-[#1a1c29] text-white disabled:text-slate-600 transition-colors shadow-md shadow-indigo-600/10 focus:outline-none"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={handleCancelResponse}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-600 hover:bg-rose-500 text-white transition-colors shadow-md shadow-rose-600/20 focus:outline-none"
+                title="Dừng phản hồi"
+              >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M4.5 7.5a3 3 0 013-3h9a3 3 0 013 3v9a3 3 0 01-3 3h-9a3 3 0 01-3-3v-9z" clipRule="evenodd" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!inputValue.trim() || isLoading}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-[#1a1c29] text-white disabled:text-slate-600 transition-colors shadow-md shadow-indigo-600/10 focus:outline-none"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            )}
           </form>
         </div>
       )}
