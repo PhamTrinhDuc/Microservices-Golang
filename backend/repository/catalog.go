@@ -678,7 +678,7 @@ func (r *CatalogRepository) SearchProducts(ctx context.Context, query *domain.Pr
 		WHERE p.is_deleted = false AND p.is_active = true`
 	selectQueryStr := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
-		       COALESCE(min_var.compare_price, min_var.sell_price, 0) as price,
+		       COALESCE(min_var.sell_price, min_var.compare_price, 0) as price,
 		       CASE WHEN min_var.compare_price > min_var.sell_price THEN min_var.sell_price ELSE NULL END as discount_price,
 		       CASE WHEN min_var.compare_price > min_var.sell_price THEN ROUND((min_var.compare_price - min_var.sell_price) / min_var.compare_price * 100) ELSE 0 END as discount_percent,
 		       COALESCE(inv.total_qty, 0) as stock,
@@ -877,7 +877,7 @@ func (r *CatalogRepository) GetProductDetails(ctx context.Context, id string) (*
 	prodQuery := `
 		SELECT p.id, p.category_id, p.brand_id, p.name, p.slug, p.meta_title, p.meta_description, p.img_thumb, p.weight, p.low_stock_threshold, p.specs_jsonb, p.is_active, p.is_deleted, p.created_at, p.updated_at,
 		       b.name as brand_name, c.name as category_name,
-		       COALESCE(min_var.compare_price, min_var.sell_price, 0) as price,
+		       COALESCE(min_var.sell_price, min_var.compare_price, 0) as price,
 		       CASE WHEN min_var.compare_price > min_var.sell_price THEN min_var.sell_price ELSE NULL END as discount_price,
 		       CASE WHEN min_var.compare_price > min_var.sell_price THEN ROUND((min_var.compare_price - min_var.sell_price) / min_var.compare_price * 100) ELSE 0 END as discount_percent,
 		       COALESCE(inv.total_qty, 0) as stock,

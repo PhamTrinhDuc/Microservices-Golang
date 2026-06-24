@@ -74,7 +74,7 @@ func getOIDCVerifier() (*oidc.IDTokenVerifier, error) {
 
 // ValidateToken validates a JWT token string using Keycloak OIDC.
 func ValidateToken(tokenString string) (*JWTClaims, error) {
-	fmt.Println("Token:", tokenString)
+	// fmt.Println("Token:", tokenString)
 	verifier, err := getOIDCVerifier()
 	if err != nil {
 		return nil, fmt.Errorf("OIDC verifier not initialized: %w", err)
