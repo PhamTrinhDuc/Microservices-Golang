@@ -12,6 +12,7 @@ import (
 	session "single-agent/memory/redis"
 	"single-agent/middleware"
 	"single-agent/observability"
+	"single-agent/plugins/langfuse"
 	anthropicprd "single-agent/provider/anthropic"
 	openaiprd "single-agent/provider/openai"
 	"single-agent/server"
@@ -21,6 +22,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"go.opentelemetry.io/otel"
 	"google.golang.org/adk/model"
 	"google.golang.org/adk/model/gemini"
 	"google.golang.org/genai"
@@ -60,6 +62,13 @@ func NewProvider(provider string) (model.LLM, error) {
 				APIKey:    utils.GetEnvString("GROQ_API_KEY", ""),
 				BaseURL:   utils.GetEnvString("BASE_URL_GROQ", "https://api.groq.com/openai/v1"),
 				ModelName: utils.GetEnvString("GROQ_LLM", "qwen/qwen3.6-27b"),
+			}), nil
+	case "vti":
+		return openaiprd.New(
+			openaiprd.Config{
+				APIKey:    utils.GetEnvString("VTI_API_KEY", ""),
+				BaseURL:   utils.GetEnvString("BASE_URL_VTI", "https://api.vti.ai/v1"),
+				ModelName: utils.GetEnvString("VTI_LLM", "vti/vti-llm"),
 			}), nil
 	default:
 		return nil, fmt.Errorf("unknown provider: %s", provider)
@@ -107,7 +116,7 @@ func loadConfig() Config {
 
 		ConfigPath: "./config.yaml",
 		Provider:   utils.GetEnvString("PROVIDER", "groq"),
-		Port:       utils.GetEnvString("AGENT_SERVER_PORT", "8000"),
+		Port:       utils.GetEnvString("AGENT_SERVER_PORT", "8080"),
 	}
 }
 
@@ -116,6 +125,10 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: failed to load .env file, reading system environment variables")
 	}
+
+	otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
+		log.Printf("[OTel Error Handler] %v", err)
+	}))
 
 	ctx := context.Background()
 
@@ -141,7 +154,19 @@ func main() {
 	tracingMiddleware := middleware.NewTracingMiddleware(telemetry)
 	corsMiddleware := middleware.CORSMiddleware()
 
-	// 3. Khởi tạo Agent Server (Nó sẽ tự lo liệu từ Config, LLM đến MCP)
+	// 3. Plugin
+	pluginCfg, langfuseShutdown, err := langfuse.Setup(&langfuse.Config{
+		PublicKey:   os.Getenv("LANGFUSE_PUBLIC_KEY"),
+		SecretKey:   os.Getenv("LANGFUSE_SECRET_KEY"),
+		Host:        "https://cloud.langfuse.com", // or self-hosted URL
+		Environment: "production",
+		ServiceName: "ecommerce-agent",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// 4. Khởi tạo Agent Server (Nó sẽ tự lo liệu từ Config, LLM đến MCP)
 	appCfg, err := config.LoadAppConfig(cfg.ConfigPath)
 	if err != nil {
 		log.Fatalf("Failed to load app config: %v", err)
@@ -152,10 +177,16 @@ func main() {
 		log.Fatalf("Failed to create provider: %v", err)
 	}
 
-	agentServer, err := server.NewAgentServer(ctx, appCfg, telemetry, llm)
+	agentServer, err := server.NewAgentServer(ctx, appCfg, telemetry, &pluginCfg, llm)
 	if err != nil {
 		log.Fatalf("Failed to initialize Agent Server: %v", err)
 	}
+	defer func() {
+		if langfuseShutdown != nil {
+			log.Println("Shutting down Langfuse telemetry...")
+			langfuseShutdown(context.Background())
+		}
+	}()
 
 	// 4. Thiết lập Gin
 	r := gin.Default()
@@ -168,6 +199,9 @@ func main() {
 	{
 		api.POST("/chat", agentServer.HandlerChat)
 		api.POST("/chat/confirm", agentServer.HandlerConfirm)
+		api.POST("/chat/stream", agentServer.HandlerChatStream)
+		api.POST("/chat/confirm/stream", agentServer.HandlerConfirmStream)
+		api.GET("/chat/debug", agentServer.HandlerDebugSession)
 	}
 
 	// 6. Chạy Server

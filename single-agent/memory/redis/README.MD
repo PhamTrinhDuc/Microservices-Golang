@@ -5,6 +5,10 @@ Dưới đây là bản tóm tắt chi tiết file `session.go`, giải thích c
 ### 1. Tổng quan (High-Level)
 File này đóng vai trò là một **Redis Storage Provider** cho ADK. Mục tiêu là chuyển đổi các yêu cầu quản lý trạng thái của Agent (như: "Nhớ tên khách hàng", "Lưu lại câu trả lời vừa rồi") thành các thao tác đọc/ghi trên database Redis.
 
+Session = Người dùng + Tên App + ID phiên + Lịch sử hội thoại (events) + Bộ nhớ biến số (state).
+
+State = Tập hợp các biến số tạm thời/ngữ cảnh (ví dụ: Garmin, 2,000,000đ...) chứ không chứa ID hệ thống hay tin nhắn chat.
+
 Để làm được điều này, file implement **4 Interface cốt lõi** của ADK:
 1.  **`session.Service`**: Bộ não điều khiển (Tạo, Xóa, Lấy Session).
 2.  **`session.Session`**: Đại diện cho một phiên làm việc đang tồn tại.

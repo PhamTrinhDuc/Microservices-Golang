@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"single-agent/guards/promptguard"
+	"single-agent/plugins/guards/promptguard"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

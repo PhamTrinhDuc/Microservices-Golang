@@ -3,7 +3,7 @@ package rule
 import (
 	"context"
 	"fmt"
-	"single-agent/guards/promptguard"
+	"single-agent/plugins/guards/promptguard"
 	"regexp"
 	"strings"
 )

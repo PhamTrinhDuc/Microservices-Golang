@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"single-agent/guards/promptguard"
+	"single-agent/plugins/guards/promptguard"
 	"strings"
 	"time"
 
