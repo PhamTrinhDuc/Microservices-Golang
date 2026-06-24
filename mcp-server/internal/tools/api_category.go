@@ -37,8 +37,10 @@ func NewCategoryTool(baseURL string) *CategoryTool {
 // Definition returns the tool definitions for Category API
 func (t *CategoryTool) ListCategoryDefinition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:        "list_categories",
-		Description: "List all product categories available in the catalog.",
+		Name: "list_categories",
+		Description: `List all product categories available in the catalog. Returns category name, ID, and slug.
+		USE when: you need a category_id or category name but don't have it yet, or when the user asks what product types are available.
+		DO NOT USE when: you already know the category_id, or the user's query is specific enough to search directly by keyword.`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -57,7 +59,7 @@ func (t *CategoryTool) ListCategoryDefinition() *mcp.Tool {
 				},
 				"search_term": map[string]any{
 					"type":        []string{"string", "number"},
-					"description": "Keyword to search for categories",
+					"description": "Keyword to search for a specific category by name (e.g. 'laptop', 'smartwatch'). Use this to resolve category_id without fetching all categories.",
 				},
 			},
 		},

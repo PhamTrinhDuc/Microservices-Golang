@@ -14,6 +14,10 @@ import (
 	utils "mcp-server/internal/utils"
 )
 
+const (
+	LIMIT_SPECS = 20
+)
+
 type Product struct {
 	ID          string  `json:"id"`
 	Name        string  `json:"name"`
@@ -23,6 +27,8 @@ type Product struct {
 	Stock       int     `json:"stock"`
 	Rating      float64 `json:"rating"`
 	ReviewCount int     `json:"review_count"`
+	ImgThumb    *string `json:"img_thumb,omitempty"`
+	Slug        string  `json:"slug,omitempty"`
 }
 
 type ProductTool struct {
@@ -41,11 +47,10 @@ func NewProductTool(baseURL string) *ProductTool {
 func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name: "list_products",
-		Description: `
-		Tìm kiếm và liệt kê sản phẩm với phân trang và bộ lọc (danh mục, thương hiệu, giá, đánh giá, tính khả dụng, bộ lọc thông số kỹ thuật).
-		Hữu ích: khi người dùng muốn tìm sản phẩm với bộ lọc chi tiết bao gồm thương hiệu, giá, đánh giá, thông số kỹ thuật, v.v... 
-		Lưu ý: khi dùng spec_filter cân phải biết rõ tên của các bộ lọc, để biết tên các bộ lọc hãy dùng tool 'get_specs_by_category'
-		`,
+		Description: `Search and filter products with full filtering support (category, brand, price, rating, stock, spec filters).
+		USE as the primary product search tool. Always apply all known filters (category_id, max_price, in_stock_only, spec_filter) in a single call — do not fetch first and filter later.
+		DO NOT USE to browse bulk results and then manually call get_product_by_id to filter — set filters at source.
+		NOTE: To use spec_filter, you must know the exact spec key names. If unsure, call get_specs_by_category first to discover available spec keys for that category.`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -101,19 +106,22 @@ func (t *ProductTool) ListProductDefinition() *mcp.Tool {
 func (t *ProductTool) GetProductDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name: "get_product_by_id",
-		Description: `
-		Lấy thông tin chi tiết của 1 sản phẩm theo id của sản phẩm
-		Hữu ích khi user muốn biết toàn bộ thông tin của 1 sản phẩm cụ thể.
-		`,
+		Description: `Get full details of a single product by ID or Name: complete specs, variants, price, stock, brand, and category.
+		USE only when the user explicitly asks for full details about 1 or 2 specific products by name or ID, or when comparing them.
+		DO NOT USE to compare multiple products — use list_products with filters instead.
+		DO NOT CALL in bulk (multiple products at once) — this is expensive and unnecessary for general searches.`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
 				"id": map[string]any{
 					"type":        []string{"string", "number"},
-					"description": "The unique ID of the product. Example: '123345', '765345",
+					"description": "The unique ID of the product. Example: '123345', '765345'. Optional if name is provided.",
+				},
+				"name": map[string]any{
+					"type":        "string",
+					"description": "The name or query of the product. Use this if you do not know the product ID. Optional if id is provided.",
 				},
 			},
-			"required": []string{"id"},
 		},
 	}
 }
@@ -121,9 +129,10 @@ func (t *ProductTool) GetProductDefinition() *mcp.Tool {
 func (t *ProductTool) GetSpectByCategoryDefinition() *mcp.Tool {
 	return &mcp.Tool{
 		Name: "get_specs_by_category",
-		Description: `
-		Lấy tập hợp các thông số kỹ thuật theo danh mục. 
-		Hữu ích khi muốn filter thông số theo sản phẩm khi chưa biết tên của thông số.`,
+		Description: `Returns all available spec key names for a given category, for use in the spec_filter parameter of list_products.
+		USE only when you need to filter by a product specification but don't know the exact key name (e.g. is it 'GPS' or 'Built-in GPS'?).
+		DO NOT USE if you already know the spec key name — pass it directly into list_products spec_filter.
+		DO NOT USE as a general product discovery step — only call when spec key names are genuinely unknown.`,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -152,7 +161,8 @@ type ListProductsArgs struct {
 }
 
 type GetProductArgs struct {
-	ID utils.FlexibleString `json:"id"`
+	ID   utils.FlexibleString `json:"id,omitempty"`
+	Name string               `json:"name,omitempty"`
 }
 
 type GetSpectByCategoryArgs struct {
@@ -238,21 +248,22 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("failed to decode response: %v", err)}, nil
 	}
 
-	resultText := fmt.Sprintf("Found %d product(s) (Total: %d, Page: %d, Limit: %d):\n",
+	resultText := fmt.Sprintf("##### Found %d product(s) (Total: %d, Page: %d, Limit: %d):\n",
 		len(apiResp.Data.Products), apiResp.Data.TotalCount, apiResp.Data.Page, apiResp.Data.Limit)
 	for _, s := range apiResp.Data.Products {
-		resultText += fmt.Sprintf("- %s (ID: %s, Price: %.2f, Stock: %d, Rating: %.1f, Reviews: %d)\n",
-			s.Name, s.ID, s.Price, s.Stock, s.Rating, s.ReviewCount)
+		resultText += fmt.Sprintf("- %s (ID: %s, Price: %.2f, Stock: %d, Rating: %.1f, Reviews: %d, Slug: %s)\n",
+			s.Name, s.ID, s.Price, s.Stock, s.Rating, s.ReviewCount, s.Slug)
 	}
 
+	resultText += "\n##### Context for Agent not use to response for user, only use for resoning refine search:\n"
 	if len(apiResp.Data.AppliedFilters) > 0 {
-		resultText += fmt.Sprintf("\nApplied Filters: %v\n", apiResp.Data.AppliedFilters)
+		resultText += fmt.Sprintf("Applied Filters: %v\n", apiResp.Data.AppliedFilters)
 	}
 	if apiResp.Data.HasMore {
-		resultText += "\nNote: There are more products available matching these criteria (HasMore: true).\n"
+		resultText += "Note: There are more products available matching these criteria (HasMore: true).\n"
 	}
 	if len(apiResp.Data.Suggestions) > 0 {
-		resultText += "\nNo results were found with the applied filters, but here are some search suggestions:\n"
+		resultText += "No results were found with the applied filters, but here are some search suggestions for Agents:\n"
 		sugBytes, _ := json.MarshalIndent(apiResp.Data.Suggestions, "", "  ")
 		resultText += string(sugBytes) + "\n"
 	}
@@ -261,7 +272,42 @@ func (t *ProductTool) ListProductHandler(ctx context.Context, req *mcp.CallToolR
 }
 
 func (t *ProductTool) GetProductHandler(ctx context.Context, req *mcp.CallToolRequest, args GetProductArgs) (*mcp.CallToolResult, any, error) {
-	apiURL := fmt.Sprintf("%s/products/%s", t.baseURL, string(args.ID))
+	productID := string(args.ID)
+	if productID == "" && args.Name != "" {
+		// Resolve name to ID by calling list endpoint
+		u, _ := url.Parse(fmt.Sprintf("%s/products", t.baseURL))
+		q := u.Query()
+		q.Set("q", args.Name)
+		q.Set("limit", "1")
+		u.RawQuery = q.Encode()
+
+		httpReq, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
+		if err != nil {
+			return nil, nil, err
+		}
+		resp, err := t.client.Do(httpReq)
+		if err != nil {
+			return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("Failed to resolve product ID by name: %v", err)}, nil
+		}
+		defer resp.Body.Close()
+
+		var searchResp struct {
+			Data struct {
+				Products []Product `json:"products"`
+			} `json:"data"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&searchResp); err == nil && len(searchResp.Data.Products) > 0 {
+			productID = searchResp.Data.Products[0].ID
+		} else {
+			return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: fmt.Sprintf("Product not found by name: %s", args.Name)}, nil
+		}
+	}
+
+	if productID == "" {
+		return &mcp.CallToolResult{IsError: true}, mcp.TextContent{Text: "Either product 'id' or 'name' must be provided"}, nil
+	}
+
+	apiURL := fmt.Sprintf("%s/products/%s", t.baseURL, productID)
 
 	// 1. Tạo request mới với Context
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
@@ -311,25 +357,32 @@ func (t *ProductTool) GetProductHandler(ctx context.Context, req *mcp.CallToolRe
 	}
 
 	p := apiResp.Data.Product
-	resultText := fmt.Sprintf("Product Details:\n")
-	resultText += fmt.Sprintf("ID: %s\nName: %s\nCategory: %s (ID: %d)\nBrand: %s (ID: %d)\nPrice: %.2f\nStock: %d\nRating: %.1f (%d reviews)\n",
-		p.ID, p.Name, apiResp.Data.CategoryName, p.CategoryID, apiResp.Data.BrandName, p.BrandID, p.Price, p.Stock, p.Rating, p.ReviewCount)
+	resultText := fmt.Sprintf("##### Product Details:\n")
+	resultText += fmt.Sprintf("ID: %s\nName: %s\nPrice: %.2f\nStock: %d\nRating: %.1f (%d reviews)\nSlug: %s\n",
+		p.ID, p.Name, p.Price, p.Stock, p.Rating, p.ReviewCount, p.Slug)
+	if p.ImgThumb != nil {
+		resultText += fmt.Sprintf("Image: %s\n", *p.ImgThumb)
+	}
 
 	if len(apiResp.Data.Specs) > 0 {
-		resultText += "\nSpecifications:\n"
-		for _, sp := range apiResp.Data.Specs {
+		listSpecs := apiResp.Data.Specs
+		if len(listSpecs) > LIMIT_SPECS {
+			listSpecs = listSpecs[:LIMIT_SPECS]
+		}
+		resultText += "\n##### Specifications:\n"
+		for _, sp := range listSpecs {
 			unitStr := ""
 			if sp.Unit != nil {
 				unitStr = " " + *sp.Unit
 			}
-			resultText += fmt.Sprintf("- [%s] %s: %s%s\n", sp.Group, sp.Key, sp.Value, unitStr)
+			resultText += fmt.Sprintf("- %s: %s%s\n", sp.Key, sp.Value, unitStr)
 		}
 	}
 
 	if len(apiResp.Data.Variants) > 0 {
-		resultText += "\nVariants:\n"
+		resultText += "\n#### Variants:\n"
 		for _, v := range apiResp.Data.Variants {
-			resultText += fmt.Sprintf("- %s (SKU: %s, Price: %.2f)\n", v.Name, v.SKU, v.SellPrice)
+			resultText += fmt.Sprintf("- Name: %s, Price: %.2f)\n", v.Name, v.SellPrice)
 		}
 	}
 

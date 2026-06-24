@@ -18,7 +18,7 @@ func NewHybridSearchTool(db database.Store) *HybridSearchTool {
 
 func (t *HybridSearchTool) Definition() *mcp.Tool {
 	return &mcp.Tool{
-		Name:        "hybrid_search_policy",
+		Name:        "seach_policies",
 		Description: "Perform hybrid search combining BM25 lexical search with vector semantic similarity for policies.",
 		InputSchema: map[string]any{
 			"type": "object",
